@@ -1,0 +1,81 @@
+@import url('https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap');
+
+.profile{
+    height: 90vh;
+    display: flex;
+    justify-content: center;
+    font-family: "Raleway", sans-serif;
+    font-optical-sizing: auto;
+    /* font-weight: <weight>; */
+    font-style: normal;
+    padding-top:0.5% ;
+}
+
+.profile-info{
+    flex-basis: 40%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    
+    padding: 2%;
+
+}
+.profile-image{
+    flex-basis: 20%;
+    justify-content: center;
+    align-items: center;
+}
+.profile-image img{
+    width: auto;
+    height: 90vh;
+   
+}
+
+.profile-social{
+    flex-basis: 40%;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 2%;
+
+}
+
+.profile-title{
+    font-size: 4rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+}
+
+.profile-content{
+    
+    margin-bottom: 1rem;
+}
+
+.follow-me{
+    margin: 10px;
+    width: 100%;
+
+
+}
+.follow-me>*{
+    margin: 5px;
+}
+
+.social-icons>*{
+    margin-right: 2%;
+    border: 1.5px solid white;
+    border-radius: 100%;
+    padding: 1.5%;
+
+}
+
+.profile-skills{
+    max-width: 200px;
+    font-size: 5rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+}
+
+
