@@ -133,5 +133,5 @@ Distributed under the MIT License. See `LICENSE` for more information.
 ---
 
 <p align="center">
-  Made with ❤️ by <a href="https://github.com/yourusername">Mohammed Jumaan</a>
+  Made with ❤️ by <a href="https://github.com/jumaan1st">Mohammed Jumaan</a>
 </p>
