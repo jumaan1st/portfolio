@@ -1,5 +1,5 @@
 // data/portfolioData.ts
-import type { ComponentType, SVGProps } from "react";
+import type {ComponentType, SVGProps} from "react";
 import {
     Server,
     Database,
@@ -71,6 +71,7 @@ export interface Profile {
     linkedin: string;
     github: string;
     twitter: string;
+    resumeUrl: string;
 }
 
 export interface UIConfig {
@@ -109,7 +110,7 @@ export const initialData: PortfolioData = {
     },
     ui: {
         heroTagline: "Portfolio 2025",
-        statusLabel: "Currently working as",
+        statusLabel: "Currently working as Java Backend Developer at",
         blogTitle: "Latest Thoughts",
         blogSubtitle: "Insights on Java, System Design, and AI",
         projectTitle: "Featured Work",
@@ -117,8 +118,8 @@ export const initialData: PortfolioData = {
     },
     profile: {
         name: "Mohammed Jumaan",
-        roles: ["Java Developer", "Backend Architect", "Spring Boot Expert"],
-        currentRole: "Java Developer",
+        roles: ["Java Backend Developer", "Backend Architect", "Spring Boot Expert"],
+        currentRole: "Java Backend Developer",
         currentCompany: "Dyashin Technosoft",
         currentCompanyUrl: "#",
         summary:
@@ -129,11 +130,12 @@ export const initialData: PortfolioData = {
         linkedin: "linkedin.com/in/mohammedjumaan",
         github: "github.com/jumaanlst",
         twitter: "x.com/jumaanlst",
+        resumeUrl: "/Mohammed_jumaan_cse.pdf",
     },
     experience: [
         {
             id: 1,
-            role: "Java Developer",
+            role: "Java Backend Developer",
             company: "Dyashin Technosoft Private Limited",
             period: "Sep 2025 - Present",
             description:
@@ -334,13 +336,13 @@ This post is based on my AI Code Converter project, where I use Gemini to transl
         },
     ],
     skills: [
-        { name: "Java", icon: Server },
-        { name: "Spring Boot", icon: Database },
-        { name: "Hibernate", icon: FileText },
-        { name: "Microservices", icon: Globe },
-        { name: "React", icon: Code },
-        { name: "Docker", icon: Cpu },
-        { name: "AWS", icon: Monitor },
-        { name: "Python", icon: Terminal },
+        {name: "Java", icon: Server},
+        {name: "Spring Boot", icon: Database},
+        {name: "Hibernate", icon: FileText},
+        {name: "Microservices", icon: Globe},
+        {name: "React", icon: Code},
+        {name: "Docker", icon: Cpu},
+        {name: "AWS", icon: Monitor},
+        {name: "Python", icon: Terminal},
     ],
 };

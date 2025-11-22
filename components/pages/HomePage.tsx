@@ -11,6 +11,7 @@ import {
     User as UserIcon,
     ChevronLeft,
     ChevronRight,
+    Download,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { EditableField } from "../EditableField";
@@ -116,8 +117,18 @@ export const HomePage: React.FC = () => {
                         onClick={() => router.push("/contact")}
                         className="bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white px-8 py-4 rounded-full font-bold border border-slate-200 dark:border-slate-700 transition-all transform hover:-translate-y-1"
                     >
-                        Hire Me
+                        Contact Me
                     </button>
+                    {data.profile.resumeUrl && (
+                        <a
+                            href={data.profile.resumeUrl}
+                            download="Mohammed_Jumaan_Resume.pdf"
+                            className="bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white px-6 py-4 rounded-full font-bold border border-slate-200 dark:border-slate-700 transition-all transform hover:-translate-y-1 flex items-center gap-2"
+                        >
+                            <Download size={18} /> Resume
+                        </a>
+
+                    )}
                 </div>
             </section>
 
@@ -168,8 +179,8 @@ export const HomePage: React.FC = () => {
 
                         <div
                             className={`relative overflow-hidden flex items-center justify-center ${project.image && project.image.startsWith("http")
-                                    ? ""
-                                    : `bg-gradient-to-br ${project.color}`
+                                ? ""
+                                : `bg-gradient-to-br ${project.color}`
                                 }`}
                         >
                             {project.image && project.image.startsWith("http") ? (

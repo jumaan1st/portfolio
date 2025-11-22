@@ -95,7 +95,7 @@ export const ContactPage: React.FC = () => {
                                 <h4 className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">
                                     Email Me
                                 </h4>
-                                <p className="text-lg font-medium text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
+                                <p className="text-base md:text-lg font-medium text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors break-all">
                                     {data.profile.email}
                                 </p>
                             </div>
@@ -109,7 +109,7 @@ export const ContactPage: React.FC = () => {
                                 <h4 className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">
                                     Call Me
                                 </h4>
-                                <p className="text-lg font-medium text-slate-900 dark:text-white truncate">
+                                <p className="text-base md:text-lg font-medium text-slate-900 dark:text-white break-all">
                                     {data.profile.phone}
                                 </p>
                             </div>
