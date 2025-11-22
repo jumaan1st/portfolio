@@ -1,72 +1,70 @@
-// components/pages/ProjectsPage.tsx
+
 "use client";
 
 import React from "react";
-import { Cpu, Layout } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { FolderOpen, Github, ExternalLink, ArrowRight } from "lucide-react";
+import Link from "next/link";
 import { usePortfolio } from "../PortfolioContext";
 
 export const ProjectsPage: React.FC = () => {
     const { data } = usePortfolio();
-    const router = useRouter();
 
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-6xl mx-auto">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
             <div className="text-center mb-12">
-                <h2 className="text-3xl font-bold text-white mb-4">All Projects</h2>
-                <p className="text-slate-400 max-w-2xl mx-auto">
-                    A complete archive of my development work.
+                <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">Featured Projects</h2>
+                <div className="h-1 w-20 bg-purple-600 dark:bg-purple-500 mx-auto rounded-full" />
+                <p className="text-slate-600 dark:text-slate-400 mt-4 max-w-2xl mx-auto">
+                    A collection of applications demonstrating my expertise in full-stack
+                    development, system design, and problem-solving.
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {data.projects.map((project) => (
-                    <div
+                    <Link
+                        href={`/projects/${project.id}`}
                         key={project.id}
-                        onClick={() => router.push(`/projects/${project.id}`)}
-                        className="group bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden hover:border-slate-600 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-900/10 flex flex-col h-full cursor-pointer transform hover:-translate-y-1"
+                        className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:border-purple-500/50 transition-all hover:shadow-2xl hover:shadow-purple-500/10 flex flex-col h-full"
                     >
-                        <div
-                            className={`h-32 bg-gradient-to-r ${project.color} flex items-center justify-center`}
-                        >
-                            {project.category.includes("AI") ? (
-                                <Cpu size={48} className="text-white/40" />
+                        <div className="h-48 bg-slate-100 dark:bg-slate-800 relative overflow-hidden">
+                            {project.image && project.image.startsWith("http") ? (
+                                <img
+                                    src={project.image}
+                                    alt={project.title}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                />
                             ) : (
-                                <Layout size={48} className="text-white/40" />
+                                <div className="absolute inset-0 flex items-center justify-center text-slate-400 dark:text-slate-600 bg-slate-100 dark:bg-slate-800 group-hover:scale-105 transition-transform duration-500">
+                                    <FolderOpen size={48} />
+                                </div>
                             )}
+                            <div className="absolute top-4 right-4 bg-slate-900/80 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-white border border-slate-700">
+                                {project.tech[0]}
+                            </div>
                         </div>
                         <div className="p-6 flex flex-col flex-grow">
-                            <div className="flex justify-between items-start mb-4">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 border border-slate-800 px-2 py-1 rounded bg-slate-950">
-                  {project.category}
-                </span>
-                            </div>
-
-                            <h3 className="text-xl font-bold text-white mb-3 group-hover:text-blue-400 transition-colors">
+                            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                                 {project.title}
                             </h3>
-
-                            <p className="text-slate-400 text-sm leading-relaxed mb-6 flex-grow line-clamp-3">
+                            <p className="text-slate-600 dark:text-slate-400 text-sm mb-4 line-clamp-3 flex-grow">
                                 {project.description}
                             </p>
-
-                            <div className="flex flex-wrap gap-2 mt-auto pt-4 border-t border-slate-800">
-                                {project.tech.slice(0, 3).map((t, i) => (
-                                    <span
-                                        key={i}
-                                        className="text-xs text-slate-300 bg-slate-800 px-2 py-1 rounded"
-                                    >
-                    {t}
-                  </span>
-                                ))}
-                                {project.tech.length > 3 && (
-                                    <span className="text-xs text-slate-500 pt-1">
-                    +{project.tech.length - 3} more
-                  </span>
-                                )}
+                            <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-100 dark:border-slate-800">
+                                <div className="flex gap-2">
+                                    <span className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                                        <Github size={18} />
+                                    </span>
+                                    <span className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                                        <ExternalLink size={18} />
+                                    </span>
+                                </div>
+                                <span className="text-xs font-bold text-purple-600 dark:text-purple-400 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                                    View Details <ArrowRight size={14} />
+                                </span>
                             </div>
                         </div>
-                    </div>
+                    </Link>
                 ))}
             </div>
         </div>

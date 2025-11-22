@@ -1,6 +1,7 @@
 /* app/globals.css */
 
 /* 1. Tailwind v4 – this includes preflight + utilities */
+@config "../tailwind.config.js";
 @import "tailwindcss";
 
 /* 2. Your custom utilities & animations */

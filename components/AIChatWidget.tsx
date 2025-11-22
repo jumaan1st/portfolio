@@ -50,7 +50,7 @@ User Question: ${userMsg}`;
     return (
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
             {isOpen && (
-                <div className="mb-4 w-80 md:w-96 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-300">
+                <div className="mb-4 w-80 md:w-96 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-300">
                     <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 flex justify-between items-center">
                         <div className="flex items-center gap-2 text-white">
                             <Bot size={20} />
@@ -64,20 +64,18 @@ User Question: ${userMsg}`;
                         </button>
                     </div>
 
-                    <div className="h-80 overflow-y-auto p-4 space-y-4 bg-slate-950/50">
+                    <div className="h-80 overflow-y-auto p-4 space-y-4 bg-slate-50 dark:bg-slate-950/50">
                         {messages.map((msg, idx) => (
                             <div
                                 key={idx}
-                                className={`flex ${
-                                    msg.role === "user" ? "justify-end" : "justify-start"
-                                }`}
+                                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"
+                                    }`}
                             >
                                 <div
-                                    className={`max-w-[80%] p-3 rounded-xl text-sm ${
-                                        msg.role === "user"
+                                    className={`max-w-[80%] p-3 rounded-xl text-sm ${msg.role === "user"
                                             ? "bg-blue-600 text-white rounded-tr-none"
-                                            : "bg-slate-800 text-slate-200 rounded-tl-none border border-slate-700"
-                                    }`}
+                                            : "bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none border border-slate-200 dark:border-slate-700 shadow-sm"
+                                        }`}
                                 >
                                     {msg.text}
                                 </div>
@@ -85,10 +83,10 @@ User Question: ${userMsg}`;
                         ))}
                         {isTyping && (
                             <div className="flex justify-start">
-                                <div className="bg-slate-800 p-3 rounded-xl rounded-tl-none border border-slate-700 flex gap-1">
-                                    <span className="w-2 h-2 bg-slate-500 rounded-full animate-bounce" />
-                                    <span className="w-2 h-2 bg-slate-500 rounded-full animate-bounce delay-100" />
-                                    <span className="w-2 h-2 bg-slate-500 rounded-full animate-bounce delay-200" />
+                                <div className="bg-white dark:bg-slate-800 p-3 rounded-xl rounded-tl-none border border-slate-200 dark:border-slate-700 flex gap-1 shadow-sm">
+                                    <span className="w-2 h-2 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce" />
+                                    <span className="w-2 h-2 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce delay-100" />
+                                    <span className="w-2 h-2 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce delay-200" />
                                 </div>
                             </div>
                         )}
@@ -97,13 +95,13 @@ User Question: ${userMsg}`;
 
                     <form
                         onSubmit={handleSend}
-                        className="p-3 bg-slate-900 border-t border-slate-800 flex gap-2"
+                        className="p-3 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex gap-2"
                     >
                         <input
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             placeholder="Ask about Jumaan..."
-                            className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-blue-500 outline-none"
+                            className="flex-1 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-blue-500 outline-none transition-colors"
                         />
                         <button
                             type="submit"
@@ -126,12 +124,11 @@ User Question: ${userMsg}`;
                     <Sparkles size={24} className="animate-pulse" />
                 )}
                 <span
-                    className={`font-bold overflow-hidden transition-all duration-300 ${
-                        isOpen ? "w-0 opacity-0" : "w-auto opacity-100"
-                    }`}
+                    className={`font-bold overflow-hidden transition-all duration-300 ${isOpen ? "w-0 opacity-0" : "w-auto opacity-100"
+                        }`}
                 >
-          Ask AI
-        </span>
+                    Ask AI
+                </span>
             </button>
         </div>
     );

@@ -7,9 +7,12 @@ import { Navbar } from "@/components/Navbar";
 import { AIChatWidget } from "@/components/AIChatWidget";
 import { Modal } from "@/components/Modal";
 import { Terminal, Star } from "lucide-react";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { usePathname } from "next/navigation";
 
 function Shell({ children }: { children: React.ReactNode }) {
     const { data } = usePortfolio();
+    const pathname = usePathname();
     const [showWelcome, setShowWelcome] = useState(
         data.config.showWelcomeModal
     );
@@ -24,21 +27,24 @@ function Shell({ children }: { children: React.ReactNode }) {
     });
 
     // Simpler version of your "return from project" logic:
+    // Check if user is returning from a project
     useEffect(() => {
-        // On client initial load we don't know if they came from external project,
-        // so you can later wire this with localStorage if you want.
-    }, []);
+        const visitedProjectId = localStorage.getItem("visited_project_id");
+        if (visitedProjectId && !pathname.includes("/projects/")) {
+            setShowReview(true);
+            localStorage.removeItem("visited_project_id");
+        }
+    }, [pathname]);
 
     const renderStars = (rating: number) =>
         [...Array(5)].map((_, i) => (
             <Star
                 key={i}
                 size={24}
-                className={`${
-                    i < rating
-                        ? "fill-yellow-400 text-yellow-400"
-                        : "text-slate-600"
-                } cursor-pointer transition-colors hover:scale-110`}
+                className={`${i < rating
+                    ? "fill-yellow-400 text-yellow-400"
+                    : "text-slate-600"
+                    } cursor-pointer transition-colors hover:scale-110`}
                 onClick={() =>
                     setReviewForm((prev) => ({ ...prev, rating: i + 1 }))
                 }
@@ -59,7 +65,7 @@ function Shell({ children }: { children: React.ReactNode }) {
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-200 selection:bg-blue-500/30 font-sans flex flex-col overflow-x-hidden">
+        <div className="min-h-screen font-sans flex flex-col overflow-x-hidden">
             <Navbar />
             <main className="flex-grow max-w-6xl w-full mx-auto px-4 py-8 md:py-12 relative">
                 <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[100px] -z-10 pointer-events-none" />
@@ -68,8 +74,8 @@ function Shell({ children }: { children: React.ReactNode }) {
 
             <AIChatWidget />
 
-            <footer className="border-t border-slate-900 bg-slate-950 py-8 text-center">
-                <p className="text-slate-600 text-sm">
+            <footer className="border-t border-slate-200 dark:border-slate-900 bg-white dark:bg-slate-950 py-8 text-center transition-colors duration-300">
+                <p className="text-slate-500 dark:text-slate-600 text-sm">
                     &copy; {new Date().getFullYear()} {data.profile.name}. Built with
                     Next.js & React.
                 </p>
@@ -129,7 +135,7 @@ function Shell({ children }: { children: React.ReactNode }) {
                             <input
                                 required
                                 placeholder="Your Name"
-                                className="bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm text-white w-full focus:border-blue-500 outline-none"
+                                className="bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-sm text-slate-900 dark:text-white w-full focus:border-blue-500 outline-none transition-colors"
                                 value={reviewForm.name}
                                 onChange={(e) =>
                                     setReviewForm((p) => ({ ...p, name: e.target.value }))
@@ -139,10 +145,19 @@ function Shell({ children }: { children: React.ReactNode }) {
                                 required
                                 type="email"
                                 placeholder="Email"
-                                className="bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm text-white w-full focus:border-blue-500 outline-none"
+                                className="bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-sm text-slate-900 dark:text-white w-full focus:border-blue-500 outline-none transition-colors"
                                 value={reviewForm.email}
                                 onChange={(e) =>
                                     setReviewForm((p) => ({ ...p, email: e.target.value }))
+                                }
+                            />
+                            <input
+                                type="tel"
+                                placeholder="Phone (Optional)"
+                                className="col-span-2 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-sm text-slate-900 dark:text-white w-full focus:border-blue-500 outline-none transition-colors"
+                                value={reviewForm.phone}
+                                onChange={(e) =>
+                                    setReviewForm((p) => ({ ...p, phone: e.target.value }))
                                 }
                             />
                         </div>
@@ -150,7 +165,7 @@ function Shell({ children }: { children: React.ReactNode }) {
                             required
                             placeholder="Your feedback..."
                             rows={3}
-                            className="bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm text-white w-full focus:border-blue-500 outline-none"
+                            className="bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-sm text-slate-900 dark:text-white w-full focus:border-blue-500 outline-none transition-colors"
                             value={reviewForm.review}
                             onChange={(e) =>
                                 setReviewForm((p) => ({ ...p, review: e.target.value }))
@@ -170,17 +185,19 @@ function Shell({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout({
-                                       children,
-                                   }: {
+    children,
+}: {
     children: React.ReactNode;
 }) {
     return (
-        <html lang="en">
-        <body>
-        <PortfolioProvider>
-            <Shell>{children}</Shell>
-        </PortfolioProvider>
-        </body>
+        <html lang="en" suppressHydrationWarning>
+            <body className="bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-200 transition-colors duration-300">
+                <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+                    <PortfolioProvider>
+                        <Shell>{children}</Shell>
+                    </PortfolioProvider>
+                </ThemeProvider>
+            </body>
         </html>
     );
 }

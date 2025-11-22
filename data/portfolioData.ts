@@ -1,5 +1,5 @@
 // data/portfolioData.ts
-import type {ComponentType, SVGProps} from "react";
+import type { ComponentType, SVGProps } from "react";
 import {
     Server,
     Database,
@@ -168,7 +168,7 @@ export const initialData: PortfolioData = {
                 "Migrating live data from the old schema to the new normalized PostgreSQL schema without downtime was critical. I used Flyway for version control and wrote custom migration scripts.",
             link: "#",
             color: "from-blue-500 to-cyan-500",
-            image: "grad-cap",
+            image: "https://images.unsplash.com/photo-1545665277-5937489579f2?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
         },
         {
             id: 2,
@@ -189,7 +189,7 @@ export const initialData: PortfolioData = {
                 "Handling the rate limits of social media APIs and processing streaming data in real-time required implementing a Redis message queue to decouple the scraper from the analyzer.",
             link: "#",
             color: "from-purple-500 to-pink-500",
-            image: "chart",
+            image: "https://images.unsplash.com/photo-1545665277-5937489579f2?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
         },
         {
             id: 3,
@@ -210,7 +210,7 @@ export const initialData: PortfolioData = {
                 "Ensuring the generated code was syntactically correct required a post-processing validation step that ran a linter against the AI output before presenting it to the user.",
             link: "#",
             color: "from-green-500 to-emerald-500",
-            image: "code",
+            image: "https://images.unsplash.com/photo-1545665277-5937489579f2?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
         },
         {
             id: 4,
@@ -231,7 +231,7 @@ export const initialData: PortfolioData = {
                 "Parsing diverse resume formats (PDF, DOCX) was tricky. I integrated a robust OCR solution to handle image-based PDFs.",
             link: "#",
             color: "from-orange-500 to-red-500",
-            image: "briefcase",
+            image: "https://images.unsplash.com/photo-1545665277-5937489579f2?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
         },
         {
             id: 5,
@@ -252,19 +252,19 @@ export const initialData: PortfolioData = {
                 "Minimizing false negatives was the highest priority. We adjusted the confidence threshold to err on the side of caution, prompting users to see a doctor if even slightly unsure.",
             link: "#",
             color: "from-indigo-500 to-blue-600",
-            image: "health",
+            image: "https://images.unsplash.com/photo-1545665277-5937489579f2?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
         },
     ],
-        blogs: [
-            {
-                id: 1,
-                title: "Optimizing Spring Boot Performance",
-                excerpt:
-                    "Deep dive into JVM tuning, HikariCP configuration, and lazy loading strategies for high-scale apps.",
-                date: "Nov 15, 2025",
-                readTime: "5 min read",
-                tags: ["Java", "Performance"],
-                content: `
+    blogs: [
+        {
+            id: 1,
+            title: "Optimizing Spring Boot Performance",
+            excerpt:
+                "Deep dive into JVM tuning, HikariCP configuration, and lazy loading strategies for high-scale apps.",
+            date: "Nov 15, 2025",
+            readTime: "5 min read",
+            tags: ["Java", "Performance"],
+            content: `
 Performance tuning a Spring Boot app starts with understanding where the time is actually spent.
 
 In this article I walk through:
@@ -275,16 +275,16 @@ In this article I walk through:
 
 I also cover a small case study from my Student Management System project where optimizing a single report endpoint dropped the response time from 2.3s to 280ms.
         `.trim(),
-            },
-            {
-                id: 2,
-                title: "Why I moved from JDBC to Hibernate",
-                excerpt:
-                    "A retrospective on the Student Management System migration and the benefits of ORM.",
-                date: "Oct 22, 2025",
-                readTime: "4 min read",
-                tags: ["Database", "ORM"],
-                content: `
+        },
+        {
+            id: 2,
+            title: "Why I moved from JDBC to Hibernate",
+            excerpt:
+                "A retrospective on the Student Management System migration and the benefits of ORM.",
+            date: "Oct 22, 2025",
+            readTime: "4 min read",
+            tags: ["Database", "ORM"],
+            content: `
 Raw JDBC is powerful, but as your schema grows it becomes harder to maintain and reason about.
 
 In this post I compare:
@@ -295,16 +295,16 @@ In this post I compare:
 
 I share some real lessons from migrating my Student Management System backend from handwritten SQL to Hibernate with a layered architecture.
         `.trim(),
-            },
-            {
-                id: 3,
-                title: "Integrating Gemini API for Code Analysis",
-                excerpt:
-                    "How to use Google's Gemini API to build an automated code converter and optimizer.",
-                date: "Sep 10, 2025",
-                readTime: "6 min read",
-                tags: ["AI", "API"],
-                content: `
+        },
+        {
+            id: 3,
+            title: "Integrating Gemini API for Code Analysis",
+            excerpt:
+                "How to use Google's Gemini API to build an automated code converter and optimizer.",
+            date: "Sep 10, 2025",
+            readTime: "6 min read",
+            tags: ["AI", "API"],
+            content: `
 Gemini is a great fit for developer productivity tools.
 
 Here I walk through:
@@ -315,8 +315,8 @@ Here I walk through:
 
 This post is based on my AI Code Converter project, where I use Gemini to translate legacy code into modern Java or Python and suggest refactors automatically.
         `.trim(),
-            },
-        ],
+        },
+    ],
     education: [
         {
             id: 1,
