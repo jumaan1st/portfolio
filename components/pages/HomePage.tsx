@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, {useState} from "react";
 import {
     ArrowRight,
     Coffee,
@@ -13,14 +13,14 @@ import {
     ChevronRight,
     Download,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { EditableField } from "../EditableField";
-import { Typewriter } from "@/components/Typewriter";
-import { Marquee } from "../Marquee";
-import { usePortfolio } from "../PortfolioContext";
+import {useRouter} from "next/navigation";
+import {EditableField} from "../EditableField";
+import {Typewriter} from "@/components/Typewriter";
+import {Marquee} from "../Marquee";
+import {usePortfolio} from "../PortfolioContext";
 
 export const HomePage: React.FC = () => {
-    const { data, setData, isAuthenticated } = usePortfolio();
+    const {data, setData, isAuthenticated} = usePortfolio();
     const [currentProjectIndex, setCurrentProjectIndex] = useState(0);
     const router = useRouter();
 
@@ -37,7 +37,7 @@ export const HomePage: React.FC = () => {
     };
 
     const onUpdateProfile = (fields: Partial<typeof data.profile>) => {
-        setData((prev) => ({ ...prev, profile: { ...prev.profile, ...fields } }));
+        setData((prev) => ({...prev, profile: {...prev.profile, ...fields}}));
     };
 
     const project = data.projects[currentProjectIndex];
@@ -45,34 +45,35 @@ export const HomePage: React.FC = () => {
     return (
         <div className="space-y-20 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-12">
             {/* Hero */}
-            <section className="flex flex-col items-center justify-center min-h-[70vh] text-center relative">
-                <div className="relative flex flex-col items-center justify-center">
+            <section className="flex flex-col items-center justify-start pt-0 pb-12 text-center relative gap-4">
+            <div className="relative flex flex-col items-center justify-center">
 
                     {/* STATUS BADGE */}
                     <div
-                        className="mb-10 bg-slate-100 dark:bg-slate-800/80 backdrop-blur border border-green-500/30 px-4 py-2 rounded-full flex items-center gap-2 shadow-lg shadow-green-900/20">
+                        className="mb-6 bg-slate-100 dark:bg-slate-800/80 backdrop-blur border border-green-500/30 px-4 py-2 rounded-full flex items-center gap-2 shadow-lg shadow-green-900/20">
                         <span className="relative flex h-3 w-3">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                            <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500" />
+                            <span
+                                className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"/>
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"/>
                         </span>
-                        <span className="text-slate-600 dark:text-slate-300 text-xs font-bold uppercase tracking-wider">
+                        <span
+                            className="text-slate-600 dark:text-slate-300 text-xs font-bold uppercase tracking-wider">
                             {data.ui.statusLabel}{" "}
-                            <span className="text-green-600 dark:text-green-400">{data.profile.currentCompany}</span>
+                            <span
+                                className="text-green-600 dark:text-green-400">{data.profile.currentCompany}</span>
                         </span>
                     </div>
 
                     {/* AVATAR */}
-                    <div className="relative -mt-12 group">
-                        <div
-                            className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-full blur opacity-40 group-hover:opacity-75 transition duration-1000 animate-gradient-x" />
+                <div className="relative -mt-2 group">
+                <div
+                            className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-full blur opacity-40 group-hover:opacity-75 transition duration-1000 animate-gradient-x"/>
                         <div
                             className="relative w-40 h-40 bg-white dark:bg-slate-900 rounded-full flex items-center justify-center border-4 border-slate-200 dark:border-slate-800 overflow-hidden shadow-[0_0_50px_8px_rgba(105,48,255,0.35)]">
-                            <UserIcon size={80} className="text-slate-400 dark:text-slate-600" />
+                            <UserIcon size={80} className="text-slate-400 dark:text-slate-600"/>
                         </div>
                     </div>
-
                 </div>
-
 
                 <div className="space-y-6 max-w-3xl">
                     <h2 className="text-blue-600 dark:text-blue-400 font-mono text-sm tracking-[0.3em] uppercase">
@@ -83,13 +84,12 @@ export const HomePage: React.FC = () => {
                         <EditableField
                             value={data.profile.name}
                             isEditing={isAuthenticated}
-                            onSave={(val) => onUpdateProfile({ name: val })}
+                            onSave={(val) => onUpdateProfile({name: val})}
                         />
                     </h1>
 
-                    <div
-                        className="h-12 text-2xl md:text-3xl text-transparent bg-clip-text bg-gradient-to-r from-slate-600 to-slate-400 dark:from-slate-200 dark:to-slate-400 font-light">
-                        I am a <Typewriter words={data.profile.roles} />
+                    <div className="h-12 text-2xl md:text-3xl ...">
+                        I am a <Typewriter words={data.profile.roles}/>
                     </div>
 
                     <div className="text-slate-600 dark:text-slate-400 leading-relaxed text-lg max-w-2xl mx-auto">
@@ -97,42 +97,40 @@ export const HomePage: React.FC = () => {
                             value={data.profile.summary}
                             isEditing={isAuthenticated}
                             type="textarea"
-                            onSave={(val) => onUpdateProfile({ summary: val })}
+                            onSave={(val) => onUpdateProfile({summary: val})}
                         />
                     </div>
                 </div>
 
-                <div className="flex gap-4 mt-12">
+                {/* ACTION BUTTONS (updated for mobile) */}
+                <div className="flex flex-col md:flex-row gap-4 mt-12 w-full justify-center items-center">
                     <button
                         onClick={() => router.push("/projects")}
-                        className="group relative bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 rounded-full font-bold transition-all transform hover:-translate-y-1 shadow-lg hover:shadow-blue-600/30 flex items-center gap-2 overflow-hidden"
+                        className="w-full md:w-auto group bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 rounded-full font-bold transition-all flex items-center gap-2 justify-center"
                     >
-                        <div
-                            className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-                        <span className="relative flex items-center gap-2">
-                            See My Work <ArrowRight size={18} />
-                        </span>
+                        See My Work <ArrowRight size={18}/>
                     </button>
+
                     <button
                         onClick={() => router.push("/contact")}
-                        className="bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white px-8 py-4 rounded-full font-bold border border-slate-200 dark:border-slate-700 transition-all transform hover:-translate-y-1"
+                        className="w-full md:w-auto bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white px-8 py-4 rounded-full font-bold border border-slate-200 dark:border-slate-700 transition-all justify-center"
                     >
                         Contact Me
                     </button>
+
                     {data.profile.resumeUrl && (
                         <a
                             href={data.profile.resumeUrl}
                             download="Mohammed_Jumaan_Resume.pdf"
-                            className="bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white px-6 py-4 rounded-full font-bold border border-slate-200 dark:border-slate-700 transition-all transform hover:-translate-y-1 flex items-center gap-2"
+                            className="w-full md:w-auto bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white px-8 py-4 rounded-full font-bold border border-slate-200 dark:border-slate-700 transition-all flex items-center gap-2 justify-center"
                         >
-                            <Download size={18} /> Resume
+                            <Download size={18}/> Resume
                         </a>
-
                     )}
                 </div>
             </section>
 
-            <Marquee items={data.skills} />
+            <Marquee items={data.skills}/>
 
             {/* Featured projects carousel */}
             <section className="max-w-5xl mx-auto w-full">
@@ -143,8 +141,9 @@ export const HomePage: React.FC = () => {
                     <p className="text-slate-600 dark:text-slate-500">{data.ui.projectSubtitle}</p>
                 </div>
 
-                <div className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
-                    <div className="absolute inset-0 bg-grid-pattern opacity-5 dark:opacity-10" />
+                <div
+                    className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+                    <div className="absolute inset-0 bg-grid-pattern opacity-5 dark:opacity-10"/>
 
                     <div className="grid md:grid-cols-2 min-h-[400px]">
                         <div className="p-8 md:p-12 flex flex-col justify-center relative z-10">
@@ -173,7 +172,7 @@ export const HomePage: React.FC = () => {
                                 onClick={() => router.push(`/projects/${project.id}`)}
                                 className="self-start flex items-center gap-2 text-slate-900 dark:text-white font-bold border-b-2 border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors pb-1"
                             >
-                                View Case Study <ExternalLink size={16} />
+                                View Case Study <ExternalLink size={16}/>
                             </button>
                         </div>
 
@@ -181,7 +180,7 @@ export const HomePage: React.FC = () => {
                             className={`relative overflow-hidden flex items-center justify-center ${project.image && project.image.startsWith("http")
                                 ? ""
                                 : `bg-gradient-to-br ${project.color}`
-                                }`}
+                            }`}
                         >
                             {project.image && project.image.startsWith("http") ? (
                                 <>
@@ -190,14 +189,14 @@ export const HomePage: React.FC = () => {
                                         alt={project.title}
                                         className="absolute inset-0 w-full h-full object-cover"
                                     />
-                                    <div className="absolute inset-0 bg-black/20" />
+                                    <div className="absolute inset-0 bg-black/20"/>
                                 </>
                             ) : (
                                 <div className="text-white/20 transform scale-150 rotate-12">
                                     {project.category.includes("AI") ? (
-                                        <Cpu size={120} />
+                                        <Cpu size={120}/>
                                     ) : (
-                                        <Layout size={120} />
+                                        <Layout size={120}/>
                                     )}
                                 </div>
                             )}
@@ -206,13 +205,13 @@ export const HomePage: React.FC = () => {
                                     onClick={prevProject}
                                     className="p-3 bg-white/20 dark:bg-black/20 backdrop-blur hover:bg-white/40 dark:hover:bg-black/40 rounded-full text-white transition-all"
                                 >
-                                    <ChevronLeft size={24} />
+                                    <ChevronLeft size={24}/>
                                 </button>
                                 <button
                                     onClick={nextProject}
                                     className="p-3 bg-white/20 dark:bg-black/20 backdrop-blur hover:bg-white/40 dark:hover:bg-black/40 rounded-full text-white transition-all"
                                 >
-                                    <ChevronRight size={24} />
+                                    <ChevronRight size={24}/>
                                 </button>
                             </div>
                         </div>
@@ -248,7 +247,7 @@ export const HomePage: React.FC = () => {
                             <div className="flex justify-between items-center text-xs text-slate-500 mb-4">
                                 <span>{blog.date}</span>
                                 <span className="flex items-center gap-1">
-                                    <Coffee size={12} /> {blog.readTime}
+                                    <Coffee size={12}/> {blog.readTime}
                                 </span>
                             </div>
                             <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-3 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
