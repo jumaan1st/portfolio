@@ -24,37 +24,40 @@ export const Navbar: React.FC = () => {
     const { theme, setTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
 
-    useEffect(() => setMounted(true), []);
-    const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const toggleTheme = () => {
+        setTheme(theme === "dark" ? "light" : "dark");
+    };
 
     return (
         <nav className="sticky top-0 z-40 w-full bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800/60 transition-colors duration-300">
             <div className="max-w-6xl mx-auto px-4 py-2">
-                <div className="flex justify-between items-center">
-                    {/* LOGO */}
+
+                {/* Desktop navbar */}
+                <div className="hidden md:flex justify-between items-center">
                     <Link href="/" className="flex items-center gap-3 group">
                         <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-blue-900/20 group-hover:shadow-blue-900/40 transition-all">
                             MJ
                         </div>
-
-                        {/* DESKTOP TEXT */}
-                        <div className="hidden sm:block text-left">
+                        <div className="text-left hidden sm:block">
                             <h1 className="font-bold text-slate-900 dark:text-white leading-none group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                                Mohammed Jumaan
+                                Portfolio
                             </h1>
                             <p className="text-[10px] text-slate-500 tracking-wider uppercase">
-                                Java Backend Developer
+                                Jumaan
                             </p>
                         </div>
                     </Link>
 
-                    {/* DESKTOP NAV */}
-                    <div className="hidden md:flex items-center gap-1 bg-slate-100 dark:bg-slate-900/50 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
+                    <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900/50 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
                         {navItems.map(({ href, label, icon: Icon }) => (
                             <Link
                                 key={href}
                                 href={href}
-                                className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800 transition-all duration-300"
+                                className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800 transition-all"
                             >
                                 <Icon size={18} />
                                 <span className="hidden md:block font-medium">{label}</span>
@@ -63,18 +66,16 @@ export const Navbar: React.FC = () => {
 
                         <div className="w-px h-6 bg-slate-200 dark:bg-slate-800 mx-1" />
 
-                        {mounted && (
-                            <button
-                                onClick={toggleTheme}
-                                className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800 transition-all duration-300"
-                            >
-                                {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
-                            </button>
-                        )}
+                        <button
+                            onClick={toggleTheme}
+                            className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800 transition-all"
+                        >
+                            {mounted && (theme === "dark" ? <Sun size={18} /> : <Moon size={18} />)}
+                        </button>
 
                         <Link
                             href="/admin"
-                            className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800"
+                            className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800"
                         >
                             {isAuthenticated ? <Lock size={18} /> : <Edit3 size={18} />}
                             <span className="hidden md:block font-medium">
@@ -82,42 +83,47 @@ export const Navbar: React.FC = () => {
                             </span>
                         </Link>
                     </div>
-
-                    {/* MOBILE — NAME CENTER + TOGGLE RIGHT */}
-                    <div className="md:hidden flex items-center w-full text-slate-600 dark:text-slate-400">
-                        <div className="flex-1"></div>
-
-                        <span className="font-semibold text-sm text-slate-900 dark:text-slate-200 tracking-wide text-center flex-1">
-                            Mohammed Jumaan
-                        </span>
-
-                        {mounted && (
-                            <button
-                                onClick={toggleTheme}
-                                className="p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex-1 flex justify-end"
-                            >
-                                {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
-                            </button>
-                        )}
-                    </div>
                 </div>
 
-                {/* MOBILE NAV ICON ROW */}
-                <div className="md:hidden flex justify-between mt-3 border-t border-slate-200 dark:border-slate-800 pt-3 overflow-x-auto pb-2">
+                {/* Mobile navbar — single row: logo | centered name | toggle */}
+                <div className="md:hidden flex items-center justify-between mt-1">
+                    {/* Logo */}
+                    <Link href="/" className="flex items-center">
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold shadow">
+                            MJ
+                        </div>
+                    </Link>
+
+                    {/* Centered Name */}
+                    <span className="font-semibold text-sm text-slate-900 dark:text-slate-200 tracking-wide">
+                        Mohammed Jumaan
+                    </span>
+
+                    {/* Toggle Positioned Right */}
+                    <button
+                        onClick={toggleTheme}
+                        className="p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center"
+                    >
+                        {mounted && (theme === "dark" ? <Sun size={20} /> : <Moon size={20} />)}
+                    </button>
+                </div>
+
+                {/* Mobile bottom nav icons */}
+                <div className="md:hidden flex justify-between mt-3 border-t border-slate-200 dark:border-slate-800 pt-3 pb-2 overflow-x-auto">
                     {navItems.map(({ href, icon: Icon }) => (
                         <Link
                             key={href}
                             href={href}
-                            className="p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                            className="p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition"
                         >
-                            <Icon size={20} />
+                            <Icon size={22} />
                         </Link>
                     ))}
                     <Link
                         href="/admin"
-                        className="p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                        className="p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition"
                     >
-                        <Edit3 size={20} />
+                        <Edit3 size={22} />
                     </Link>
                 </div>
             </div>
