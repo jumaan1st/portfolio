@@ -33,8 +33,26 @@ export const ProjectDetailPage: React.FC<Props> = ({ project, onBack }) => {
     };
 
     const generateInsight = async (type: "pitch" | "tech") => {
+        let userInfo = null;
+        const stored = localStorage.getItem("portfolio_user_identity");
+        if (stored) {
+            userInfo = JSON.parse(stored);
+        } else {
+            // Simple prompt for now to keep flow (since they should ideally use ChatWidget first)
+            const name = window.prompt("Please enter your name to generate insights:");
+            if (!name) return;
+            const email = window.prompt("Please enter your email to track your daily limit:");
+            if (!email) return;
+            if (name && email) {
+                userInfo = { name, email };
+                localStorage.setItem("portfolio_user_identity", JSON.stringify(userInfo));
+            }
+        }
+
+        if (!userInfo) return;
+
         setLoadingAi(true);
-        const prompt =
+        const aiPrompt =
             type === "pitch"
                 ? `Write a convincing 30-second elevator pitch for this project: ${project.title}. Description: ${project.longDescription}. Key features: ${(project.features || []).join(
                     ", "
@@ -43,9 +61,30 @@ export const ProjectDetailPage: React.FC<Props> = ({ project, onBack }) => {
                     ", "
                 )}) used for ${project.title}. Explain why these choices are good for this specific use case (${project.description}).`;
 
-        const response = await callGeminiAPI(prompt);
-        setAiInsight(response);
-        setLoadingAi(false);
+        try {
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: aiPrompt,
+                    context: "You are a senior tech lead.", // Simple context override
+                    name: userInfo.name,
+                    email: userInfo.email
+                })
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                setAiInsight(data.response);
+            } else {
+                setAiInsight(data.error || "Failed to generate insights.");
+            }
+        } catch (e) {
+            setAiInsight("Connection failed.");
+        } finally {
+            setLoadingAi(false);
+        }
     };
 
     return (
@@ -64,8 +103,8 @@ export const ProjectDetailPage: React.FC<Props> = ({ project, onBack }) => {
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-2xl mb-12">
                 <div
                     className={`h-48 md:h-64 relative flex items-center justify-center overflow-hidden ${project.image && project.image.startsWith("http")
-                            ? ""
-                            : `bg-gradient-to-r ${project.color}`
+                        ? ""
+                        : `bg-gradient-to-r ${project.color}`
                         }`}
                 >
                     {project.image && project.image.startsWith("http") && (

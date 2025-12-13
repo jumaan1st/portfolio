@@ -3,7 +3,7 @@ export const callGeminiAPI = async (
     prompt: string,
     systemInstruction = ""
 ): Promise<string> => {
-    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
+    const apiKey = process.env.GEMINI_API_KEY || "";
     if (!apiKey) return "Error: Missing Gemini API key.";
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;

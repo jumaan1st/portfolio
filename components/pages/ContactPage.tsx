@@ -1,11 +1,71 @@
 "use client";
 
-import React from "react";
-import { Mail, Phone, Send } from "lucide-react";
+import React, { useState } from "react";
+import { Mail, Phone, Send, Loader2 } from "lucide-react";
 import { usePortfolio } from "@/components/PortfolioContext";
 
 export const ContactPage: React.FC = () => {
     const { data } = usePortfolio();
+    const [formData, setFormData] = useState({
+        name: "",
+        email: "",
+        subject: "",
+        message: ""
+    });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+
+    // Auto-fill identity from localStorage
+    React.useEffect(() => {
+        const stored = localStorage.getItem("portfolio_user_identity");
+        if (stored) {
+            try {
+                const { name, email } = JSON.parse(stored);
+                setFormData(prev => ({ ...prev, name: name || "", email: email || "" }));
+            } catch (e) {
+                // ignore check
+            }
+        }
+    }, []);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        setFormData({ ...formData, [e.target.type === "email" ? "email" : e.target.type === "text" && e.target.parentElement?.textContent?.includes("NAME") ? "name" : e.target.tagName === "TEXTAREA" ? "message" : "subject"]: e.target.value });
+    };
+
+    // Use specific handlers to avoid complex logic in generic handleChange
+    const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, name: e.target.value });
+    const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, email: e.target.value });
+    const handleSubjectChange = (e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, subject: e.target.value });
+    const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, message: e.target.value });
+
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        setStatus("idle");
+
+        try {
+            // Save identity for future use
+            localStorage.setItem("portfolio_user_identity", JSON.stringify({ name: formData.name, email: formData.email }));
+
+            const res = await fetch("/api/contact", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ...formData, type: "Contact" })
+            });
+
+            if (res.ok) {
+                setStatus("success");
+                setFormData({ name: formData.name, email: formData.email, subject: "", message: "" }); // Keep identity, clear message
+            } else {
+                setStatus("error");
+            }
+        } catch (error) {
+            setStatus("error");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-6xl mx-auto px-4 pb-12">
@@ -20,14 +80,29 @@ export const ContactPage: React.FC = () => {
                         Got a project in mind? Fill out the form below and I'll get back to you within 24 hours.
                     </p>
 
-                    <form className="space-y-5 relative z-10">
+                    {status === "success" && (
+                        <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-600 dark:text-green-300 rounded-xl flex items-center gap-2">
+                            <span className="text-xl">✅</span> Message sent successfully! Check your email for confirmation.
+                        </div>
+                    )}
+
+                    {status === "error" && (
+                        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-300 rounded-xl">
+                            ❌ Something went wrong. Please try again.
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="space-y-5 relative z-10">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div className="space-y-2">
                                 <label className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                                     Name
                                 </label>
                                 <input
+                                    required
                                     type="text"
+                                    value={formData.name}
+                                    onChange={handleNameChange}
                                     className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-xl p-3 text-base text-slate-900 dark:text-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all placeholder:text-slate-400"
                                     placeholder="John Doe"
                                 />
@@ -37,7 +112,10 @@ export const ContactPage: React.FC = () => {
                                     Email
                                 </label>
                                 <input
+                                    required
                                     type="email"
+                                    value={formData.email}
+                                    onChange={handleEmailChange}
                                     className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-xl p-3 text-base text-slate-900 dark:text-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all placeholder:text-slate-400"
                                     placeholder="john@example.com"
                                 />
@@ -48,7 +126,10 @@ export const ContactPage: React.FC = () => {
                                 Subject
                             </label>
                             <input
+                                required
                                 type="text"
+                                value={formData.subject}
+                                onChange={handleSubjectChange}
                                 className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-xl p-3 text-base text-slate-900 dark:text-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all placeholder:text-slate-400"
                                 placeholder="Project Inquiry"
                             />
@@ -58,16 +139,21 @@ export const ContactPage: React.FC = () => {
                                 Message
                             </label>
                             <textarea
+                                required
                                 rows={5}
+                                value={formData.message}
+                                onChange={handleMessageChange}
                                 className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-xl p-3 text-base text-slate-900 dark:text-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all placeholder:text-slate-400 resize-none"
                                 placeholder="Tell me about your project goals, timeline, and budget..."
                             />
                         </div>
                         <button
                             type="submit"
-                            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl transition-all shadow-xl shadow-blue-600/20 hover:shadow-blue-600/40 flex justify-center items-center gap-3 text-lg transform hover:-translate-y-1 active:translate-y-0"
+                            disabled={isSubmitting}
+                            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl transition-all shadow-xl shadow-blue-600/20 hover:shadow-blue-600/40 flex justify-center items-center gap-3 text-lg transform hover:-translate-y-1 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed"
                         >
-                            <Send size={20} /> Send Message
+                            {isSubmitting ? <Loader2 className="animate-spin" /> : <Send size={20} />}
+                            {isSubmitting ? "Sending..." : "Send Message"}
                         </button>
                     </form>
                 </div>
@@ -118,7 +204,7 @@ export const ContactPage: React.FC = () => {
 
                     <div className="p-6 bg-slate-100 dark:bg-slate-800/30 rounded-2xl border border-slate-200 dark:border-slate-700/50">
                         <p className="text-slate-600 dark:text-slate-400 text-sm italic">
-                            "The only way to do great work is to love what you do."
+                            &quot;The only way to do great work is to love what you do.&quot;
                         </p>
                         <p className="text-slate-900 dark:text-white font-bold text-sm mt-2 text-right">— Steve Jobs</p>
                     </div>

@@ -1,8 +1,9 @@
 "use client";
 
 import React from "react";
-import { Briefcase, GraduationCap, Zap } from "lucide-react";
+import { Briefcase, GraduationCap, Zap, Github, Linkedin } from "lucide-react";
 import { usePortfolio } from "@/components/PortfolioContext";
+import { IconRenderer } from "@/components/IconRenderer";
 
 export const AboutPage: React.FC = () => {
     const { data } = usePortfolio();
@@ -11,7 +12,33 @@ export const AboutPage: React.FC = () => {
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl mx-auto space-y-12">
             <div className="text-center mb-12">
                 <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">About Me</h2>
-                <div className="h-1 w-20 bg-blue-600 dark:bg-blue-500 mx-auto rounded-full" />
+                <div className="h-1 w-20 bg-blue-600 dark:bg-blue-500 mx-auto rounded-full mb-6" />
+
+                {/* Social Links */}
+                <div className="flex justify-center gap-4">
+                    {data.profile.github && (
+                        <a
+                            href={`https://${data.profile.github.replace(/^https?:\/\//, '')}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-900 rounded-full text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+                        >
+                            <Github size={20} />
+                            <span className="font-medium">GitHub</span>
+                        </a>
+                    )}
+                    {data.profile.linkedin && (
+                        <a
+                            href={`https://${data.profile.linkedin.replace(/^https?:\/\//, '')}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-full text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+                        >
+                            <Linkedin size={20} />
+                            <span className="font-medium">LinkedIn</span>
+                        </a>
+                    )}
+                </div>
             </div>
 
             {/* Experience */}
@@ -64,16 +91,16 @@ export const AboutPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-6">
-                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center justify-center md:justify-start gap-2">
                         <Zap className="text-yellow-500 dark:text-yellow-400" /> Technical Arsenal
                     </h3>
-                    <div className="flex flex-wrap gap-3">
+                    <div className="flex flex-wrap justify-center md:justify-start gap-3">
                         {data.skills.map((skill, idx) => (
                             <div
                                 key={idx}
                                 className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-lg shadow-sm"
                             >
-                                <skill.icon size={16} className="text-slate-500 dark:text-slate-400" />
+                                <IconRenderer iconName={skill.icon} size={16} className="text-slate-500 dark:text-slate-400" />
                                 <span className="text-slate-700 dark:text-slate-200 font-medium">
                                     {skill.name}
                                 </span>

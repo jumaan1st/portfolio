@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Edit3, Home, Layout, Mail, User, Lock, Sun, Moon } from "lucide-react";
+import { Edit3, Home, Layout, Mail, User, Lock, Sun, Moon, Github, Linkedin } from "lucide-react";
 import { usePortfolio } from "./PortfolioContext";
 import { useTheme } from "next-themes";
 
@@ -20,9 +20,11 @@ const navItems: NavItem[] = [
 ];
 
 export const Navbar: React.FC = () => {
-    const { isAuthenticated } = usePortfolio();
+    const { isAuthenticated, data } = usePortfolio();
     const { theme, setTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isSocialOpen, setIsSocialOpen] = useState(false); // Sub-dropdown for socials
 
     useEffect(() => {
         setMounted(true);
@@ -36,7 +38,7 @@ export const Navbar: React.FC = () => {
         <nav className="sticky top-0 z-40 w-full bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800/60 transition-colors duration-300">
             <div className="max-w-6xl mx-auto px-4 py-2">
 
-                {/* Desktop navbar */}
+                {/* Desktop navbar - Unchanged */}
                 <div className="hidden md:flex justify-between items-center">
                     <Link href="/" className="flex items-center gap-3 group">
                         <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-blue-900/20 group-hover:shadow-blue-900/40 transition-all">
@@ -53,6 +55,30 @@ export const Navbar: React.FC = () => {
                     </Link>
 
                     <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900/50 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
+                        {/* Socials (Desktop) */}
+                        <div className="hidden lg:flex items-center gap-1 mr-2 px-2 border-r border-slate-200 dark:border-slate-800">
+                            {data.profile.github && (
+                                <a
+                                    href={`https://${data.profile.github.replace(/^https?:\/\//, '')}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="p-2 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
+                                >
+                                    <Github size={18} />
+                                </a>
+                            )}
+                            {data.profile.linkedin && (
+                                <a
+                                    href={`https://${data.profile.linkedin.replace(/^https?:\/\//, '')}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="p-2 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                >
+                                    <Linkedin size={18} />
+                                </a>
+                            )}
+                        </div>
+
                         {navItems.map(({ href, label, icon: Icon }) => (
                             <Link
                                 key={href}
@@ -85,47 +111,109 @@ export const Navbar: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Mobile navbar — single row: logo | centered name | toggle */}
-                <div className="md:hidden flex items-center justify-between mt-1">
-                    {/* Logo */}
-                    <Link href="/" className="flex items-center">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold shadow">
-                            MJ
-                        </div>
-                    </Link>
-
-                    {/* Centered Name */}
-                    <span className="font-semibold text-sm text-slate-900 dark:text-slate-200 tracking-wide">
-                        Mohammed Jumaan
-                    </span>
-
-                    {/* Toggle Positioned Right */}
-                    <button
-                        onClick={toggleTheme}
-                        className="p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center"
-                    >
-                        {mounted && (theme === "dark" ? <Sun size={20} /> : <Moon size={20} />)}
-                    </button>
-                </div>
-
-                {/* Mobile bottom nav icons */}
-                <div className="md:hidden flex justify-between mt-3 border-t border-slate-200 dark:border-slate-800 pt-3 pb-2 overflow-x-auto">
-                    {navItems.map(({ href, icon: Icon }) => (
-                        <Link
-                            key={href}
-                            href={href}
-                            className="p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition"
-                        >
-                            <Icon size={22} />
+                {/* Mobile Header (Double Decker) */}
+                <div className="md:hidden flex flex-col gap-3 pb-2">
+                    <div className="flex items-center justify-between">
+                        <Link href="/" className="flex items-center gap-2">
+                            <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold shadow">
+                                MJ
+                            </div>
+                            <span className="font-bold text-slate-900 dark:text-white">Jumaan</span>
                         </Link>
-                    ))}
-                    <Link
-                        href="/admin"
-                        className="p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition"
-                    >
-                        <Edit3 size={22} />
-                    </Link>
+
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={toggleTheme}
+                                className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                            >
+                                {mounted && (theme === "dark" ? <Sun size={18} /> : <Moon size={18} />)}
+                            </button>
+                            <button
+                                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white"
+                            >
+                                {isMenuOpen ? (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                                ) : (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" /></svg>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center justify-around border-t border-slate-100 dark:border-slate-800/50 pt-2">
+                        {navItems.map(({ href, label, icon: Icon }) => (
+                            <Link
+                                key={href}
+                                href={href}
+                                className="p-2 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                aria-label={label}
+                            >
+                                <Icon size={20} />
+                            </Link>
+                        ))}
+                    </div>
                 </div>
+
+                {/* Mobile Menu Dropdown (Simplified - Admin & Socials only) */}
+                {isMenuOpen && (
+                    <div className="md:hidden mt-4 pb-4 animate-in slide-in-from-top-4 fade-in duration-200">
+                        <div className="flex flex-col gap-2 p-2 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+
+                            <Link
+                                href="/admin"
+                                onClick={() => setIsMenuOpen(false)}
+                                className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800 active:scale-95 transition-all"
+                            >
+                                <Edit3 size={20} />
+                                <span className="font-medium">{isAuthenticated ? "Dashboard" : "Admin"}</span>
+                            </Link>
+
+                            <div className="h-px bg-slate-200 dark:bg-slate-700 mx-4 my-1" />
+
+                            {/* Socials Dropdown Toggle */}
+                            <button
+                                onClick={() => setIsSocialOpen(!isSocialOpen)}
+                                className="flex items-center justify-between px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800 transition-all"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <User size={20} className="text-blue-500" />
+                                    <span className="font-medium">Connect</span>
+                                </div>
+                                <div className={`transform transition-transform ${isSocialOpen ? 'rotate-180' : ''}`}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+                                </div>
+                            </button>
+
+                            {isSocialOpen && (
+                                <div className="px-4 pb-2 space-y-2 animate-in slide-in-from-top-1 fade-in">
+                                    {data.profile.github && (
+                                        <a
+                                            href={`https://${data.profile.github.replace(/^https?:\/\//, '')}`}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="flex items-center gap-3 px-4 py-2 rounded-lg bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-slate-700"
+                                        >
+                                            <Github size={18} /> GitHub
+                                        </a>
+                                    )}
+                                    {data.profile.linkedin && (
+                                        <a
+                                            href={`https://${data.profile.linkedin.replace(/^https?:\/\//, '')}`}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="flex items-center gap-3 px-4 py-2 rounded-lg bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 border border-slate-100 dark:border-slate-700"
+                                        >
+                                            <Linkedin size={18} /> LinkedIn
+                                        </a>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Bottom Bar Removed in favor of Double-Decker Header */}
             </div>
         </nav>
     );

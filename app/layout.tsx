@@ -11,13 +11,19 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { usePathname } from "next/navigation";
 
 function Shell({ children }: { children: React.ReactNode }) {
-    const { data } = usePortfolio();
+    const { data, isLoading } = usePortfolio();
     const pathname = usePathname();
-    const [showWelcome, setShowWelcome] = useState(
-        data.config.showWelcomeModal
-    );
+    const [showWelcome, setShowWelcome] = useState(false);
     const [showReview, setShowReview] = useState(false);
     const [visitingProject, setVisitingProject] = useState(false);
+
+    // Sync welcome modal when data is loaded
+    useEffect(() => {
+        if (!isLoading && data.config.showWelcomeModal) {
+            setShowWelcome(true);
+        }
+    }, [isLoading, data.config.showWelcomeModal]);
+
     const [reviewForm, setReviewForm] = useState({
         name: "",
         email: "",
@@ -36,6 +42,21 @@ function Shell({ children }: { children: React.ReactNode }) {
         }
     }, [pathname]);
 
+    // Auto-fill identity for review
+    useEffect(() => {
+        if (showReview) {
+            const stored = localStorage.getItem("portfolio_user_identity");
+            if (stored) {
+                try {
+                    const { name, email } = JSON.parse(stored);
+                    setReviewForm(prev => ({ ...prev, name: name || "", email: email || "" }));
+                } catch (e) {
+                    // ignore
+                }
+            }
+        }
+    }, [showReview]);
+
     const renderStars = (rating: number) =>
         [...Array(5)].map((_, i) => (
             <Star
@@ -51,18 +72,54 @@ function Shell({ children }: { children: React.ReactNode }) {
             />
         ));
 
-    const handleReviewSubmit = (e: React.FormEvent) => {
+    const handleReviewSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        alert(`Thank you ${reviewForm.name}! Your review has been submitted.`);
-        setShowReview(false);
-        setReviewForm({
-            name: "",
-            email: "",
-            phone: "",
-            review: "",
-            rating: 5,
-        });
+
+        // Persist identity
+        localStorage.setItem("portfolio_user_identity", JSON.stringify({ name: reviewForm.name, email: reviewForm.email }));
+
+        try {
+            const res = await fetch('/api/contact', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: reviewForm.name,
+                    email: reviewForm.email,
+                    message: reviewForm.review,
+                    // Request type handled by generic field mapping or added to body if needed.
+                    // Based on previous plan, we should ensure type is sent if the backend needs it, 
+                    // but the backend contact/route.ts defaults to "Contact" if not sent.
+                    // However, we want "Project Review".
+                    // Let's add type: "Project Review" here as per earlier plan.
+                    type: "Project Review"
+                })
+            });
+
+            if (res.ok) {
+                // alert(`Thank you ${reviewForm.name}! Your review has been submitted.`);
+                setShowReview(false);
+                setReviewForm({
+                    name: "",
+                    email: "",
+                    phone: "",
+                    review: "",
+                    rating: 5,
+                });
+            } else {
+                console.error("Failed to submit review.");
+            }
+        } catch (error) {
+            console.error("Error submitting review:", error);
+        }
     };
+
+    if (isLoading) {
+        return (
+            <div className="flex h-screen items-center justify-center bg-white dark:bg-slate-950">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen font-sans flex flex-col overflow-x-hidden">
@@ -96,7 +153,7 @@ function Shell({ children }: { children: React.ReactNode }) {
                             {data.profile.name}
                         </h3>
                         <p className="text-blue-400 text-sm font-mono mt-1">
-                            Java Developer @ Dyashin Technosoft
+                            {data.profile.currentRole} @ {data.profile.currentCompany}
                         </p>
                     </div>
                     <p className="text-slate-400 text-sm leading-relaxed">

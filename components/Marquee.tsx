@@ -2,6 +2,7 @@
 
 import React from "react";
 import { PortfolioData } from "@/data/portfolioData";
+import { IconRenderer } from "@/components/IconRenderer";
 
 type Skill = PortfolioData["skills"][number];
 
@@ -14,7 +15,7 @@ export const Marquee: React.FC<{ items: Skill[] }> = ({ items }) => (
                         key={idx}
                         className="flex items-center gap-3 text-slate-600 dark:text-slate-400 font-bold text-lg uppercase tracking-wider"
                     >
-                        <item.icon size={20} className="text-blue-500" />
+                        <IconRenderer iconName={item.icon} size={20} className="text-blue-500" />
                         {item.name}
                     </div>
                 ))}
