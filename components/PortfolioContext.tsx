@@ -44,14 +44,23 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
                     fetch('/api/skills')
                 ]);
 
-                const config = await configRes.json();
-                const ui = await uiRes.json();
-                const profile = await profileRes.json();
-                const experience = await experienceRes.json();
-                const projects = await projectsRes.json();
-                const blogs = await blogsRes.json();
-                const education = await educationRes.json();
-                const skills = await skillsRes.json();
+                const parseOrNull = async (res: Response, fallback: any) => {
+                    if (!res.ok) return fallback;
+                    try {
+                        return await res.json();
+                    } catch {
+                        return fallback;
+                    }
+                }
+
+                const config = await parseOrNull(configRes, initialEmptyData.config);
+                const ui = await parseOrNull(uiRes, initialEmptyData.ui);
+                const profile = await parseOrNull(profileRes, initialEmptyData.profile);
+                const experience = await parseOrNull(experienceRes, []);
+                const projects = await parseOrNull(projectsRes, []);
+                const blogs = await parseOrNull(blogsRes, []);
+                const education = await parseOrNull(educationRes, []);
+                const skills = await parseOrNull(skillsRes, []);
 
                 console.log("Loaded projects from API:", projects);
 
