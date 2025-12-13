@@ -225,10 +225,10 @@ export const ProjectDetailPage: React.FC<Props> = ({ project, onBack }) => {
                                     </h3>
                                     <div className="bg-slate-50 dark:bg-slate-800/30 p-6 rounded-xl border border-slate-200 dark:border-slate-700 mb-6">
                                         <p className="text-slate-600 dark:text-slate-300 leading-relaxed italic">
-                                            "
+                                            &quot;
                                             {project.challenges ||
                                                 "Building this project required careful consideration of scalability and performance. The main challenge was integrating the disparate APIs in real-time."}
-                                            "
+                                            &quot;
                                         </p>
                                     </div>
                                     <div className="flex gap-4">

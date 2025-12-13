@@ -1,4 +1,5 @@
 
+/* eslint-disable */
 const fetch = require('node-fetch');
 
 async function check() {

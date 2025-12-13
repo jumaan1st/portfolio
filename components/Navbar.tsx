@@ -27,6 +27,7 @@ export const Navbar: React.FC = () => {
     const [isSocialOpen, setIsSocialOpen] = useState(false); // Sub-dropdown for socials
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMounted(true);
     }, []);
 

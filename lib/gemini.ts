@@ -37,10 +37,11 @@ export const callGeminiAPI = async (
                 data.candidates?.[0]?.content?.parts?.[0]?.text ||
                 "No response generated."
             );
-        } catch (err: any) {
+        } catch (err: unknown) {
             attempt++;
+            const errorMessage = err instanceof Error ? err.message : String(err);
             if (attempt >= maxRetries)
-                return `Error: ${err.message}. Please try again later.`;
+                return `Error: ${errorMessage}. Please try again later.`;
             await new Promise((r) => setTimeout(r, delay));
             delay *= 2;
         }

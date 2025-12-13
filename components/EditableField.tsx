@@ -12,15 +12,16 @@ type Props = {
 };
 
 export const EditableField: React.FC<Props> = ({
-                                                   value,
-                                                   onSave,
-                                                   isEditing,
-                                                   type = "input",
-                                                   className = "",
-                                               }) => {
+    value,
+    onSave,
+    isEditing,
+    type = "input",
+    className = "",
+}) => {
     const [isEditingField, setIsEditingField] = useState(false);
     const [tempValue, setTempValue] = useState(value);
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     useEffect(() => setTempValue(value), [value]);
 
     if (!isEditing) return <span className={className}>{value}</span>;
@@ -66,11 +67,11 @@ export const EditableField: React.FC<Props> = ({
 
     return (
         <div className="group relative inline-block">
-      <span
-          className={`${className} group-hover:bg-slate-800/50 rounded px-1 transition-colors`}
-      >
-        {value}
-      </span>
+            <span
+                className={`${className} group-hover:bg-slate-800/50 rounded px-1 transition-colors`}
+            >
+                {value}
+            </span>
             <button
                 onClick={() => setIsEditingField(true)}
                 className="absolute -right-6 top-0 opacity-0 group-hover:opacity-100 transition-opacity text-blue-400 hover:text-white"

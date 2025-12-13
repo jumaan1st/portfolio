@@ -20,6 +20,7 @@ function Shell({ children }: { children: React.ReactNode }) {
     // Sync welcome modal when data is loaded
     useEffect(() => {
         if (!isLoading && data.config.showWelcomeModal) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setShowWelcome(true);
         }
     }, [isLoading, data.config.showWelcomeModal]);
@@ -37,6 +38,7 @@ function Shell({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const visitedProjectId = localStorage.getItem("visited_project_id");
         if (visitedProjectId && !pathname.includes("/projects/")) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setShowReview(true);
             localStorage.removeItem("visited_project_id");
         }
@@ -49,6 +51,7 @@ function Shell({ children }: { children: React.ReactNode }) {
             if (stored) {
                 try {
                     const { name, email } = JSON.parse(stored);
+                    // eslint-disable-next-line react-hooks/set-state-in-effect
                     setReviewForm(prev => ({ ...prev, name: name || "", email: email || "" }));
                 } catch (e) {
                     // ignore

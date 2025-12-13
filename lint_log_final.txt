@@ -1,0 +1,42 @@
+
+> portfolio@0.1.0 lint
+> eslint
+
+
+C:\Users\moham\Desktop\portfolio\app\layout.tsx
+  18:12  warning  'visitingProject' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  18:29  warning  'setVisitingProject' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  56:26  warning  'e' is defined but never used                            @typescript-eslint/no-unused-vars
+
+C:\Users\moham\Desktop\portfolio\components\AIChatWidget.tsx
+   4:15  warning  'Loader2' is defined but never used  @typescript-eslint/no-unused-vars
+  83:18  warning  'error' is defined but never used    @typescript-eslint/no-unused-vars
+
+C:\Users\moham\Desktop\portfolio\components\PortfolioContext.tsx
+  5:43  warning  'Skill' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\moham\Desktop\portfolio\components\pages\ContactPage.tsx
+  25:22  warning  'e' is defined but never used                                    @typescript-eslint/no-unused-vars
+  31:11  warning  'handleChange' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  63:18  warning  'error' is defined but never used                                @typescript-eslint/no-unused-vars
+  80:77  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\moham\Desktop\portfolio\components\pages\HomePage.tsx
+   10:5   warning  'Terminal' is defined but never used                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+   83:41  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  205:37  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\moham\Desktop\portfolio\components\pages\ProjectDetailPage.tsx
+   12:10  warning  'callGeminiAPI' is defined but never used                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+   83:18  warning  'e' is defined but never used                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+  111:25  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\moham\Desktop\portfolio\components\pages\ProjectsPage.tsx
+  32:33  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\moham\Desktop\portfolio\data\portfolioData.ts
+  2:15  warning  'ComponentType' is defined but never used  @typescript-eslint/no-unused-vars
+  2:30  warning  'SVGProps' is defined but never used       @typescript-eslint/no-unused-vars
+
+Γ£û 19 problems (1 error, 18 warnings)
+

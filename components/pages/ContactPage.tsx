@@ -77,7 +77,7 @@ export const ContactPage: React.FC = () => {
 
                     <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2 relative z-10">Send me a message</h3>
                     <p className="text-slate-600 dark:text-slate-400 mb-8 relative z-10">
-                        Got a project in mind? Fill out the form below and I'll get back to you within 24 hours.
+                        Got a project in mind? Fill out the form below and I&apos;ll get back to you within 24 hours.
                     </p>
 
                     {status === "success" && (

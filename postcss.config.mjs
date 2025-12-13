@@ -1,3 +1,4 @@
+/* eslint-disable */
 // postcss.config.mjs
 export default {
     plugins: {

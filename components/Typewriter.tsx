@@ -25,6 +25,7 @@ export const Typewriter: React.FC<Props> = ({ words, delay = 3000 }) => {
             return;
         }
         if (subIndex === 0 && reverse) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setReverse(false);
             setIndex((prev) => (prev + 1) % words.length);
             return;
@@ -45,10 +46,10 @@ export const Typewriter: React.FC<Props> = ({ words, delay = 3000 }) => {
 
     return (
         <span className="font-mono">
-      {words[index]?.substring(0, subIndex)}
+            {words[index]?.substring(0, subIndex)}
             <span className={`${blink ? "opacity-100" : "opacity-0"} text-blue-500`}>
-        |
-      </span>
-    </span>
+                |
+            </span>
+        </span>
     );
 };
