@@ -32,6 +32,7 @@ function Shell({ children }: { children: React.ReactNode }) {
         review: "",
         rating: 5,
     });
+    const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
     // Simpler version of your "return from project" logic:
     // Check if user is returning from a project
@@ -77,6 +78,7 @@ function Shell({ children }: { children: React.ReactNode }) {
 
     const handleReviewSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsSubmittingReview(true);
 
         // Persist identity
         localStorage.setItem("portfolio_user_identity", JSON.stringify({ name: reviewForm.name, email: reviewForm.email }));
@@ -90,10 +92,6 @@ function Shell({ children }: { children: React.ReactNode }) {
                     email: reviewForm.email,
                     message: reviewForm.review,
                     // Request type handled by generic field mapping or added to body if needed.
-                    // Based on previous plan, we should ensure type is sent if the backend needs it, 
-                    // but the backend contact/route.ts defaults to "Contact" if not sent.
-                    // However, we want "Project Review".
-                    // Let's add type: "Project Review" here as per earlier plan.
                     type: "Project Review"
                 })
             });
@@ -113,6 +111,8 @@ function Shell({ children }: { children: React.ReactNode }) {
             }
         } catch (error) {
             console.error("Error submitting review:", error);
+        } finally {
+            setIsSubmittingReview(false);
         }
     };
 
@@ -233,9 +233,17 @@ function Shell({ children }: { children: React.ReactNode }) {
                         />
                         <button
                             type="submit"
-                            className="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-lg font-bold transition-all"
+                            disabled={isSubmittingReview}
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg hover:shadow-blue-600/20 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
-                            Submit Review
+                            {isSubmittingReview ? (
+                                <>
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    <span>Submitting...</span>
+                                </>
+                            ) : (
+                                "Submit Review"
+                            )}
                         </button>
                     </form>
                 </div>
