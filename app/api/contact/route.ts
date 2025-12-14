@@ -167,9 +167,10 @@ export async function POST(request: Request) {
             }
         };
 
-        sendEmailTask();
+        // Await the task to ensure it completes before Vercel freezes/kills the lambda.
+        await sendEmailTask();
 
-        return NextResponse.json({ success: true, message: 'Saved and processing email' });
+        return NextResponse.json({ success: true, message: 'Saved and email sent' });
 
     } catch (error) {
         console.error('Error in contact/review API:', error);
