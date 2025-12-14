@@ -66,6 +66,10 @@ export async function POST(request: Request) {
                     `;
                 }
 
+                // Rate Limiting Logic (New Schema: email_count, name, email_date)
+                let allowAI = true;
+                let aiEmailBody = "";
+
                 try {
                     // Check usage (Strictly by Email + Date, ignoring Name for counting)
                     const usageRes = await pool.query(
