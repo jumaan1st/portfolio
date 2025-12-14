@@ -49,6 +49,18 @@ export async function POST(request: Request) {
         // 2. Call Gemini API
         const aiResponse = await callGeminiAPI(context);
 
+        if (aiResponse.startsWith("Error:") || aiResponse.startsWith("No response")) {
+            console.warn(`[AI Chat] Gemini API Error: ${aiResponse}`);
+            // If we suspect a quota limit, return 429 so UI can show the right message
+            if (aiResponse.includes("429") || aiResponse.includes("Rate limit")) {
+                return NextResponse.json(
+                    { error: "I'm receiving too many messages right now! Please try again tomorrow. ⏳" },
+                    { status: 429 }
+                );
+            }
+            return NextResponse.json({ error: "I'm having trouble connecting to the server. Please try again later! 🔌" }, { status: 503 });
+        }
+
         // 3. Update Usage
         if (usageId) {
             await pool.query(

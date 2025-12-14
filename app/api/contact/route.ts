@@ -72,7 +72,25 @@ export async function POST(request: Request) {
                     `;
                 }
 
-                const aiEmailBody = await callGeminiAPI(aiPrompt);
+                let aiEmailBody = await callGeminiAPI(aiPrompt);
+
+                // Fallback if AI fails (e.g. Rate Limit / Quota Exceeded)
+                if (aiEmailBody.startsWith("Error:") || aiEmailBody.startsWith("No response") || aiEmailBody.includes("Rate limit")) {
+                    console.warn(`[Contact API] AI Generation failed. Using fallback email. Reason: ${aiEmailBody}`);
+
+                    if (requestType === "Project Review") {
+                        aiEmailBody = `
+                            Thank you so much for taking the time to review my project! I really appreciate your feedback and insights.<br><br>
+                            I'm currently reviewing all comments and will get back to you personally if there's anything specific to discuss.
+                            Thanks again for checking out my work!
+                        `;
+                    } else {
+                        aiEmailBody = `
+                            Thank you for reaching out! I have received your message and will get back to you as soon as possible.<br><br>
+                            I usually respond within 24-48 hours. Looking forward to connecting with you!
+                        `;
+                    }
+                }
 
                 // Send Email
                 const transporter = nodemailer.createTransport({

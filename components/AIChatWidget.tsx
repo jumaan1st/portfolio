@@ -74,10 +74,9 @@ User Question: ${userMsg}`;
 
             if (res.ok) {
                 setMessages((prev) => [...prev, { role: "ai", text: responseData.response }]);
-            } else if (res.status === 429) {
-                setMessages((prev) => [...prev, { role: "ai", text: "⚠️ You have reached the daily limit of 5 AI requests." }]);
             } else {
-                setMessages((prev) => [...prev, { role: "ai", text: "Sorry, I encountered an error. Please try again later." }]);
+                // Use backend's friendly error message, or a fallback
+                setMessages((prev) => [...prev, { role: "ai", text: responseData.error || "Something went wrong. Please try again." }]);
             }
 
         } catch (error) {
