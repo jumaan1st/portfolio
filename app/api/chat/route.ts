@@ -33,13 +33,13 @@ export async function POST(request: Request) {
         if (usageRes.rows.length > 0) {
             currentCount = usageRes.rows[0].chat_count;
             usageId = usageRes.rows[0].usage_id;
-            console.log(`[AI Chat] User has used ${currentCount} requests today.`);
+            console.log(`[AI Chat] Found existing usage record (ID: ${usageId}) for ${normalizedEmail} with count ${currentCount}`);
         } else {
-            console.log(`[AI Chat] New user for today.`);
+            console.log(`[AI Chat] No usage record found for ${normalizedEmail} on ${today}. Creating new.`);
         }
 
         if (currentCount >= 5) {
-            console.warn(`[AI Chat] Rate limit exceeded for ${normalizedEmail}`);
+            console.warn(`[AI Chat] Rate limit exceeded for ${normalizedEmail} (Count: ${currentCount})`);
             return NextResponse.json(
                 { error: 'Rate limit exceeded. You have used your 5 free AI requests for today.' },
                 { status: 429 }
@@ -50,8 +50,8 @@ export async function POST(request: Request) {
         const aiResponse = await callAI(context);
 
         if (aiResponse.startsWith("Error:") || aiResponse.startsWith("No response")) {
-            console.warn(`[AI Chat] Gemini API Error: ${aiResponse}`);
-            // If we suspect a quota limit, return 429 so UI can show the right message
+            console.warn(`[AI Chat] AI Provider Error: ${aiResponse}`);
+            // ... error handling
             if (aiResponse.includes("429") || aiResponse.includes("Rate limit")) {
                 return NextResponse.json(
                     { error: "I'm receiving too many messages right now! Please try again tomorrow. ⏳" },
@@ -63,18 +63,20 @@ export async function POST(request: Request) {
 
         // 3. Update Usage
         if (usageId) {
+            console.log(`[AI Chat] Incrementing count for Usage ID: ${usageId}`);
             await pool.query(
                 'UPDATE portfolio.ai_chat_usage SET chat_count = chat_count + 1 WHERE usage_id = $1',
                 [usageId]
             );
         } else {
+            console.log(`[AI Chat] Creating new usage record for ${normalizedEmail}`);
             await pool.query(
                 'INSERT INTO portfolio.ai_chat_usage (name, email, chat_date, chat_count) VALUES ($1, $2, $3, 1)',
                 [name, normalizedEmail, today]
             );
         }
 
-        console.log(`[AI Chat] Success. New count: ${currentCount + 1}`);
+        console.log(`[AI Chat] Success. New count should be: ${currentCount + 1}`);
 
         return NextResponse.json({ response: aiResponse, remaining: 5 - (currentCount + 1) });
 
