@@ -9,8 +9,8 @@ import {
     Zap,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { callGeminiAPI } from "@/lib/gemini";
 import type { Project } from "@/data/portfolioData";
+import ReactMarkdown from 'react-markdown';
 
 interface Props {
     project: Project;
@@ -258,7 +258,7 @@ export const ProjectDetailPage: React.FC<Props> = ({ project, onBack }) => {
                                             </h3>
                                         </div>
                                         <p className="text-slate-600 dark:text-slate-300 text-sm mb-6">
-                                            Use Gemini to analyze this project and generate content
+                                            Use AI to analyze this project and generate content
                                             dynamically.
                                         </p>
 
@@ -293,17 +293,19 @@ export const ProjectDetailPage: React.FC<Props> = ({ project, onBack }) => {
                                     {loadingAi && (
                                         <div className="flex justify-center py-8 text-purple-400 animate-pulse">
                                             <Loader2 className="animate-spin mr-2" /> Generating
-                                            insights with Gemini...
+                                            insights with AI...
                                         </div>
                                     )}
 
                                     {aiInsight && !loadingAi && (
                                         <div className="bg-slate-50 dark:bg-slate-950 p-6 rounded-xl border border-slate-200 dark:border-slate-800 animate-in slide-in-from-bottom-4">
                                             <h4 className="text-purple-600 dark:text-purple-400 font-bold text-sm uppercase mb-2">
-                                                Gemini Analysis
+                                                AI Analysis
                                             </h4>
                                             <p className="text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">
-                                                {aiInsight}
+                                                <div className="prose prose-sm dark:prose-invert max-w-none">
+                                                    <ReactMarkdown>{aiInsight || ""}</ReactMarkdown>
+                                                </div>
                                             </p>
                                         </div>
                                     )}

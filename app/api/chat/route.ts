@@ -1,7 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
-import { callGeminiAPI } from '@/lib/gemini';
+import { callAI } from '@/lib/ai-manager';
 
 export async function POST(request: Request) {
     try {
@@ -46,8 +46,8 @@ export async function POST(request: Request) {
             );
         }
 
-        // 2. Call Gemini API
-        const aiResponse = await callGeminiAPI(context);
+        // 2. Call AI Manager (Switches between Gemini/DeepSeek)
+        const aiResponse = await callAI(context);
 
         if (aiResponse.startsWith("Error:") || aiResponse.startsWith("No response")) {
             console.warn(`[AI Chat] Gemini API Error: ${aiResponse}`);

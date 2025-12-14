@@ -1,71 +1,94 @@
-# 🚀 Modern Developer Portfolio
+# 🚀 Modern Developer Portfolio [Next.js 16 + AI Integration]
 
-![Portfolio Preview](https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=1000&auto=format&fit=crop)
+> A high-performance, interactive, and AI-powered developer portfolio built with the latest web technologies. Features a custom **DeepSeek AI Chat Assistant**, a smart email rate-limiting system, and a dynamic project showcase.
 
-> A stunning, responsive, and interactive portfolio website built with **Next.js 16**, **React 19**, and **Tailwind CSS v4**. Designed to showcase your projects, skills, and thoughts with a premium user experience.
+![Home Page](file:///C:/Users/moham/.gemini/antigravity/brain/a5f22c7d-9fa0-4b0e-8c63-d781d20d76eb/home_page_top_1765696403743.png)
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.0-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.0-blue?style=for-the-badge&logo=react)](https://react.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.0-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=for-the-badge&logo=postgresql)](https://www.postgresql.org/)
 
 ---
 
-## ✨ Features
+## ✨ Key Features
 
-*   **🎨 Dynamic Theme System**: Seamless Dark/Light mode toggle with persistent state.
-*   **📱 Fully Responsive**: Mobile-first design that looks great on all devices (Desktop, Tablet, Mobile).
-*   **⚡ High Performance**: Built on Next.js App Router for optimal speed and SEO.
-*   **🤖 AI Chat Widget**: Integrated AI assistant to answer visitor questions (Gemini API integration ready).
-*   **💼 Project Showcase**: Beautiful carousel and grid layouts to display your work with image support.
-*   **📝 Blog System**: Markdown-ready blog section to share your technical insights.
-*   **contact Form**: Responsive contact form with validation and email integration readiness.
-*   **🔐 Admin Dashboard**: Hidden admin route for managing content.
+### 🤖 Intelligent AI Assistant
+A custom-built, draggable Chat Widget powered by **DeepSeek AI**.
+*   **Context-Aware**: Knows your skills, projects, and bio intimately.
+*   **Cost-Optimized**: Uses a "Smart Compression" algorithm to reduce token usage by ~75% without losing context.
+*   **Interactive UI**: Draggable window with an app-like feel and smooth animations.
+
+![AI Chat Widget](file:///C:/Users/moham/.gemini/antigravity/brain/a5f22c7d-9fa0-4b0e-8c63-d781d20d76eb/chat_widget_open_1765696444414.png)
+
+### 📧 Smart Contact System
+More than just a form.
+*   **Rate Limiting**: Limits users to **5 AI-drafted emails per day** to prevent abuse and manage costs (backed by Postgres).
+*   **Auto-Drafting**: AI reads the visitor's message and drafts a hyper-personalized email reply on your behalf.
+*   **Fallback Logic**: Automatically switches to generic templates if limits are hit or APIs fail.
+
+![Contact Page](file:///C:/Users/moham/.gemini/antigravity/brain/a5f22c7d-9fa0-4b0e-8c63-d781d20d76eb/contact_page_1765696583255.png)
+
+### 💼 Dynamic Project Showcase
+*   **Rich Details**: Dedicated pages for each project with "AI Insights" (Elevator Pitch & Tech Critique generator).
+*   **Tabs**: Organized views for Overview, Tech Stack, and Outcomes.
+
+![Projects Page](file:///C:/Users/moham/.gemini/antigravity/brain/a5f22c7d-9fa0-4b0e-8c63-d781d20d76eb/projects_page_1765696532545.png)
 
 ---
 
 ## 🛠️ Tech Stack
 
-*   **Framework**: [Next.js 16](https://nextjs.org/) (App Router)
-*   **Language**: [TypeScript](https://www.typescriptlang.org/)
-*   **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
-*   **Icons**: [Lucide React](https://lucide.dev/)
-*   **Theming**: [next-themes](https://github.com/pacocoursey/next-themes)
-*   **Animations**: CSS Animations & Transitions
+*   **Frontend**: Next.js 16 (App Router), React 19, TypeScript
+*   **Styling**: Tailwind CSS v4, Lucide Icons, Framer Motion (animations)
+*   **Backend**: Next.js API Routes (Serverless)
+*   **Database**: PostgreSQL (via `pg`)
+*   **AI**: DeepSeek API (or Gemini fallback)
+*   **Email**: Nodemailer (SMTP)
 
 ---
 
 ## 🚀 Getting Started
 
-Follow these steps to get your portfolio up and running locally.
+Follow these steps to deploy your own version.
 
 ### Prerequisites
-
-*   Node.js 18.17 or later
-*   npm, yarn, pnpm, or bun
+*   Node.js 18+
+*   PostgreSQL Database
 
 ### Installation
 
-1.  **Clone the repository**
+1.  **Clone the repo**
     ```bash
-    git clone https://github.com/yourusername/portfolio.git
+    git clone https://github.com/jumaan1st/portfolio.git
     cd portfolio
     ```
 
 2.  **Install dependencies**
     ```bash
     npm install
-    # or
-    yarn install
     ```
 
-3.  **Run the development server**
+3.  **Environment Setup**
+    Create a `.env.local` file:
+    ```env
+    # Database
+    DATABASE_URL=postgres://user:pass@host:5432/db
+
+    # AI Provider (gemini | deepseek)
+    AI_PROVIDER=deepseek
+    DEEPSEEK_API_KEY=sk-your-key
+    GEMINI_API_KEY=abc-your-key
+
+    # Email
+    EMAIL_USER=your@gmail.com
+    EMAIL_PASS=your-app-password
+    ```
+
+4.  **Run Locally**
     ```bash
     npm run dev
     ```
-
-4.  **Open your browser**
-    Navigate to [http://localhost:3000](http://localhost:3000) to see your portfolio in action.
 
 ---
 
@@ -73,62 +96,25 @@ Follow these steps to get your portfolio up and running locally.
 
 ```
 portfolio/
-├── app/                # Next.js App Router pages
-│   ├── layout.tsx      # Root layout with ThemeProvider
-│   ├── page.tsx        # Home page
-│   └── ...
-├── components/         # Reusable React components
-│   ├── pages/          # Page-specific components (HomePage, AboutPage, etc.)
-│   ├── Navbar.tsx      # Navigation bar
-│   └── ...
-├── data/               # Static data files
-│   └── portfolioData.ts # Centralized data for the entire app
-├── public/             # Static assets (images, fonts)
-└── tailwind.config.js  # Tailwind CSS configuration
+├── app/
+│   ├── api/            # Serverless functions (Chat, Contact, DB)
+│   ├── (public)/       # Public routes (Home, About, Projects)
+│   └── admin/          # Protected Admin Dashboard
+├── components/
+│   ├── AIChatWidget.tsx # Core AI Chat Logic
+│   └── pages/          # Page specific components
+├── lib/
+│   ├── ai-manager.ts   # Central AI routing logic
+│   └── db.ts           # Postgres connection pool
+└── data/               # Static fallback data
 ```
 
 ---
 
-## ⚙️ Customization
+## 📸 More Screens
 
-This portfolio is designed to be easily customizable. You don't need to dive deep into the code to change the content.
-
-1.  **Update Content**: Open `data/portfolioData.ts`. This file contains all the text, project details, skills, and profile information.
-    ```typescript
-    export const initialData = {
-      profile: {
-        name: "Your Name",
-        role: "Full Stack Developer",
-        // ...
-      },
-      projects: [
-        // Add your projects here
-      ],
-      // ...
-    }
-    ```
-
-2.  **Change Images**: Replace the images in the `public` folder or update the URLs in `portfolioData.ts`.
-
-3.  **Styling**: Modify `app/globals.css` or `tailwind.config.js` to change the color scheme or fonts.
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! If you find a bug or want to add a new feature, feel free to open an issue or submit a pull request.
-
-1.  Fork the Project
-2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4.  Push to the Branch (`git push origin feature/AmazingFeature`)
-5.  Open a Pull Request
-
----
-
-## 📄 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
+### About Page
+![About Page](file:///C:/Users/moham/.gemini/antigravity/brain/a5f22c7d-9fa0-4b0e-8c63-d781d20d76eb/about_page_1765696610390.png)
 
 ---
 

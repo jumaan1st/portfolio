@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import nodemailer from 'nodemailer';
-import { callGeminiAPI } from '@/lib/gemini';
+import { callAI } from '@/lib/ai-manager';
 
 export async function POST(request: Request) {
     try {
@@ -72,22 +72,66 @@ export async function POST(request: Request) {
                     `;
                 }
 
-                let aiEmailBody = await callGeminiAPI(aiPrompt);
+                // Check Rate Limit (5 per day)
+                let allowAI = true;
+                let aiEmailBody = ""; // Declare here
 
-                // Fallback if AI fails (e.g. Rate Limit / Quota Exceeded)
-                if (aiEmailBody.startsWith("Error:") || aiEmailBody.startsWith("No response") || aiEmailBody.includes("Rate limit")) {
-                    console.warn(`[Contact API] AI Generation failed. Using fallback email. Reason: ${aiEmailBody}`);
+                try {
+                    // Check usage
+                    const usageRes = await pool.query('SELECT usage_count, last_updated FROM portfolio.ai_email_usage WHERE email = $1', [cleanEmail]);
 
-                    if (requestType === "Project Review") {
-                        aiEmailBody = `
-                            Thank you so much for taking the time to review my project! I really appreciate your feedback and insights.<br><br>
-                            I'm currently reviewing all comments and will get back to you personally if there's anything specific to discuss.
-                            Thanks again for checking out my work!
-                        `;
+                    if (usageRes.rows.length > 0) {
+                        const { usage_count, last_updated } = usageRes.rows[0];
+                        const lastDate = new Date(last_updated).toISOString().split('T')[0];
+
+                        if (lastDate !== today) {
+                            // Reset for new day
+                            await pool.query('UPDATE portfolio.ai_email_usage SET usage_count = 1, last_updated = $2 WHERE email = $1', [cleanEmail, today]);
+                        } else if (usage_count >= 5) {
+                            allowAI = false;
+                            console.warn(`[Contact API] Rate limit exceeded for ${cleanEmail}. Sending generic email.`);
+                        } else {
+                            // Increment
+                            await pool.query('UPDATE portfolio.ai_email_usage SET usage_count = usage_count + 1 WHERE email = $1', [cleanEmail]);
+                        }
                     } else {
+                        // First time
+                        await pool.query('INSERT INTO portfolio.ai_email_usage (email, usage_count, last_updated) VALUES ($1, 1, $2)', [cleanEmail, today]);
+                    }
+                } catch (e) {
+                    console.error("Rate Limit Check Failed:", e);
+                    // allowAI stays true on error to avoid blocking logic, or false to be safe. 
+                    // Let's default to safe (false) if DB fails, or true? 
+                    // User wants to limit cost, so maybe default false if check fails? 
+                    // But if check fails, maybe saving to main DB also failed. 
+                    // Let's assume allowAI = true (fail open) for UX, or fail closed for cost. 
+                    // Given the prompt "limit ... usage", let's fail open but log it, preventing strictly 5 if DB error.
+                }
+
+                if (!allowAI) {
+                    // GENERIC FALLBACK (Limit Exceeded)
+                    aiEmailBody = `
+                        Thank you for reaching out! I have received your message and will get back to you as soon as possible.<br><br>
+                        (Auto-Reply: Daily AI limit reached, but your message is safe!)
+                    `;
+                } else {
+                    // PROCEED WITH AI
+                    try {
+                        let aiEmailBodyRaw = await callAI(aiPrompt);
+
+                        // Check for Soft Errors (Rate Limits returned as text)
+                        if (aiEmailBodyRaw.includes("Error:") || aiEmailBodyRaw.includes("No response")) {
+                            throw new Error(aiEmailBodyRaw);
+                        }
+
+                        // eslint-disable-next-line @typescript-eslint/no-require-imports
+                        const { marked } = require('marked');
+                        aiEmailBody = marked.parse(aiEmailBodyRaw);
+                    } catch (e) {
+                        console.error("AI Generation or Parsing Failed:", e);
                         aiEmailBody = `
                             Thank you for reaching out! I have received your message and will get back to you as soon as possible.<br><br>
-                            I usually respond within 24-48 hours. Looking forward to connecting with you!
+                            I usually respond within 24-48 hours.
                         `;
                     }
                 }
