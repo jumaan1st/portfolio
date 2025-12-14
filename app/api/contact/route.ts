@@ -66,15 +66,11 @@ export async function POST(request: Request) {
                     `;
                 }
 
-                // Rate Limiting Logic (New Schema: email_count, name, email_date)
-                let allowAI = true;
-                let aiEmailBody = "";
-
                 try {
-                    // Check existing usage for this user+day
+                    // Check usage (Strictly by Email + Date, ignoring Name for counting)
                     const usageRes = await pool.query(
-                        'SELECT usage_id, email_count FROM portfolio.ai_email_usage WHERE email = $1 AND name = $2 AND email_date = $3',
-                        [cleanEmail, cleanName, today]
+                        'SELECT usage_id, email_count FROM portfolio.ai_email_usage WHERE email = $1 AND email_date = $2 LIMIT 1',
+                        [cleanEmail, today]
                     );
 
                     if (usageRes.rows.length > 0) {
@@ -84,11 +80,11 @@ export async function POST(request: Request) {
                             allowAI = false;
                             console.warn(`[Contact API] Rate limit exceeded for ${cleanEmail}. Sending generic email.`);
                         } else {
-                            // Increment Usage
+                            // Increment Usage on the existing record found for this email
                             await pool.query('UPDATE portfolio.ai_email_usage SET email_count = email_count + 1 WHERE usage_id = $1', [usage_id]);
                         }
                     } else {
-                        // Insert New Record for Day
+                        // Insert New Record for Day (Name is still required by DB, so we use the provided one)
                         await pool.query(
                             'INSERT INTO portfolio.ai_email_usage (email, name, email_date, email_count) VALUES ($1, $2, $3, 1)',
                             [cleanEmail, cleanName, today]
