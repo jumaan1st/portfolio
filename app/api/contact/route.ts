@@ -21,18 +21,8 @@ export async function POST(request: Request) {
         const messageToStore = `[${requestType}] ${cleanMessage}`;
         const today = new Date().toISOString().split('T')[0];
 
-        // 0. Spam Protection (Rate Limit per email)
-        // Independent of AI Chat usage. Strictly to prevent spam.
-        const spamCheck = await pool.query(
-            "SELECT COUNT(*) as count FROM portfolio.review WHERE email = $1 AND created_at::date = $2",
-            [cleanEmail, today]
-        );
-
-        const submissionCount = parseInt(spamCheck.rows[0].count);
-        if (submissionCount >= 10) {
-            console.warn(`[Contact API] Spam limit exceeded for ${cleanEmail}`);
-            return NextResponse.json({ error: 'Daily limit exceeded. Please try again tomorrow.' }, { status: 429 });
-        }
+        // 0. Spam Protection (DISABLED per user request)
+        // const spamCheck = await pool.query(...)
 
         // 1. Store in DB (Synchronous - Critical)
         console.log(`[Contact API] Saving ${requestType} from ${cleanEmail}`);
@@ -44,9 +34,8 @@ export async function POST(request: Request) {
         );
         console.log(`[Contact API] Saved to portfolio.review.`);
 
-        // 2. Background Task: AI Email (Fire-and-Forget)
-        const sendEmailTask = async () => {
-            try {
+        // 2. Send Email (Awaited for Serverless Compliance)
+        try {
                 // Fetch Profile
                 const profileResult = await pool.query('SELECT name, current_company, current_role, linkedin, github FROM portfolio.profile LIMIT 1');
                 const profile = profileResult.rows[0];
@@ -104,7 +93,7 @@ export async function POST(request: Request) {
                             
                             <div class="footer">
                                 <strong>${profile.name}</strong><br>
-                                ${profile.current_role} @ ${profile.current_company}<br>
+                                <strong>${profile.current_role}</strong> @ <strong>${profile.current_company}</strong><br>
                                 <div class="social-links">
                                     ${profile.linkedin ? `<a href="${profile.linkedin}">LinkedIn</a>` : ''}
                                     ${profile.github ? `<a href="${profile.github}">GitHub</a>` : ''}
@@ -125,15 +114,13 @@ export async function POST(request: Request) {
                 };
 
                 await transporter.sendMail(mailOptions);
-                console.log(`[Contact API] Background email sent to ${email}`);
+                console.log(`[Contact API] Email successfully sent to ${email}`);
 
-            } catch (bgError) {
-                console.error('[Contact API] Background task failed:', bgError);
-            }
-        };
-
-        // Fire and forget (handling promise without await)
-        sendEmailTask();
+        } catch (emailError) {
+             // Log but don't fail the request (or maybe we should? User said "sometimes i am not recieving")
+             // Better to log heavily so Vercel logs show it.
+             console.error('[Contact API] Check Email Config! Send failed:', emailError);
+        }
 
         return NextResponse.json({ success: true, message: 'Saved and processing email' });
 

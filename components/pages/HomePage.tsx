@@ -151,91 +151,93 @@ export const HomePage: React.FC = () => {
             <Marquee items={data.skills} />
 
             {/* Featured projects carousel */}
-            <section className="max-w-5xl mx-auto w-full">
-                <div className="text-center mb-10">
-                    <h3 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
-                        {data.ui.projectTitle}
-                    </h3>
-                    <p className="text-slate-600 dark:text-slate-500">{data.ui.projectSubtitle}</p>
-                </div>
+            {project && (
+                <section className="max-w-5xl mx-auto w-full">
+                    <div className="text-center mb-10">
+                        <h3 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+                            {data.ui.projectTitle}
+                        </h3>
+                        <p className="text-slate-600 dark:text-slate-500">{data.ui.projectSubtitle}</p>
+                    </div>
 
-                <div
-                    className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
-                    <div className="absolute inset-0 bg-grid-pattern opacity-5 dark:opacity-10" />
+                    <div
+                        className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+                        <div className="absolute inset-0 bg-grid-pattern opacity-5 dark:opacity-10" />
 
-                    <div className="grid md:grid-cols-2 min-h-[400px]">
-                        <div className="p-8 md:p-12 flex flex-col justify-center relative z-10">
-                            <div
-                                className={`inline-block self-start px-3 py-1 rounded-lg text-xs font-bold uppercase mb-4 bg-gradient-to-r ${project.color} bg-opacity-10 text-slate-900 dark:text-white`}
-                            >
-                                {project.category}
-                            </div>
-                            <h3 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">
-                                {project.title}
-                            </h3>
-                            <p className="text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
-                                {project.description}
-                            </p>
-                            <div className="flex flex-wrap gap-2 mb-8">
-                                {project.tech.map((t) => (
-                                    <span
-                                        key={t}
-                                        className="text-xs font-mono bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-1 rounded border border-slate-200 dark:border-slate-700"
-                                    >
-                                        {t}
-                                    </span>
-                                ))}
-                            </div>
-                            <button
-                                onClick={() => router.push(`/projects/${project.id}`)}
-                                className="self-start flex items-center gap-2 text-slate-900 dark:text-white font-bold border-b-2 border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors pb-1"
-                            >
-                                View Case Study <ExternalLink size={16} />
-                            </button>
-                        </div>
-
-                        <div
-                            className={`relative overflow-hidden flex items-center justify-center ${project.image && project.image.startsWith("http")
-                                ? ""
-                                : `bg-gradient-to-br ${project.color}`
-                                }`}
-                        >
-                            {project.image && project.image.startsWith("http") ? (
-                                <>
-                                    <img
-                                        src={project.image}
-                                        alt={project.title}
-                                        className="absolute inset-0 w-full h-full object-cover"
-                                    />
-                                    <div className="absolute inset-0 bg-black/20" />
-                                </>
-                            ) : (
-                                <div className="text-white/20 transform scale-150 rotate-12">
-                                    {project.category.includes("AI") ? (
-                                        <Cpu size={120} />
-                                    ) : (
-                                        <Layout size={120} />
-                                    )}
+                        <div className="grid md:grid-cols-2 min-h-[400px]">
+                            <div className="p-8 md:p-12 flex flex-col justify-center relative z-10">
+                                <div
+                                    className={`inline-block self-start px-3 py-1 rounded-lg text-xs font-bold uppercase mb-4 bg-gradient-to-r ${project.color} bg-opacity-10 text-slate-900 dark:text-white`}
+                                >
+                                    {project.category}
                                 </div>
-                            )}
-                            <div className="absolute bottom-6 right-6 flex gap-3 z-10">
+                                <h3 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">
+                                    {project.title}
+                                </h3>
+                                <p className="text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
+                                    {project.description}
+                                </p>
+                                <div className="flex flex-wrap gap-2 mb-8">
+                                    {project.tech.map((t) => (
+                                        <span
+                                            key={t}
+                                            className="text-xs font-mono bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-1 rounded border border-slate-200 dark:border-slate-700"
+                                        >
+                                            {t}
+                                        </span>
+                                    ))}
+                                </div>
                                 <button
-                                    onClick={prevProject}
-                                    className="p-3 bg-white/20 dark:bg-black/20 backdrop-blur hover:bg-white/40 dark:hover:bg-black/40 rounded-full text-white transition-all"
+                                    onClick={() => router.push(`/projects/${project.id}`)}
+                                    className="self-start flex items-center gap-2 text-slate-900 dark:text-white font-bold border-b-2 border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors pb-1"
                                 >
-                                    <ChevronLeft size={24} />
+                                    View Case Study <ExternalLink size={16} />
                                 </button>
-                                <button
-                                    onClick={nextProject}
-                                    className="p-3 bg-white/20 dark:bg-black/20 backdrop-blur hover:bg-white/40 dark:hover:bg-black/40 rounded-full text-white transition-all"
-                                >
-                                    <ChevronRight size={24} />
-                                </button>
+                            </div>
+
+                            <div
+                                className={`relative overflow-hidden flex items-center justify-center ${project.image && project.image.startsWith("http")
+                                    ? ""
+                                    : `bg-gradient-to-br ${project.color}`
+                                    }`}
+                            >
+                                {project.image && project.image.startsWith("http") ? (
+                                    <>
+                                        <img
+                                            src={project.image}
+                                            alt={project.title}
+                                            className="absolute inset-0 w-full h-full object-cover"
+                                        />
+                                        <div className="absolute inset-0 bg-black/20" />
+                                    </>
+                                ) : (
+                                    <div className="text-white/20 transform scale-150 rotate-12">
+                                        {project.category.includes("AI") ? (
+                                            <Cpu size={120} />
+                                        ) : (
+                                            <Layout size={120} />
+                                        )}
+                                    </div>
+                                )}
+                                <div className="absolute bottom-6 right-6 flex gap-3 z-10">
+                                    <button
+                                        onClick={prevProject}
+                                        className="p-3 bg-white/20 dark:bg-black/20 backdrop-blur hover:bg-white/40 dark:hover:bg-black/40 rounded-full text-white transition-all"
+                                    >
+                                        <ChevronLeft size={24} />
+                                    </button>
+                                    <button
+                                        onClick={nextProject}
+                                        className="p-3 bg-white/20 dark:bg-black/20 backdrop-blur hover:bg-white/40 dark:hover:bg-black/40 rounded-full text-white transition-all"
+                                    >
+                                        <ChevronRight size={24} />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </section>
+                </section>
+            )}
 
             {/* Blog cards */}
             <section className="max-w-5xl mx-auto w-full">
