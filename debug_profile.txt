@@ -1,0 +1,16 @@
+Connecting to: localhost
+
+--- DATA IN portfolio.profile TABLE ---
+[
+  {
+    "id": 3,
+    "name": "Mohammed Jumaan",
+    "current_role": "postgres",
+    "roles": [
+      "Java Backend Developer",
+      "Backend Architect",
+      "Spring Boot Expert"
+    ]
+  }
+]
+---------------------------------------

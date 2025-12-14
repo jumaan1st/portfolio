@@ -34,18 +34,42 @@ export async function POST(request: Request) {
         );
         console.log(`[Contact API] Saved to portfolio.review.`);
 
-        // 2. Send Email (Awaited for Serverless Compliance)
-        try {
-                // Fetch Profile
-                const profileResult = await pool.query('SELECT name, current_company, current_role, linkedin, github FROM portfolio.profile LIMIT 1');
+        // 2. Background Task: AI Email (Fire-and-Forget) - Enhanced Personalization
+        const sendEmailTask = async () => {
+            try {
+                // Fetch Profile - Use 'role' column (correct one) aliased as current_role for code compatibility
+                const profileResult = await pool.query('SELECT name, current_company, role as current_role, linkedin, github FROM portfolio.profile LIMIT 1');
                 const profile = profileResult.rows[0];
 
-                // Generate AI Content
+                // Enhanced AI Prompt for Hyper-Personalization
                 let aiPrompt = "";
+                const baseContext = `You are ${profile.name}, a ${profile.current_role} at ${profile.current_company}.`;
+                const toneInstruction = "Analyze the sender's message tone. If they are casual, be friendly and professional. If formal, be precise and respectful. If excited, match their energy.";
+
                 if (requestType === "Project Review") {
-                    aiPrompt = `Act as ${profile.name}, a ${profile.current_role} at ${profile.current_company}. Write a warm, professional email thanking ${name} for their review of my project. They said: "${message}". Express appreciation for their feedback and mention that I always value constructive input. Keep it concise.`;
+                    aiPrompt = `
+                        ${baseContext}
+                        User's Review: "${message}"
+                        
+                        Task: Write a personalized reply to ${name}.
+                        1. ${toneInstruction}
+                        2. Specifically reference a detail they mentioned in their review (e.g., if they liked the UI, thank them for noticing the design).
+                        3. Express genuine gratitude for them taking the time to review my work.
+                        4. Keep it concise (under 150 words) but warm.
+                        5. Sign off professionally.
+                    `;
                 } else {
-                    aiPrompt = `Act as ${profile.name}, a ${profile.current_role} at ${profile.current_company}. Write a polite, professional confirmation email to ${name} regarding their inquiry: "${message}". Confirm receipt of their message and promise to reply shortly. Keep it concise and friendly.`;
+                    aiPrompt = `
+                        ${baseContext}
+                        User's Inquiry: "${message}"
+                        
+                        Task: Write a personalized reply to ${name}.
+                        1. ${toneInstruction}
+                        2. Acknowledge the specific reason they contacted me (e.g., job opportunity, collaboration, question).
+                        3. Confirm I have received it and will respond personally soon.
+                        4. Keep it concise (under 100 words) and reassuring.
+                        5. Sign off professionally.
+                    `;
                 }
 
                 const aiEmailBody = await callGeminiAPI(aiPrompt);
@@ -64,40 +88,44 @@ export async function POST(request: Request) {
                 <html>
                 <head>
                     <style>
-                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                        .container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px; }
-                        .header { background-color: #2563eb; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-                        .content { padding: 30px 20px; background-color: #f8fafc; }
-                        .message-box { background-color: white; padding: 15px; border-left: 4px solid #2563eb; margin: 20px 0; font-style: italic; }
-                        .footer { margin-top: 30px; border-top: 1px solid #ddd; padding-top: 20px; font-size: 0.9em; color: #666; }
-                        .social-links { margin-top: 10px; }
-                        .social-links a { margin-right: 15px; text-decoration: none; color: #2563eb; font-weight: bold; }
+                        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #f4f6f9; margin: 0; padding: 0; }
+                        .container { max-width: 600px; margin: 20px auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+                        .header { background: linear-gradient(135deg, #2563eb, #4f46e5); color: white; padding: 30px 20px; text-align: center; }
+                        .header h2 { margin: 0; font-size: 22px; font-weight: 600; }
+                        .content { padding: 40px 30px; background-color: #ffffff; }
+                        .greeting { font-size: 18px; font-weight: bold; color: #1e293b; margin-bottom: 20px; }
+                        .body-text { color: #475569; font-size: 16px; margin-bottom: 25px; white-space: pre-line; }
+                        .original-message { background-color: #f8fafc; padding: 20px; border-left: 4px solid #3b82f6; border-radius: 4px; color: #64748b; font-style: italic; font-size: 14px; margin: 30px 0; }
+                        .footer { background-color: #f1f5f9; padding: 30px; text-align: center; color: #64748b; font-size: 14px; }
+                        .profile-name { font-weight: bold; color: #0f172a; font-size: 16px; margin-bottom: 4px; }
+                        .profile-role { color: #2563eb; font-weight: 500; margin-bottom: 15px; }
+                        .social-links { margin-top: 15px; }
+                        .social-links a { display: inline-block; margin: 0 10px; color: #475569; text-decoration: none; font-weight: 600; transition: color 0.2s; }
+                        .social-links a:hover { color: #2563eb; }
                     </style>
                 </head>
                 <body>
                     <div class="container">
                         <div class="header">
-                            <h2>${requestType === "Project Review" ? "Thank You for Your Feedback!" : "Message Received"}</h2>
+                            <h2>${requestType === "Project Review" ? "Feedback Received! 🚀" : "Message Received 📬"}</h2>
                         </div>
                         <div class="content">
-                            <p>Hi <strong>${name}</strong>,</p>
+                            <div class="greeting">Hi ${name},</div>
                             
-                            <p>${aiEmailBody.replace(/\n/g, '<br>')}</p>
+                            <div class="body-text">${aiEmailBody}</div>
                             
-                            <p><strong>Your Message:</strong></p>
-                            <div class="message-box">
-                                "${message}"
+                            <div class="original-message">
+                                " ${message} "
                             </div>
+                        </div>
+                        <div class="footer">
+                            <div class="profile-name">${profile.name}</div>
+                            <div class="profile-role">${profile.current_role} @ ${profile.current_company}</div>
                             
-                            <p>Best regards,</p>
-                            
-                            <div class="footer">
-                                <strong>${profile.name}</strong><br>
-                                <strong>${profile.current_role}</strong> @ <strong>${profile.current_company}</strong><br>
-                                <div class="social-links">
-                                    ${profile.linkedin ? `<a href="${profile.linkedin}">LinkedIn</a>` : ''}
-                                    ${profile.github ? `<a href="${profile.github}">GitHub</a>` : ''}
-                                </div>
+                            <div class="social-links">
+                                ${profile.linkedin ? `<a href="${profile.linkedin}">LinkedIn</a>` : ''}
+                                ${profile.github ? `<a href="${profile.github}">GitHub</a>` : ''}
+                                <a href="${process.env.NEXT_PUBLIC_APP_URL || '#'}">Portfolio</a>
                             </div>
                         </div>
                     </div>
@@ -109,18 +137,20 @@ export async function POST(request: Request) {
                     from: process.env.EMAIL_USER,
                     to: email, // Send to the sender
                     cc: process.env.EMAIL_USER, // Keep owner in CC
-                    subject: requestType === "Project Review" ? `Thanks for your review, ${name}!` : `Thank you for contacting ${profile.name}`,
+                    subject: requestType === "Project Review" ? `Re: Your review on my portfolio` : `Re: Your message to ${profile.name}`,
                     html: htmlTemplate,
                 };
 
                 await transporter.sendMail(mailOptions);
-                console.log(`[Contact API] Email successfully sent to ${email}`);
+                console.log(`[Contact API] Background email sent to ${email}`);
 
-        } catch (emailError) {
-             // Log but don't fail the request (or maybe we should? User said "sometimes i am not recieving")
-             // Better to log heavily so Vercel logs show it.
-             console.error('[Contact API] Check Email Config! Send failed:', emailError);
-        }
+            } catch (emailError) {
+                console.error('[Contact API] Fire-and-Forget Email Failed:', emailError);
+            }
+        };
+
+        // Fire and forget (No await) - Improves UX Latency
+        sendEmailTask();
 
         return NextResponse.json({ success: true, message: 'Saved and processing email' });
 
