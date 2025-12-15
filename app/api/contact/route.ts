@@ -103,6 +103,7 @@ export async function POST(request: Request) {
                 if (!allowAI) {
                     // Generic Fallback
                     aiEmailBody = `
+                        Hi ${name},<br><br>
                         Thank you for reaching out! I have received your message and will get back to you as soon as possible.<br><br>
                         (Auto-Reply: Daily AI limit reached, but your message is safe!)
                     `;
@@ -118,6 +119,7 @@ export async function POST(request: Request) {
                     } catch (e) {
                         console.error("AI Generation Failed:", e);
                         aiEmailBody = `
+                            Hi ${name},<br><br>
                             Thank you for reaching out! I have received your message and will get back to you as soon as possible.<br><br>
                             I usually respond within 24-48 hours.
                         `;
@@ -139,7 +141,6 @@ export async function POST(request: Request) {
                 <body>
                     <div style="font-family: sans-serif; padding: 20px;">
                         <h3>${requestType === "Project Review" ? "Feedback Received! 🚀" : "Message Received 📬"}</h3>
-                        <p>Hi ${name},</p>
                         <div>${aiEmailBody}</div>
                         <br>
                         <div style="background: #f0f0f0; padding: 10px; font-style: italic;">
