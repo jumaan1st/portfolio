@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     ArrowRight,
     Coffee,
@@ -21,28 +21,62 @@ import { Marquee } from "../Marquee";
 import { usePortfolio } from "../PortfolioContext";
 
 export const HomePage: React.FC = () => {
-    const { data, setData, isAuthenticated } = usePortfolio();
+    const { data: globalData, isAuthenticated, updateProfile } = usePortfolio();
     const { theme } = useTheme();
     const [currentProjectIndex, setCurrentProjectIndex] = useState(0);
     const router = useRouter();
 
+    // Local state for optimized fetching
+    const [blogs, setBlogs] = useState<any[]>([]);
+    const [projects, setProjects] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchHomeData = async () => {
+            try {
+                const [blogsRes, projectsRes] = await Promise.all([
+                    fetch('/api/blogs?limit=3'),
+                    fetch('/api/projects?limit=5') // Fetch a few for carousel
+                ]);
+
+                const blogsData = await blogsRes.json();
+                const projectsData = await projectsRes.json();
+
+                setBlogs(blogsData.data || []);
+                setProjects(projectsData.data || []);
+            } catch (e) {
+                console.error("Home data load failed", e);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchHomeData();
+    }, []);
+
     const nextProject = () => {
+        if (projects.length === 0) return;
         setCurrentProjectIndex(
-            (prev) => (prev + 1) % data.projects.length
+            (prev) => (prev + 1) % projects.length
         );
     };
 
     const prevProject = () => {
+        if (projects.length === 0) return;
         setCurrentProjectIndex(
-            (prev) => (prev - 1 + data.projects.length) % data.projects.length
+            (prev) => (prev - 1 + projects.length) % projects.length
         );
     };
 
-    const onUpdateProfile = (fields: Partial<typeof data.profile>) => {
-        setData((prev) => ({ ...prev, profile: { ...prev.profile, ...fields } }));
+    const onUpdateProfile = (fields: Partial<typeof globalData.profile>) => {
+        updateProfile(fields);
     };
 
-    const project = data.projects[currentProjectIndex];
+    const project = projects[currentProjectIndex];
+
+    if (isLoading) {
+        // Minimal loading skeleton
+        return <div className="min-h-screen animate-pulse bg-slate-50 dark:bg-slate-900" />;
+    }
 
     return (
         <div className="space-y-20 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-12">
@@ -60,13 +94,12 @@ export const HomePage: React.FC = () => {
                         </span>
                         <span
                             className="text-slate-600 dark:text-slate-300 text-xs font-bold uppercase tracking-wider">
-                            {data.ui.statusLabel}{" "}
+                            {globalData.ui.statusLabel}{" "}
                             <span
-                                className="text-green-600 dark:text-green-400">{data.profile.currentCompany}</span>
+                                className="text-green-600 dark:text-green-400">{globalData.profile.currentCompany}</span>
                         </span>
                     </div>
 
-                    {/* AVATAR */}
                     {/* AVATAR */}
                     <div className="relative -mt-2 group">
                         <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-full blur opacity-40 group-hover:opacity-75 transition duration-1000 animate-gradient-x" />
@@ -75,14 +108,14 @@ export const HomePage: React.FC = () => {
                                 // Determine which URL to use
                                 const currentTheme = theme === "system" ? "dark" : theme; // Simplified system check
                                 const photoUrl = currentTheme === "dark"
-                                    ? (data.profile.photoDarkUrl || data.profile.photoLightUrl)
-                                    : (data.profile.photoLightUrl || data.profile.photoDarkUrl);
+                                    ? (globalData.profile.photoDarkUrl || globalData.profile.photoLightUrl)
+                                    : (globalData.profile.photoLightUrl || globalData.profile.photoDarkUrl);
 
                                 if (photoUrl) {
                                     return (
                                         <img
                                             src={photoUrl}
-                                            alt={data.profile.name}
+                                            alt={globalData.profile.name}
                                             className="w-full h-full object-cover object-top"
                                         />
                                     );
@@ -95,24 +128,24 @@ export const HomePage: React.FC = () => {
 
                 <div className="space-y-6 max-w-3xl">
                     <h2 className="text-blue-600 dark:text-blue-400 font-mono text-sm tracking-[0.3em] uppercase">
-                        {data.ui.heroTagline}
+                        {globalData.ui.heroTagline}
                     </h2>
 
                     <h1 className="text-5xl md:text-7xl font-bold text-slate-900 dark:text-white tracking-tight">
                         <EditableField
-                            value={data.profile.name}
+                            value={globalData.profile.name}
                             isEditing={isAuthenticated}
                             onSave={(val) => onUpdateProfile({ name: val })}
                         />
                     </h1>
 
                     <div className="h-12 text-2xl md:text-3xl ...">
-                        I am a <Typewriter words={data.profile.roles} />
+                        I am a <Typewriter words={globalData.profile.roles} />
                     </div>
 
                     <div className="text-slate-600 dark:text-slate-400 leading-relaxed text-lg max-w-2xl mx-auto">
                         <EditableField
-                            value={data.profile.summary}
+                            value={globalData.profile.summary}
                             isEditing={isAuthenticated}
                             type="textarea"
                             onSave={(val) => onUpdateProfile({ summary: val })}
@@ -136,7 +169,7 @@ export const HomePage: React.FC = () => {
                         Contact Me
                     </button>
 
-                    {data.profile.resumeUrl && (
+                    {globalData.profile.resumeUrl && (
                         <a
                             href="/api/resume"
                             download="Mohammed_Jumaan_Resume.pdf"
@@ -148,16 +181,16 @@ export const HomePage: React.FC = () => {
                 </div>
             </section>
 
-            <Marquee items={data.skills} />
+            <Marquee items={globalData.skills} />
 
             {/* Featured projects carousel */}
             {project && (
                 <section className="max-w-5xl mx-auto w-full">
                     <div className="text-center mb-10">
                         <h3 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
-                            {data.ui.projectTitle}
+                            {globalData.ui.projectTitle}
                         </h3>
-                        <p className="text-slate-600 dark:text-slate-500">{data.ui.projectSubtitle}</p>
+                        <p className="text-slate-600 dark:text-slate-500">{globalData.ui.projectSubtitle}</p>
                     </div>
 
                     <div
@@ -178,7 +211,7 @@ export const HomePage: React.FC = () => {
                                     {project.description}
                                 </p>
                                 <div className="flex flex-wrap gap-2 mb-8">
-                                    {project.tech.map((t) => (
+                                    {project.tech.map((t: string) => (
                                         <span
                                             key={t}
                                             className="text-xs font-mono bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-1 rounded border border-slate-200 dark:border-slate-700"
@@ -244,9 +277,9 @@ export const HomePage: React.FC = () => {
                 <div className="flex justify-between items-end mb-10 px-4">
                     <div>
                         <h3 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
-                            {data.ui.blogTitle}
+                            {globalData.ui.blogTitle}
                         </h3>
-                        <p className="text-slate-600 dark:text-slate-500">{data.ui.blogSubtitle}</p>
+                        <p className="text-slate-600 dark:text-slate-500">{globalData.ui.blogSubtitle}</p>
                     </div>
                     <button
                         className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-bold text-sm hidden md:block"
@@ -258,7 +291,7 @@ export const HomePage: React.FC = () => {
                 </div>
 
                 <div className="grid md:grid-cols-3 gap-6 px-4">
-                    {data.blogs.map((blog) => (
+                    {blogs.map((blog) => (
                         <article
                             key={blog.id}
                             onClick={() => router.push(`/blogs/${blog.id}`)}
@@ -277,7 +310,7 @@ export const HomePage: React.FC = () => {
                                 {blog.excerpt}
                             </p>
                             <div className="flex gap-2 mt-auto">
-                                {blog.tags.map((tag) => (
+                                {blog.tags.map((tag: string) => (
                                     <span
                                         key={tag}
                                         className="text-[10px] uppercase font-bold tracking-wider text-slate-500 bg-slate-100 dark:bg-slate-950 px-2 py-1 rounded"

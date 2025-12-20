@@ -19,10 +19,10 @@ function Shell({ children }: { children: React.ReactNode }) {
 
     // Sync welcome modal when data is loaded
     useEffect(() => {
-        if (!isLoading && data.config.showWelcomeModal) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setShowWelcome(true);
-        }
+        // User requested to remove the welcome popup
+        // if (!isLoading && data.config.showWelcomeModal) {
+        //    setShowWelcome(true);
+        // }
     }, [isLoading, data.config.showWelcomeModal]);
 
     const [reviewForm, setReviewForm] = useState({
@@ -259,6 +259,9 @@ export default function RootLayout({
 }) {
     return (
         <html lang="en" suppressHydrationWarning>
+            <head>
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css" />
+            </head>
             <body className="bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-200 transition-colors duration-300">
                 <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
                     <PortfolioProvider>

@@ -50,6 +50,11 @@ interface IconRendererProps {
 }
 
 export const IconRenderer: React.FC<IconRendererProps> = ({ iconName, className, size = 24 }) => {
+    // If it's a devicon class (e.g. "devicon-react-original") or contains "devicon-"
+    if (iconName?.includes('devicon-') || iconName?.includes('fa-')) {
+        return <i className={`${iconName} ${className}`} style={{ fontSize: size }} />;
+    }
+
     const IconComponent = iconMap[iconName] || HelpCircle; // Fallback icon
     return <IconComponent className={className} size={size} />;
 };

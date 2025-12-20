@@ -76,7 +76,6 @@ export interface UIConfig {
 
 export interface Config {
     adminEmail: string;
-    adminPass: string;
     showWelcomeModal: boolean;
 }
 
@@ -94,7 +93,6 @@ export interface PortfolioData {
 export const initialEmptyData: PortfolioData = {
     config: {
         adminEmail: "",
-        adminPass: "",
         showWelcomeModal: false,
     },
     ui: {

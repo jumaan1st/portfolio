@@ -1,5 +1,6 @@
-scripts/
-dist/
-.next/
-out/
-node_modules/
+node_modules
+.next
+out
+build
+dist
+scripts

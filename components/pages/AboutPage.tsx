@@ -6,19 +6,37 @@ import { usePortfolio } from "@/components/PortfolioContext";
 import { IconRenderer } from "@/components/IconRenderer";
 
 export const AboutPage: React.FC = () => {
-    const { data } = usePortfolio();
+    const { data: globalData } = usePortfolio();
+    const [experience, setExperience] = React.useState<any[]>([]);
+    const [education, setEducation] = React.useState<any[]>([]);
+
+    React.useEffect(() => {
+        const fetchAboutData = async () => {
+            try {
+                const [expRes, eduRes] = await Promise.all([
+                    fetch('/api/experience'),
+                    fetch('/api/education')
+                ]);
+                setExperience(await expRes.json());
+                setEducation(await eduRes.json());
+            } catch (e) {
+                console.error(e);
+            }
+        };
+        fetchAboutData();
+    }, []);
 
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl mx-auto space-y-12">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl mx-auto space-y-12 pb-12">
             <div className="text-center mb-12">
                 <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">About Me</h2>
                 <div className="h-1 w-20 bg-blue-600 dark:bg-blue-500 mx-auto rounded-full mb-6" />
 
                 {/* Social Links */}
                 <div className="flex justify-center gap-4">
-                    {data.profile.github && (
+                    {globalData.profile.github && (
                         <a
-                            href={`https://${data.profile.github.replace(/^https?:\/\//, '')}`}
+                            href={`https://${globalData.profile.github.replace(/^https?:\/\//, '')}`}
                             target="_blank"
                             rel="noreferrer"
                             className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-900 rounded-full text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
@@ -27,9 +45,9 @@ export const AboutPage: React.FC = () => {
                             <span className="font-medium">GitHub</span>
                         </a>
                     )}
-                    {data.profile.linkedin && (
+                    {globalData.profile.linkedin && (
                         <a
-                            href={`https://${data.profile.linkedin.replace(/^https?:\/\//, '')}`}
+                            href={`https://${globalData.profile.linkedin.replace(/^https?:\/\//, '')}`}
                             target="_blank"
                             rel="noreferrer"
                             className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-full text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
@@ -47,7 +65,7 @@ export const AboutPage: React.FC = () => {
                     <Briefcase className="text-blue-600 dark:text-blue-400" /> Experience
                 </h3>
                 <div className="border-l-2 border-slate-200 dark:border-slate-800 ml-3 space-y-12 pl-8 relative">
-                    {data.experience.map((exp) => (
+                    {experience.map((exp) => (
                         <div key={exp.id} className="relative group">
                             <div className="absolute -left-[41px] top-0 w-6 h-6 bg-white dark:bg-slate-900 border-4 border-blue-600 dark:border-blue-500 rounded-full group-hover:scale-125 transition-transform duration-300" />
                             <div className="flex flex-col md:flex-row md:items-center justify-between mb-2">
@@ -72,7 +90,7 @@ export const AboutPage: React.FC = () => {
                         <GraduationCap className="text-purple-600 dark:text-purple-400" /> Education
                     </h3>
                     <div className="space-y-4">
-                        {data.education.map((edu) => (
+                        {education.map((edu) => (
                             <div
                                 key={edu.id}
                                 className="bg-white dark:bg-slate-800/30 p-6 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm"
@@ -95,7 +113,7 @@ export const AboutPage: React.FC = () => {
                         <Zap className="text-yellow-500 dark:text-yellow-400" /> Technical Arsenal
                     </h3>
                     <div className="flex flex-wrap justify-center md:justify-start gap-3">
-                        {data.skills.map((skill, idx) => (
+                        {globalData.skills.map((skill, idx) => (
                             <div
                                 key={idx}
                                 className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-lg shadow-sm"

@@ -7,9 +7,18 @@ module.exports = {
         "./components/**/*.{js,ts,jsx,tsx,mdx}",
         "./data/**/*.{js,ts,jsx,tsx,mdx}",
     ],
-    theme: {
-        extend: {},
-    },
-    plugins: [],
     darkMode: 'class',
+    theme: {
+        extend: {
+            keyframes: {
+                marquee: {
+                    '0%': { transform: 'translateX(0)' },
+                    '100%': { transform: 'translateX(-50%)' },
+                }
+            },
+            animation: {
+                marquee: 'marquee 120s linear infinite',
+            }
+        },
+    },
 };
