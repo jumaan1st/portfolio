@@ -1,0 +1,4 @@
+[2025-12-20T18:06:15.609Z] Provider: default | Error: Error: Missing Gemini API key.
+[2025-12-20T18:06:44.018Z] Provider: default | Error: Error: Missing Gemini API key.
+[2025-12-20T18:11:00.151Z] Provider: default | Error: Error: Missing Gemini API key.
+[2025-12-20T18:11:13.923Z] Provider: default | Error: Error: Missing Gemini API key.

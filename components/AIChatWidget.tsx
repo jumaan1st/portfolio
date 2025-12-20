@@ -112,18 +112,26 @@ export const AIChatWidget: React.FC = () => {
                         : `${e.role} at ${e.company} (${e.period})`
                 ),
             },
-            // Top 4 projects full detail, others title/tech only
-            projects: (rest.projects || []).map((p: any, idx: number) => ({
-                title: p.title,
-                tech: p.tech,
-                description: idx < 4 ? p.description : undefined, // Only top 4 get desc
-            })),
-            // Recent 3 blogs title/excerpt, others title only
-            blogs: (rest.blogs || []).map((b: any, idx: number) => ({
-                title: b.title,
-                date: b.date,
-                excerpt: idx < 3 ? b.excerpt : undefined, // Only recent 3 get excerpt
-            }))
+            // LAST 10 projects, top 3 with complete details (longDescription or description)
+            projects: (rest.projects || [])
+                .slice()
+                .reverse()
+                .slice(0, 10)
+                .map((p: any, idx: number) => ({
+                    title: p.title,
+                    tech: p.tech,
+                    description: idx < 3 ? (p.longDescription || p.description) : undefined,
+                })),
+            // LAST 10 blogs, top 3 with full details (content or excerpt)
+            blogs: (rest.blogs || [])
+                .slice()
+                .reverse()
+                .slice(0, 10)
+                .map((b: any, idx: number) => ({
+                    title: b.title,
+                    date: b.date,
+                    content: idx < 3 ? (b.content || b.excerpt) : undefined,
+                }))
         };
     };
 

@@ -51,6 +51,18 @@ export async function POST(request: Request) {
 
         if (aiResponse.startsWith("Error:") || aiResponse.startsWith("No response")) {
             console.warn(`[AI Chat] AI Provider Error: ${aiResponse}`);
+
+            // DEBUG LOGGING
+            try {
+                const fs = require('fs');
+                const path = require('path');
+                const logPath = path.join(process.cwd(), 'debug_ai_errors.txt');
+                const logEntry = `[${new Date().toISOString()}] Provider: ${process.env.AI_PROVIDER || 'default'} | Error: ${aiResponse}\n`;
+                fs.appendFileSync(logPath, logEntry);
+            } catch (e) {
+                console.error("Failed to write debug log", e);
+            }
+
             // ... error handling
             if (aiResponse.includes("429") || aiResponse.includes("Rate limit")) {
                 return NextResponse.json(

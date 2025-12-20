@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import {
     Trash2, Plus, Save, X, Edit2, Loader2, SaveAll, Sparkles,
     LayoutDashboard, User, FolderOpen, PenTool, BookOpen, Briefcase, GraduationCap,
-    LogOut, Menu, ChevronRight, Search
+    LogOut, Menu, ChevronRight, Search, Upload, ExternalLink, RefreshCw
 } from "lucide-react";
 import { usePortfolio } from "@/components/PortfolioContext";
 import { Project } from "@/data/portfolioData";
@@ -27,6 +27,137 @@ const SidebarItem = ({ icon: Icon, label, active, onClick }: any) => (
         {active && <ChevronRight size={16} className="ml-auto opacity-50" />}
     </button>
 );
+
+const FileUploader = ({ label, value, onChange, folder = 'uploads' }: any) => {
+    const [uploading, setUploading] = useState(false);
+    const { addToast } = useToast();
+
+    const handleDeleteOld = async (oldUrl: string) => {
+        if (!oldUrl) return;
+        try {
+            await fetch('/api/upload', {
+                method: 'DELETE',
+                body: JSON.stringify({ url: oldUrl }),
+                headers: { 'Content-Type': 'application/json' }
+            });
+        } catch (e) {
+            console.error("Failed to delete old file", e);
+        }
+    };
+
+    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Client-side Safety Limit: 5MB
+        if (file.size > 5 * 1024 * 1024) {
+            addToast("File is too large! Max 5MB.", "error");
+            return;
+        }
+
+        setUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('folder', folder);
+
+        try {
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                if (value) await handleDeleteOld(value);
+                onChange(data.url);
+                addToast("File uploaded successfully", "success");
+            } else {
+                addToast("Upload failed", "error");
+            }
+        } catch (error) {
+            console.error(error);
+            addToast("Upload error", "error");
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const isPdf = value?.toLowerCase().endsWith('.pdf');
+    const isImage = value?.match(/\.(jpeg|jpg|gif|png|webp)$/i) || (!isPdf && value);
+
+    // Helper to truncate URL for display - explicitly stricter for mobile
+    const displayUrl = value ? (value.length > 25 ? value.substring(0, 20) + '...' : value) : '';
+
+    return (
+        <div className="w-full min-w-0 space-y-2">
+            <label className="text-xs font-bold text-slate-500 uppercase ml-1 block">{label}</label>
+
+            {!value ? (
+                <div className="relative group w-full">
+                    <div className="w-full border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-4 flex flex-col items-center justify-center gap-2 text-slate-400 hover:text-blue-500 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all cursor-pointer h-28 sm:h-32">
+                        {uploading ? <Loader2 className="animate-spin" size={24} /> : <Upload size={24} />}
+                        <span className="text-xs font-bold">{uploading ? "Uploading..." : "Click to Upload"}</span>
+                    </div>
+                    <input
+                        type="file"
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        onChange={handleUpload}
+                        disabled={uploading}
+                        accept={folder === 'resumes' ? ".pdf" : "image/*"}
+                    />
+                </div>
+            ) : (
+                <div className="w-full max-w-full relative group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-2 grid grid-cols-[auto_1fr_auto] gap-3 items-center shadow-sm hover:shadow-md transition-all overflow-hidden">
+                    {/* Preview Icon/Image - Fixed Width */}
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden shrink-0 flex items-center justify-center border border-slate-100 dark:border-slate-700">
+                        {isImage ? (
+                            <img src={value} alt="Preview" className="w-full h-full object-cover" />
+                        ) : (
+                            <span className="text-[10px] font-bold text-red-500 uppercase">PDF</span>
+                        )}
+                    </div>
+
+                    {/* Info - Flexible Width with Truncation */}
+                    <div className="min-w-0 overflow-hidden flex flex-col justify-center">
+                        <p className="text-[10px] uppercase font-bold text-slate-400 mb-0.5">{folder === 'resumes' ? 'Document' : 'Image'}</p>
+                        <a href={value} target="_blank" rel="noreferrer" className="block text-xs font-mono text-slate-600 dark:text-slate-300 truncate hover:text-blue-600 transition-colors" title={value}>
+                            {displayUrl}
+                        </a>
+                    </div>
+
+                    {/* Actions - Fixed Width */}
+                    <div className="flex items-center gap-1 shrink-0">
+                        <a
+                            href={value}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
+                            title="Open Link"
+                        >
+                            <ExternalLink size={16} />
+                        </a>
+                        <div className="relative w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-all cursor-pointer" title="Replace File">
+                            <RefreshCw size={16} />
+                            <input
+                                type="file"
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                onChange={handleUpload}
+                                disabled={uploading}
+                                accept={folder === 'resumes' ? ".pdf" : "image/*"}
+                            />
+                        </div>
+                    </div>
+
+                    {uploading && (
+                        <div className="absolute inset-0 bg-white/80 dark:bg-slate-900/80 flex items-center justify-center rounded-xl z-10 backdrop-blur-sm">
+                            <Loader2 className="animate-spin text-blue-600" size={20} />
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+};
 
 const AdminContent: React.FC = () => {
     const {
@@ -344,7 +475,7 @@ const AdminContent: React.FC = () => {
             <main className="flex-1 min-w-0 overflow-auto h-screen relative">
 
                 {/* Header (Mobile Toggle + Quick Actions) */}
-                <header className="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex items-center justify-between">
+                <header className="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="lg:hidden p-2 text-slate-600 dark:text-slate-400">
                             <Menu size={24} />
@@ -360,13 +491,13 @@ const AdminContent: React.FC = () => {
                     </div>
                 </header>
 
-                <div className="p-6 max-w-6xl mx-auto space-y-6">
+                <div className="p-4 sm:p-6 max-w-6xl mx-auto space-y-6">
 
                     {/* Tab Content */}
 
                     {/* PROFILE */}
                     {activeTab === 'profile' && profileForm && (
-                        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 space-y-6">
+                        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 sm:p-8 space-y-6">
                             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pb-4 border-b dark:border-slate-700">
                                 <h3 className="text-lg font-bold">Personal Information</h3>
                                 <button onClick={saveProfile} className="w-full md:w-auto bg-blue-600 text-white px-6 py-2 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors"><Save size={16} /> Save Changes</button>
@@ -378,12 +509,12 @@ const AdminContent: React.FC = () => {
                                     <Input label="Email Address" value={profileForm.email} onChange={v => setProfileForm({ ...profileForm, email: v })} />
                                 </div>
                                 <div className="space-y-4">
-                                    <Input label="Phone Number" value={profileForm.phone} onChange={v => setProfileForm({ ...profileForm, phone: v })} />
-                                    <Input label="Resume URL" value={profileForm.resumeUrl} onChange={v => setProfileForm({ ...profileForm, resumeUrl: v })} />
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <Input label="Photo (Light)" value={profileForm.photoLightUrl || ''} onChange={v => setProfileForm({ ...profileForm, photoLightUrl: v })} />
-                                        <Input label="Photo (Dark)" value={profileForm.photoDarkUrl || ''} onChange={v => setProfileForm({ ...profileForm, photoDarkUrl: v })} />
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <FileUploader label="Photo (Light)" value={profileForm.photoLightUrl || ''} onChange={(v: string) => setProfileForm({ ...profileForm, photoLightUrl: v })} folder="photos" />
+                                        <FileUploader label="Photo (Dark)" value={profileForm.photoDarkUrl || ''} onChange={(v: string) => setProfileForm({ ...profileForm, photoDarkUrl: v })} folder="photos" />
                                     </div>
+                                    <Input label="Phone Number" value={profileForm.phone} onChange={(v: string) => setProfileForm({ ...profileForm, phone: v })} />
+                                    <FileUploader label="Resume URL" value={profileForm.resumeUrl} onChange={(v: string) => setProfileForm({ ...profileForm, resumeUrl: v })} folder="resumes" />
                                 </div>
                                 <div className="md:col-span-2">
                                     <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-2 block">Professional Summary</label>
@@ -452,7 +583,7 @@ const AdminContent: React.FC = () => {
                                         <Input label="Link" value={editingProject.link} onChange={v => setEditingProject({ ...editingProject, link: v })} />
                                     </div>
                                     <Input label="Technologies (comma separated)" value={Array.isArray(editingProject.tech) ? editingProject.tech.join(', ') : editingProject.tech} onChange={v => setEditingProject({ ...editingProject, tech: v.split(',').map(s => s.trim()) })} />
-                                    <Input label="Image URL" value={editingProject.image} onChange={v => setEditingProject({ ...editingProject, image: v })} />
+                                    <FileUploader label="Project Image" value={editingProject.image} onChange={(v: string) => setEditingProject({ ...editingProject, image: v })} folder="projects" />
                                     <div className="md:col-span-2">
                                         <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-2 block">Description</label>
                                         <textarea className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 h-32 outline-none focus:ring-2 ring-blue-500" value={editingProject.description} onChange={e => setEditingProject({ ...editingProject, description: e.target.value })} />
@@ -679,9 +810,9 @@ const AdminContent: React.FC = () => {
 
 // UI Helpers
 const Input = ({ label, value, onChange }: { label: string, value: any, onChange: (v: string) => void }) => (
-    <div>
+    <div className="w-full min-w-0">
         <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{label}</label>
-        <input className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 outline-none focus:ring-2 ring-blue-500 transition-all" value={value || ''} onChange={e => onChange(e.target.value)} />
+        <input className="w-full min-w-0 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 outline-none focus:ring-2 ring-blue-500 transition-all" value={value || ''} onChange={e => onChange(e.target.value)} />
     </div>
 );
 

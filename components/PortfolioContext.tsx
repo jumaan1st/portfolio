@@ -57,11 +57,13 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
     // Fetches ONLY essential data for public pages (faster load)
     const fetchEssentials = React.useCallback(async () => {
         try {
-            const [configRes, uiRes, profileRes, skillsRes] = await Promise.all([
+            const [configRes, uiRes, profileRes, skillsRes, projectRes, blogsRes] = await Promise.all([
                 fetch('/api/config'),
                 fetch('/api/ui-config'),
                 fetch('/api/profile'),
-                fetch('/api/skills')
+                fetch('/api/skills'),
+                fetch('/api/projects?limit=50'),
+                fetch('/api/blogs?limit=50')
             ]);
 
             const config = await parseOrNull(configRes, initialEmptyData.config);
@@ -69,7 +71,12 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
             const profile = await parseOrNull(profileRes, initialEmptyData.profile);
             const skills = await parseOrNull(skillsRes, []);
 
-            setData(prev => ({ ...prev, config, ui, profile, skills }));
+            const projJson = await parseOrNull(projectRes, { data: [] });
+            const blogsJson = await parseOrNull(blogsRes, { data: [] });
+            const projects = Array.isArray(projJson) ? projJson : (projJson.data || []);
+            const blogs = Array.isArray(blogsJson) ? blogsJson : (blogsJson.data || []);
+
+            setData(prev => ({ ...prev, config, ui, profile, skills, projects, blogs }));
         } catch (e) {
             console.error("Essential data fetch failed", e);
         } finally {

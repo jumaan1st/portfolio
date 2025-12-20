@@ -1,0 +1,14 @@
+DB_USER=postgres
+DB_PASSWORD=root
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=portfolio
+
+# Cloudflare R2 Configuration
+R2_ACCOUNT_ID=d1432a65f80c1ef4f02bc1fb0b3c8504
+R2_BUCKET_NAME=portfolio
+R2_PUBLIC_URL=https://pub-449628d08210466891a47d6feb22ed65.r2.dev
+
+# S3 Compatible Credentials
+R2_ACCESS_KEY_ID=39b2941d0c1d2c5eca6b317edd61e9e9
+R2_SECRET_ACCESS_KEY=fa9a3c37a4b4ad79d38a0219ea930a1379980b0619ea6ca3bd4acb8fae77a9ff
