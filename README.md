@@ -35,6 +35,14 @@ More than just a form.
 
 ![Projects Page](file:///C:/Users/moham/.gemini/antigravity/brain/a5f22c7d-9fa0-4b0e-8c63-d781d20d76eb/projects_page_1765696532545.png)
 
+### 🛡️ Protected Admin Portal
+A comprehensive dashboard to manage your portfolio content dynamically.
+*   **AI Resume Parsing**: Paste your resume text, and the AI extracting your profile, skills, experience, and education to auto-fill the database with structured data.
+*   **Full CMS**: Create, update, and delete Projects, Blogs, Skills, Experience, and Education entries without touching code.
+*   **Secure Access**: Protected by robust authentication to prevent unauthorized changes.
+
+![Admin Portal](file:///C:/Users/moham/.gemini/antigravity/brain/a5f22c7d-9fa0-4b0e-8c63-d781d20d76eb/admin_page_mockup.png)
+
 ---
 
 ## 🛠️ Tech Stack
