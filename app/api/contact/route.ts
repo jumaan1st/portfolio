@@ -43,6 +43,10 @@ export async function POST(request: Request) {
                 const baseContext = `You are ${profile.name}, a ${profile.current_role} at ${profile.current_company}.`;
                 const toneInstruction = "Analyze the sender's message tone. If casual, be friendly. If formal, be professional.";
 
+                // IMPORTANT: We ask AI to handle the full email body including greeting and signature.
+                // We provide the name explicitly to avoid placeholders.
+                const structureInstruction = `Start with "Hi ${name}," and end with "Best regards, \\n${profile.name}\\n${profile.current_role}\\n${profile.current_company}".`;
+
                 if (requestType === "Project Review") {
                     aiPrompt = `
                         ${baseContext}
@@ -51,7 +55,7 @@ export async function POST(request: Request) {
                         1. ${toneInstruction}
                         2. Thank them for the review.
                         3. Keep it concise (under 150 words).
-                        4. Sign off professionally.
+                        4. ${structureInstruction}
                     `;
                 } else {
                     aiPrompt = `
@@ -62,7 +66,7 @@ export async function POST(request: Request) {
                         2. Acknowledge their specific inquiry.
                         3. Confirm receipt and promise a follow-up.
                         4. Keep it concise (under 100 words).
-                        5. Sign off professionally.
+                        5. ${structureInstruction}
                     `;
                 }
 
@@ -105,7 +109,11 @@ export async function POST(request: Request) {
                     aiEmailBody = `
                         Hi ${name},<br><br>
                         Thank you for reaching out! I have received your message and will get back to you as soon as possible.<br><br>
-                        (Auto-Reply: Daily AI limit reached, but your message is safe!)
+                        (Auto-Reply: Daily AI limit reached, but your message is safe!)<br><br>
+                        Best regards,<br>
+                        ${profile.name}<br>
+                        ${profile.current_role}<br>
+                        ${profile.current_company}
                     `;
                 } else {
                     // Call AI
@@ -121,7 +129,11 @@ export async function POST(request: Request) {
                         aiEmailBody = `
                             Hi ${name},<br><br>
                             Thank you for reaching out! I have received your message and will get back to you as soon as possible.<br><br>
-                            I usually respond within 24-48 hours.
+                            I usually respond within 24-48 hours.<br><br>
+                            Best regards,<br>
+                            ${profile.name}<br>
+                            ${profile.current_role}<br>
+                            ${profile.current_company}
                         `;
                     }
                 }
@@ -146,8 +158,6 @@ export async function POST(request: Request) {
                         <div style="background: #f0f0f0; padding: 10px; font-style: italic;">
                             " ${message} "
                         </div>
-                        <br>
-                        <p>Best regards,<br>${profile.name}</p>
                     </div>
                 </body>
                 </html>
