@@ -1,33 +1,102 @@
-// components/pages/BlogDetailPage.tsx
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Coffee, Tag } from "lucide-react";
+import { ChevronLeft, Coffee, Tag, Edit } from "lucide-react";
 import type { BlogPost } from "@/data/portfolioData";
+import { usePortfolio } from "@/components/PortfolioContext";
+import { BlogEditor } from "./BlogEditor";
 
 interface BlogDetailPageProps {
     blog: BlogPost;
 }
 
-export const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ blog }) => {
+export const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ blog: initialBlog }) => {
     const router = useRouter();
+    const { isAuthenticated, refreshData } = usePortfolio();
+    const [blog, setBlog] = useState(initialBlog);
+    const [isEditing, setIsEditing] = useState(false);
+
+    const handleSave = async (updatedBlog: BlogPost) => {
+        try {
+            const res = await fetch(`/api/blogs?id=${blog.id}`, {
+                method: 'PUT',
+                body: JSON.stringify(updatedBlog),
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (res.ok) {
+                const saved = await res.json();
+                setBlog(saved);
+                setIsEditing(false);
+                if (refreshData) refreshData();
+            } else {
+                alert('Failed to save changes');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Error saving blog');
+        }
+    };
+
+    if (isEditing) {
+        return (
+            <div className="max-w-5xl mx-auto py-12 animate-in fade-in slide-in-from-bottom-8">
+                <BlogEditor
+                    blog={blog}
+                    onSave={handleSave}
+                    onCancel={() => setIsEditing(false)}
+                />
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-3xl mx-auto animate-in fade-in slide-in-from-right-8 duration-500 pb-12">
-            <button
-                onClick={() => router.push("/blogs")}
-                className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-6 transition-colors group"
-            >
-                <ChevronLeft
-                    size={20}
-                    className="group-hover:-translate-x-1 transition-transform"
-                />
-                Back to Blogs
-            </button>
+            <div className="flex justify-between items-center mb-6">
+                <button
+                    onClick={() => router.push("/blogs")}
+                    className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors group"
+                >
+                    <ChevronLeft
+                        size={20}
+                        className="group-hover:-translate-x-1 transition-transform"
+                    />
+                    Back to Blogs
+                </button>
+
+                {isAuthenticated && (
+                    <button
+                        onClick={() => setIsEditing(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 rounded-lg text-sm font-bold transition-all"
+                    >
+                        <Edit size={16} /> Edit Post
+                    </button>
+                )}
+            </div>
 
             <article className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 md:p-10 shadow-2xl">
                 <header className="mb-6">
+                    <div className="relative h-64 md:h-96 w-full mb-8 overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800 shadow-md">
+                        {blog.image ? (
+                            <img
+                                src={blog.image}
+                                alt={blog.title}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                    (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                                }}
+                            />
+                        ) : null}
+                        <div className={`absolute inset-0 flex items-center justify-center text-slate-300 dark:text-slate-600 ${blog.image ? 'hidden' : ''}`}>
+                            <div className="flex flex-col items-center gap-2">
+                                <Coffee size={64} />
+                                <span className="text-sm font-mono uppercase tracking-widest opacity-50">Cover Image</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="flex justify-between items-center text-xs text-slate-500 mb-3">
                         <span>{blog.date}</span>
                         <span className="flex items-center gap-1">
@@ -35,17 +104,20 @@ export const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ blog }) => {
                         </span>
                     </div>
 
-                    <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mb-3">
+                    <h1 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6 leading-tight">
                         {blog.title}
                     </h1>
 
-                    <p className="text-slate-600 dark:text-slate-400 text-sm mb-4">{blog.excerpt}</p>
+                    <div
+                        className="text-slate-600 dark:text-slate-400 text-lg mb-6 leading-relaxed italic border-l-4 border-blue-500 pl-4 prose dark:prose-invert max-w-none"
+                        dangerouslySetInnerHTML={{ __html: blog.excerpt || '' }}
+                    />
 
                     <div className="flex flex-wrap gap-2">
                         {blog.tags.map((tag) => (
                             <span
                                 key={tag}
-                                className="inline-flex items-center gap-1 text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-950 px-2 py-1 rounded-full"
+                                className="inline-flex items-center gap-1 text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-950 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-800"
                             >
                                 <Tag size={10} /> {tag}
                             </span>
@@ -53,22 +125,12 @@ export const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ blog }) => {
                     </div>
                 </header>
 
-                <hr className="border-slate-200 dark:border-slate-800 my-6" />
+                <hr className="border-slate-200 dark:border-slate-800 my-8" />
 
-                <section className="prose prose-slate dark:prose-invert max-w-none text-slate-700 dark:text-slate-200">
-                    {blog.content
-                        ? blog.content.split("\n\n").map((para, idx) => (
-                            <p key={idx} className="mb-4 leading-relaxed">
-                                {para}
-                            </p>
-                        ))
-                        : (
-                            <p className="leading-relaxed text-slate-600 dark:text-slate-400">
-                                {blog.excerpt}
-                            </p>
-                        )
-                    }
-                </section>
+                <section
+                    className="prose prose-lg prose-slate dark:prose-invert max-w-none text-slate-700 dark:text-slate-200 blog-content break-words overflow-hidden"
+                    dangerouslySetInnerHTML={{ __html: blog.content || '' }}
+                />
 
             </article>
         </div>

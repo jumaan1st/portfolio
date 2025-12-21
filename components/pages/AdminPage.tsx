@@ -8,9 +8,11 @@ import {
 } from "lucide-react";
 import { usePortfolio } from "@/components/PortfolioContext";
 import { Project } from "@/data/portfolioData";
-import { ToastProvider, useToast } from "@/components/ui/Toast";
+import { useToast } from "@/components/ui/Toast";
 import { IconPicker } from "@/components/ui/IconPicker";
 import { PROJECT_CATEGORIES, BLOG_TAGS } from "@/data/constants";
+import RichTextEditor from "@/components/RichTextEditor";
+import { FileUploader } from "@/components/FileUploader";
 
 // --- Sub-components (could be separate files, kept here for cohesion during migration) ---
 
@@ -28,136 +30,7 @@ const SidebarItem = ({ icon: Icon, label, active, onClick }: any) => (
     </button>
 );
 
-const FileUploader = ({ label, value, onChange, folder = 'uploads' }: any) => {
-    const [uploading, setUploading] = useState(false);
-    const { addToast } = useToast();
 
-    const handleDeleteOld = async (oldUrl: string) => {
-        if (!oldUrl) return;
-        try {
-            await fetch('/api/upload', {
-                method: 'DELETE',
-                body: JSON.stringify({ url: oldUrl }),
-                headers: { 'Content-Type': 'application/json' }
-            });
-        } catch (e) {
-            console.error("Failed to delete old file", e);
-        }
-    };
-
-    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        // Client-side Safety Limit: 5MB
-        if (file.size > 5 * 1024 * 1024) {
-            addToast("File is too large! Max 5MB.", "error");
-            return;
-        }
-
-        setUploading(true);
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('folder', folder);
-
-        try {
-            const res = await fetch('/api/upload', {
-                method: 'POST',
-                body: formData
-            });
-            const data = await res.json();
-
-            if (data.success) {
-                if (value) await handleDeleteOld(value);
-                onChange(data.url);
-                addToast("File uploaded successfully", "success");
-            } else {
-                addToast("Upload failed", "error");
-            }
-        } catch (error) {
-            console.error(error);
-            addToast("Upload error", "error");
-        } finally {
-            setUploading(false);
-        }
-    };
-
-    const isPdf = value?.toLowerCase().endsWith('.pdf');
-    const isImage = value?.match(/\.(jpeg|jpg|gif|png|webp)$/i) || (!isPdf && value);
-
-    // Helper to truncate URL for display - explicitly stricter for mobile
-    const displayUrl = value ? (value.length > 25 ? value.substring(0, 20) + '...' : value) : '';
-
-    return (
-        <div className="w-full min-w-0 space-y-2">
-            <label className="text-xs font-bold text-slate-500 uppercase ml-1 block">{label}</label>
-
-            {!value ? (
-                <div className="relative group w-full">
-                    <div className="w-full border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-4 flex flex-col items-center justify-center gap-2 text-slate-400 hover:text-blue-500 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all cursor-pointer h-28 sm:h-32">
-                        {uploading ? <Loader2 className="animate-spin" size={24} /> : <Upload size={24} />}
-                        <span className="text-xs font-bold">{uploading ? "Uploading..." : "Click to Upload"}</span>
-                    </div>
-                    <input
-                        type="file"
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        onChange={handleUpload}
-                        disabled={uploading}
-                        accept={folder === 'resumes' ? ".pdf" : "image/*"}
-                    />
-                </div>
-            ) : (
-                <div className="w-full max-w-full relative group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-2 grid grid-cols-[auto_1fr_auto] gap-3 items-center shadow-sm hover:shadow-md transition-all overflow-hidden">
-                    {/* Preview Icon/Image - Fixed Width */}
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden shrink-0 flex items-center justify-center border border-slate-100 dark:border-slate-700">
-                        {isImage ? (
-                            <img src={value} alt="Preview" className="w-full h-full object-cover" />
-                        ) : (
-                            <span className="text-[10px] font-bold text-red-500 uppercase">PDF</span>
-                        )}
-                    </div>
-
-                    {/* Info - Flexible Width with Truncation */}
-                    <div className="min-w-0 overflow-hidden flex flex-col justify-center">
-                        <p className="text-[10px] uppercase font-bold text-slate-400 mb-0.5">{folder === 'resumes' ? 'Document' : 'Image'}</p>
-                        <a href={value} target="_blank" rel="noreferrer" className="block text-xs font-mono text-slate-600 dark:text-slate-300 truncate hover:text-blue-600 transition-colors" title={value}>
-                            {displayUrl}
-                        </a>
-                    </div>
-
-                    {/* Actions - Fixed Width */}
-                    <div className="flex items-center gap-1 shrink-0">
-                        <a
-                            href={value}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
-                            title="Open Link"
-                        >
-                            <ExternalLink size={16} />
-                        </a>
-                        <div className="relative w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-all cursor-pointer" title="Replace File">
-                            <RefreshCw size={16} />
-                            <input
-                                type="file"
-                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                onChange={handleUpload}
-                                disabled={uploading}
-                                accept={folder === 'resumes' ? ".pdf" : "image/*"}
-                            />
-                        </div>
-                    </div>
-
-                    {uploading && (
-                        <div className="absolute inset-0 bg-white/80 dark:bg-slate-900/80 flex items-center justify-center rounded-xl z-10 backdrop-blur-sm">
-                            <Loader2 className="animate-spin text-blue-600" size={20} />
-                        </div>
-                    )}
-                </div>
-            )}
-        </div>
-    );
-};
 
 const SuccessModal = ({ isOpen, message, onClose }: { isOpen: boolean, message: string, onClose: () => void }) => {
     if (!isOpen) return null;
@@ -456,7 +329,7 @@ const AdminContent: React.FC = () => {
     // --- Main Dashboard Layout ---
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex transition-colors relative">
+        <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900 font-sans transition-colors duration-300">
 
             {/* Mobile Backdrop */}
             {isSidebarOpen && (
@@ -617,7 +490,7 @@ const AdminContent: React.FC = () => {
                                         <Input label="Link" value={editingProject.link} onChange={v => setEditingProject({ ...editingProject, link: v })} />
                                     </div>
                                     <Input label="Technologies (comma separated)" value={Array.isArray(editingProject.tech) ? editingProject.tech.join(', ') : editingProject.tech} onChange={v => setEditingProject({ ...editingProject, tech: v.split(',').map(s => s.trim()) })} />
-                                    <FileUploader label="Project Image" value={editingProject.image} onChange={(v: string) => setEditingProject({ ...editingProject, image: v })} folder="projects" />
+                                    <FileUploader label="Project Image" value={editingProject.image || ''} onChange={(v: string) => setEditingProject({ ...editingProject, image: v })} folder="projects" />
                                     <div className="md:col-span-2">
                                         <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-2 block">Description</label>
                                         <textarea className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 h-32 outline-none focus:ring-2 ring-blue-500" value={editingProject.description} onChange={e => setEditingProject({ ...editingProject, description: e.target.value })} />
@@ -659,18 +532,19 @@ const AdminContent: React.FC = () => {
                                     onSave={saveBlog}
                                 >
                                     <Input label="Article Title" value={editingBlog.title} onChange={v => setEditingBlog({ ...editingBlog, title: v })} />
-                                    <div className="md:col-span-2">
-                                        <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-2 block">Excerpt (Short Summary)</label>
-                                        <textarea
-                                            className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 h-20 outline-none focus:ring-2 ring-blue-500"
-                                            value={editingBlog.excerpt || ''}
-                                            onChange={e => setEditingBlog({ ...editingBlog, excerpt: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
+
+                                    <div className="grid md:grid-cols-2 gap-4">
                                         <Input label="Publish Date" value={editingBlog.date} onChange={v => setEditingBlog({ ...editingBlog, date: v })} />
                                         <Input label="Read Time" value={editingBlog.readTime} onChange={v => setEditingBlog({ ...editingBlog, readTime: v })} />
                                     </div>
+
+                                    <FileUploader
+                                        label="Cover Image"
+                                        value={editingBlog.image || ''}
+                                        onChange={(v: string) => setEditingBlog({ ...editingBlog, image: v })}
+                                        folder="blogs"
+                                    />
+
                                     <div>
                                         <Input label="Tags (comma separated)" value={Array.isArray(editingBlog.tags) ? editingBlog.tags.join(', ') : editingBlog.tags} onChange={v => setEditingBlog({ ...editingBlog, tags: v.split(',').map(s => s.trim()) })} />
                                         <div className="flex flex-wrap gap-2 mt-2 px-1">
@@ -696,23 +570,24 @@ const AdminContent: React.FC = () => {
                                             ))}
                                         </div>
                                     </div>
-                                    <div className="md:col-span-2">
-                                        <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-2 block">Content (Markdown Supported)</label>
-                                        <div className="grid md:grid-cols-2 gap-4 h-[500px]">
-                                            <textarea
-                                                className="w-full h-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 outline-none focus:ring-2 ring-blue-500 font-mono text-xs resize-none"
-                                                value={editingBlog.content}
-                                                onChange={e => setEditingBlog({ ...editingBlog, content: e.target.value })}
-                                                placeholder="# Write your masterpiece..."
+
+                                    <div className="md:col-span-2 space-y-4">
+                                        <div>
+                                            <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-2 block">Excerpt (Summary)</label>
+                                            <RichTextEditor
+                                                value={editingBlog.excerpt || ''}
+                                                onChange={v => setEditingBlog({ ...editingBlog, excerpt: v })}
+                                                placeholder="Short summary..."
                                             />
-                                            <div className="hidden md:block h-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 overflow-y-auto prose dark:prose-invert max-w-none">
-                                                {/* Simple Preview - In real app use react-markdown */}
-                                                {editingBlog.content ? (
-                                                    <div className="whitespace-pre-wrap">{editingBlog.content}</div>
-                                                ) : (
-                                                    <div className="text-slate-400 italic flex items-center justify-center h-full">Markdown Preview</div>
-                                                )}
-                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-2 block">Content</label>
+                                            <RichTextEditor
+                                                value={editingBlog.content || ''}
+                                                onChange={v => setEditingBlog({ ...editingBlog, content: v })}
+                                                placeholder="Write your article here..."
+                                            />
                                         </div>
                                     </div>
                                 </EditorLayout>
@@ -880,9 +755,7 @@ const EditorLayout = ({ title, children, onCancel, onSave }: any) => (
     </div>
 );
 
-// Wrapper to provide Toast
+// Wrapper was removed as ToastProvider is now global
 export const AdminPage = () => (
-    <ToastProvider>
-        <AdminContent />
-    </ToastProvider>
+    <AdminContent />
 );

@@ -1,74 +1,71 @@
 # 🚀 Modern Developer Portfolio [Next.js 16 + AI Integration]
 
-> A high-performance, interactive, and AI-powered developer portfolio built with the latest web technologies. Features a custom **DeepSeek AI Chat Assistant**, a smart email rate-limiting system, and a dynamic project showcase.
+> A high-performance, interactive, and AI-powered developer portfolio built with the latest web technologies. Features a custom **DeepSeek AI Chat Assistant**, a robust **Blog Engine**, and a dynamic **Admin Dashboard**.
 
-![Home Page](file:///C:/Users/moham/.gemini/antigravity/brain/a5f22c7d-9fa0-4b0e-8c63-d781d20d76eb/home_page_top_1765696403743.png)
+![Home Page](public/screenshots/home.png)
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.0-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.0-blue?style=for-the-badge&logo=react)](https://react.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.0-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=for-the-badge&logo=postgresql)](https://www.postgresql.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 
 ---
 
 ## ✨ Key Features
 
 ### 🤖 Intelligent AI Assistant
-A custom-built, draggable Chat Widget powered by **DeepSeek AI**.
+A custom-built, draggable Chat Widget powered by **DeepSeek AI** (or Gemini).
 *   **Context-Aware**: Knows your skills, projects, and bio intimately.
-*   **Cost-Optimized**: Uses a "Smart Compression" algorithm to reduce token usage by ~75% without losing context.
-*   **Interactive UI**: Draggable window with an app-like feel and smooth animations.
+*   **Smart Compression**: Reduces token usage by ~75% while maintaining context.
+*   **Interactive UI**: Draggable window with smooth animations and markdown support.
 
-![AI Chat Widget](file:///C:/Users/moham/.gemini/antigravity/brain/a5f22c7d-9fa0-4b0e-8c63-d781d20d76eb/chat_widget_open_1765696444414.png)
+### 📝 Full-Featured Blog Engine
+A complete blogging platform built right into the portfolio.
+*   **Rich Text Editor**: Integrated **Quill Editor** (React 19 compatible) with formatting, lists, and links.
+*   **Media Support**: Drag & drop support for **Images** and **PDFs** directly in content.
+*   **Auto-Cover**: Automatically extracts the first image from content if no cover is provided.
+*   **Cloudflare R2**: High-performance object storage for all media assets.
 
-### 📧 Smart Contact System
-More than just a form.
-*   **Rate Limiting**: Limits users to **5 AI-drafted emails per day** to prevent abuse and manage costs (backed by Postgres).
-*   **Auto-Drafting**: AI reads the visitor's message and drafts a hyper-personalized email reply on your behalf.
-*   **Fallback Logic**: Automatically switches to generic templates if limits are hit or APIs fail.
-
-![Contact Page](file:///C:/Users/moham/.gemini/antigravity/brain/a5f22c7d-9fa0-4b0e-8c63-d781d20d76eb/contact_page_1765696583255.png)
-
-### 💼 Dynamic Project Showcase
-*   **Rich Details**: Dedicated pages for each project with "AI Insights" (Elevator Pitch & Tech Critique generator).
-*   **Tabs**: Organized views for Overview, Tech Stack, and Outcomes.
-
-![Projects Page](file:///C:/Users/moham/.gemini/antigravity/brain/a5f22c7d-9fa0-4b0e-8c63-d781d20d76eb/projects_page_1765696532545.png)
+![Blogs Page](public/screenshots/blogs.png)
 
 ### 🛡️ Protected Admin Portal
 A comprehensive dashboard to manage your portfolio content dynamically.
-*   **AI Resume Parsing**: Paste your resume text, and the AI extracting your profile, skills, experience, and education to auto-fill the database with structured data.
-*   **Full CMS**: Create, update, and delete Projects, Blogs, Skills, Experience, and Education entries without touching code.
-*   **Secure Access**: Protected by robust authentication to prevent unauthorized changes.
+*   **AI Resume Parsing**: Paste your resume text/PDF, and the AI extracts profile, skills, and experience to auto-fill the database.
+*   **CMS**: Create, update, and delete **Projects**, **Blogs**, **Skills**, and **Experience** without touching code.
+*   **Secure Access**: Protected routes with session-based authentication.
 
-![Admin Portal](file:///C:/Users/moham/.gemini/antigravity/brain/a5f22c7d-9fa0-4b0e-8c63-d781d20d76eb/admin_page_mockup.png)
+![Admin Portal](public/screenshots/admin.png)
+
+### 📧 Smart Contact System
+*   **Rate Limiting**: Limits users to **5 AI-drafted emails per day** to prevent abuse.
+*   **Auto-Drafting**: AI drafts personalized email replies based on visitor messages.
 
 ---
 
 ## 🛠️ Tech Stack
 
 *   **Frontend**: Next.js 16 (App Router), React 19, TypeScript
-*   **Styling**: Tailwind CSS v4, Lucide Icons, Framer Motion (animations)
-*   **Backend**: Next.js API Routes (Serverless)
-*   **Database**: PostgreSQL (via `pg`)
-*   **AI**: DeepSeek API (or Gemini fallback)
-*   **Email**: Nodemailer (SMTP)
+*   **Styling**: Tailwind CSS v4, Lucide Icons, Framer Motion
+*   **Backend**: Next.js Server Actions & API Routes
+*   **Database**: PostgreSQL (via `pg` & connection pooling)
+*   **Storage**: Cloudflare R2 (S3 Compatible)
+*   **AI**: DeepSeek API / Google Gemini
 
 ---
 
 ## 🚀 Getting Started
 
-Follow these steps to deploy your own version.
-
 ### Prerequisites
 *   Node.js 18+
 *   PostgreSQL Database
+*   Cloudflare R2 Bucket (optional, for images)
 
 ### Installation
 
 1.  **Clone the repo**
     ```bash
-    git clone https://github.com/jumaan1st/portfolio.git
+    git clone https://github.com/yourusername/portfolio.git
     cd portfolio
     ```
 
@@ -83,20 +80,29 @@ Follow these steps to deploy your own version.
     # Database
     DATABASE_URL=postgres://user:pass@host:5432/db
 
-    # AI Provider (gemini | deepseek)
+    # AI Provider
     AI_PROVIDER=deepseek
     DEEPSEEK_API_KEY=sk-your-key
     GEMINI_API_KEY=abc-your-key
 
-    # Email
-    EMAIL_USER=your@gmail.com
-    EMAIL_PASS=your-app-password
+    # Cloudflare R2 (Storage)
+    R2_ACCOUNT_ID=your_id
+    R2_ACCESS_KEY_ID=your_access_key
+    R2_SECRET_ACCESS_KEY=your_secret_key
+    R2_BUCKET_NAME=your_bucket
+    R2_PUBLIC_URL=https://pub-your-url.r2.dev
+
+    # Auth
+    ADMIN_PASSWORD=your_secure_password
+    JWT_SECRET=your_jwt_secret
     ```
 
 4.  **Run Locally**
     ```bash
     npm run dev
     ```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 ---
 
@@ -105,24 +111,27 @@ Follow these steps to deploy your own version.
 ```
 portfolio/
 ├── app/
-│   ├── api/            # Serverless functions (Chat, Contact, DB)
-│   ├── (public)/       # Public routes (Home, About, Projects)
-│   └── admin/          # Protected Admin Dashboard
+│   ├── api/            # API Routes (Upload, AI, Blogs)
+│   ├── (public)/       # Public pages (Home, Blog, Projects)
+│   └── admin/          # Admin Dashboard
 ├── components/
-│   ├── AIChatWidget.tsx # Core AI Chat Logic
-│   └── pages/          # Page specific components
+│   ├── pages/          # Page-level components
+│   ├── ui/             # Reusable UI elements (Toast, Modal)
+│   └── RichTextEditor  # Custom Quill wrapper
 ├── lib/
-│   ├── ai-manager.ts   # Central AI routing logic
-│   └── db.ts           # Postgres connection pool
-└── data/               # Static fallback data
+│   ├── db.ts           # DB Connection
+│   └── s3.ts           # R2 Storage Logic
+└── public/
+    └── screenshots/    # Project screenshots
 ```
 
 ---
 
-## 📸 More Screens
+## 📸 Screen Gallery
 
-### About Page
-![About Page](file:///C:/Users/moham/.gemini/antigravity/brain/a5f22c7d-9fa0-4b0e-8c63-d781d20d76eb/about_page_1765696610390.png)
+| **Projects** | **Contact** |
+|:---:|:---:|
+| ![Projects](public/screenshots/projects.png) | ![Contact](public/screenshots/contact.png) |
 
 ---
 

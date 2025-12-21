@@ -125,9 +125,10 @@ export const BlogsPage: React.FC = () => {
                                     {blog.title}
                                 </h2>
 
-                                <p className="text-slate-600 dark:text-slate-400 text-sm mb-4 line-clamp-3">
-                                    {blog.excerpt}
-                                </p>
+                                <div
+                                    className="text-slate-600 dark:text-slate-400 text-sm mb-4 line-clamp-3 prose dark:prose-invert max-w-none break-words [&>*]:m-0"
+                                    dangerouslySetInnerHTML={{ __html: blog.excerpt || '' }}
+                                />
 
                                 <div className="flex flex-wrap gap-2 mt-auto">
                                     {blog.tags && blog.tags.map((t: string) => (

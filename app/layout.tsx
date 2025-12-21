@@ -9,6 +9,7 @@ import { Modal } from "@/components/Modal";
 import { Terminal, Star } from "lucide-react";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { usePathname } from "next/navigation";
+import { ToastProvider } from "@/components/ui/Toast";
 
 function Shell({ children }: { children: React.ReactNode }) {
     const { data, isLoading } = usePortfolio();
@@ -265,7 +266,9 @@ export default function RootLayout({
             <body className="bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-200 transition-colors duration-300">
                 <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
                     <PortfolioProvider>
-                        <Shell>{children}</Shell>
+                        <ToastProvider>
+                            <Shell>{children}</Shell>
+                        </ToastProvider>
                     </PortfolioProvider>
                 </ThemeProvider>
             </body>

@@ -37,6 +37,7 @@ export interface BlogPost {
     readTime: string;
     tags: string[];
     content?: string;
+    image?: string; // Cover image URL
 }
 
 export interface Education {

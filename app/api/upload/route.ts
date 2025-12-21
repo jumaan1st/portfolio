@@ -50,21 +50,19 @@ export async function POST(req: NextRequest) {
             Key: key,
             Body: buffer,
             ContentType: file.type,
-            // ACL: 'public-read', // R2 doesn't always support ACLs depending on bucket settings, usually public buckets are handled via domain
+            // ACL: 'public-read', // R2 doesn't always support ACLs, public access usually via bucket policy/domain
         });
 
         await s3Client.send(command);
 
         // Construct the public URL
-        // If R2_PUBLIC_URL is provided (e.g. custom domain or r2.dev), use it.
-        // Otherwise prompt to configure it.
         let publicUrl = '';
         if (R2_PUBLIC_URL) {
             // Remove trailing slash if present
             const baseUrl = R2_PUBLIC_URL.replace(/\/$/, '');
             publicUrl = `${baseUrl}/${key}`;
         } else {
-            // Fallback or error? For now, imply it needs to be configured.
+            // Fallback public R2 URL
             publicUrl = `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET_NAME}/${key}`;
         }
 
@@ -89,24 +87,34 @@ export async function DELETE(req: NextRequest) {
         const { url } = await req.json();
         if (!url) return NextResponse.json({ error: "No URL provided" }, { status: 400 });
 
-        // Extract key from URL
-        // Assumes URL format: .../BUCKET_NAME/folder/filename or .../folder/filename
-        // Simple extraction: everything after the last '/' is the filename, potentially preceded by folder
-        // Better: store Key in DB, but here we only have URL. 
-        // Let's try to extract from the known public URL structure if possible, or just try to match the end.
+        console.log("Attempting to delete image:", url);
 
+        // Extract key from URL
         let key = url;
+
+        // Method 1: If using Custom Domain (R2_PUBLIC_URL)
         if (R2_PUBLIC_URL && url.startsWith(R2_PUBLIC_URL)) {
-            key = url.replace(R2_PUBLIC_URL + '/', '');
-        } else {
-            // Fallback for direct R2 links: https://ACCOUNT.r2.../BUCKET/KEY
-            const parts = url.split('/');
-            // This is risky if we don't know the exact structure, but usually it's the last 2 parts for folder/file
-            // or just the last part if no folder.
-            // Given our upload logic: key = `${folder}/${timestamp}-${safeName}`
-            // We can try to grab the last 2 segments.
-            key = parts.slice(-2).join('/');
+            // remove domain + slash
+            key = url.replace(R2_PUBLIC_URL.replace(/\/$/, '') + '/', '');
         }
+        // Method 2: If using R2 dev/storage URL
+        else if (url.includes(R2_BUCKET_NAME)) {
+            // Split by bucket name and take the part after
+            const parts = url.split(R2_BUCKET_NAME + '/');
+            if (parts.length > 1) key = parts[1];
+        }
+        // Method 3: Fallback - try to match standard folder structure "folder/filename"
+        else {
+            // Assuming key format is {folder}/{timestamp}-{filename}
+            // We can try to grab the last 2 path segments if structure is consistent
+            const parts = url.split('/');
+            if (parts.length >= 2) {
+                // heuristic: grabs "folder/file.ext"
+                key = parts.slice(-2).join('/');
+            }
+        }
+
+        console.log("Derived Key for deletion:", key);
 
         const command = new DeleteObjectCommand({
             Bucket: R2_BUCKET_NAME,
@@ -114,6 +122,8 @@ export async function DELETE(req: NextRequest) {
         });
 
         await s3Client.send(command);
+        console.log("Delete command sent successfully");
+
         return NextResponse.json({ success: true });
 
     } catch (error) {

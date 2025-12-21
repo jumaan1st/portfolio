@@ -34,6 +34,7 @@ type PortfolioContextType = {
     updateEducation: (id: number, e: any) => Promise<void>;
     deleteEducation: (id: number) => Promise<void>;
     fetchAdminData: () => Promise<void>;
+    refreshData: () => Promise<void>;
 };
 
 const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
@@ -85,8 +86,6 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
     }, []);
 
     // Fetches EVERYTHING (for Admin Dashboard)
-    // Fetches EVERYTHING (for Admin Dashboard)
-    // Fetches EVERYTHING (for Admin Dashboard)
     const fetchAdminData = React.useCallback(async () => {
         // Do not set global isLoading here, as it unmounts the entire app in layout.tsx!
         // AdminPage handles its own loading state.
@@ -132,7 +131,10 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
     }, []);
 
     // Alias for compatibility, but points to full fetch
-    const refreshData = fetchAdminData;
+    // Alias for compatibility
+    const refreshData = async () => {
+        await fetchAdminData();
+    };
 
     // Initial Load: Essentials Only + Auth Check
     useEffect(() => {
@@ -278,8 +280,9 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
         createEducation,
         updateEducation,
         deleteEducation,
-        fetchAdminData
-    }), [data, isAuthenticated, isLoading, fetchAdminData, fetchEssentials /** included implicitly via closure, but best be safe if used */]);
+        fetchAdminData,
+        refreshData
+    }), [data, isAuthenticated, isLoading, fetchAdminData, fetchEssentials, refreshData]);
 
     return (
         <PortfolioContext.Provider value={contextValue}>
