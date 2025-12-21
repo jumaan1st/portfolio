@@ -20,6 +20,28 @@ import { Typewriter } from "@/components/Typewriter";
 import { Marquee } from "../Marquee";
 import { usePortfolio } from "../PortfolioContext";
 
+const ProfileAvatar = ({ photoLight, photoDark, name, theme }: { photoLight?: string, photoDark?: string, name: string, theme?: string }) => {
+    const [error, setError] = useState(false);
+
+    // Determine which URL to use
+    const currentTheme = theme === "system" ? "dark" : theme;
+    const photoUrl = currentTheme === "dark"
+        ? (photoDark || photoLight)
+        : (photoLight || photoDark);
+
+    if (photoUrl && !error) {
+        return (
+            <img
+                src={photoUrl}
+                alt={name}
+                className="w-full h-full object-cover object-top"
+                onError={() => setError(true)}
+            />
+        );
+    }
+    return <UserIcon size={80} className="text-slate-400 dark:text-slate-600" />;
+};
+
 export const HomePage: React.FC = () => {
     const { data: globalData, isAuthenticated, updateProfile } = usePortfolio();
     const { theme } = useTheme();
@@ -104,24 +126,12 @@ export const HomePage: React.FC = () => {
                     <div className="relative -mt-2 group">
                         <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-full blur opacity-40 group-hover:opacity-75 transition duration-1000 animate-gradient-x" />
                         <div className="relative w-40 h-40 bg-white dark:bg-slate-900 rounded-full flex items-center justify-center border-4 border-slate-200 dark:border-slate-800 overflow-hidden shadow-[0_0_50px_8px_rgba(105,48,255,0.35)]">
-                            {(() => {
-                                // Determine which URL to use
-                                const currentTheme = theme === "system" ? "dark" : theme; // Simplified system check
-                                const photoUrl = currentTheme === "dark"
-                                    ? (globalData.profile.photoDarkUrl || globalData.profile.photoLightUrl)
-                                    : (globalData.profile.photoLightUrl || globalData.profile.photoDarkUrl);
-
-                                if (photoUrl) {
-                                    return (
-                                        <img
-                                            src={photoUrl}
-                                            alt={globalData.profile.name}
-                                            className="w-full h-full object-cover object-top"
-                                        />
-                                    );
-                                }
-                                return <UserIcon size={80} className="text-slate-400 dark:text-slate-600" />;
-                            })()}
+                            <ProfileAvatar
+                                photoLight={globalData.profile.photoLightUrl}
+                                photoDark={globalData.profile.photoDarkUrl}
+                                name={globalData.profile.name}
+                                theme={theme}
+                            />
                         </div>
                     </div>
                 </div>

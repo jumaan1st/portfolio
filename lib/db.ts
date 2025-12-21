@@ -2,7 +2,7 @@ import { Pool } from 'pg';
 
 const isLocal = process.env.DB_HOST === 'localhost' || process.env.DB_HOST === '127.0.0.1';
 
-const pool = new Pool({
+const poolConfig = {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     host: process.env.DB_HOST,
@@ -11,6 +11,16 @@ const pool = new Pool({
     ssl: isLocal ? undefined : {
         rejectUnauthorized: false
     }
-});
+};
+
+declare global {
+    var postgresPool: Pool | undefined;
+}
+
+const pool = global.postgresPool || new Pool(poolConfig);
+
+if (process.env.NODE_ENV !== 'production') {
+    global.postgresPool = pool;
+}
 
 export default pool;

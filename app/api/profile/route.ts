@@ -1,9 +1,10 @@
 
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
+import { unstable_cache, revalidateTag } from 'next/cache';
 
-export async function GET() {
-  try {
+const getProfile = unstable_cache(
+  async () => {
     const { rows } = await pool.query(`
       SELECT 
         id,
@@ -25,8 +26,16 @@ export async function GET() {
       FROM portfolio.profile
       LIMIT 1
     `);
+    return rows[0] || {};
+  },
+  ['profile-data'],
+  { tags: ['profile'], revalidate: 3600 }
+);
 
-    return NextResponse.json(rows[0] || {});
+export async function GET() {
+  try {
+    const data = await getProfile();
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Error fetching profile:', error);
     return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 500 });
@@ -89,5 +98,7 @@ export async function PUT(request: Request) {
   } catch (error) {
     console.error('Error updating profile:', error);
     return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 });
+  } finally {
+    revalidateTag('profile');
   }
 }
