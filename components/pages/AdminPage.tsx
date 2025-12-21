@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import {
     Trash2, Plus, Save, X, Edit2, Loader2, SaveAll, Sparkles,
     LayoutDashboard, User, FolderOpen, PenTool, BookOpen, Briefcase, GraduationCap,
-    LogOut, Menu, ChevronRight, Search, Upload, ExternalLink, RefreshCw
+    LogOut, Menu, ChevronRight, Search, Upload, ExternalLink, RefreshCw, CheckCircle
 } from "lucide-react";
 import { usePortfolio } from "@/components/PortfolioContext";
 import { Project } from "@/data/portfolioData";
@@ -159,6 +159,29 @@ const FileUploader = ({ label, value, onChange, folder = 'uploads' }: any) => {
     );
 };
 
+const SuccessModal = ({ isOpen, message, onClose }: { isOpen: boolean, message: string, onClose: () => void }) => {
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 max-w-sm w-full shadow-2xl scale-100 animate-in zoom-in-95 duration-200 flex flex-col items-center text-center space-y-6">
+                <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-green-600 mb-2">
+                    <CheckCircle size={40} strokeWidth={3} />
+                </div>
+                <div>
+                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Success!</h3>
+                    <p className="text-slate-500 font-medium">{message}</p>
+                </div>
+                <button
+                    onClick={onClose}
+                    className="w-full py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
+                >
+                    Continue
+                </button>
+            </div>
+        </div>
+    );
+};
+
 const AdminContent: React.FC = () => {
     const {
         data,
@@ -217,7 +240,12 @@ const AdminContent: React.FC = () => {
     const [resumeText, setResumeText] = useState("");
     const [isAnalyzingResume, setIsAnalyzingResume] = useState(false);
     const [importedData, setImportedData] = useState<any>(null);
+
     const [showReviewModal, setShowReviewModal] = useState(false);
+
+    // Success Modal State
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [successMessage, setSuccessMessage] = useState("");
 
     // Initialize profile form
     useEffect(() => {
@@ -252,14 +280,15 @@ const AdminContent: React.FC = () => {
         addToast("Logged out successfully", "info");
     };
 
-    // Generic Save Handler Wrapper
     const handleSave = async (
         action: () => Promise<void>,
         successMsg: string
     ) => {
         try {
             await action();
-            addToast(successMsg, "success");
+            // Show Modal instead of Toast for success
+            setSuccessMessage(successMsg);
+            setShowSuccessModal(true);
             return true;
         } catch (e) {
             console.error(e);
@@ -809,6 +838,12 @@ const AdminContent: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            <SuccessModal
+                isOpen={showSuccessModal}
+                message={successMessage}
+                onClose={() => setShowSuccessModal(false)}
+            />
         </div>
     );
 };
