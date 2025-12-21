@@ -45,7 +45,8 @@ export async function POST(request: Request) {
 
                 // IMPORTANT: We ask AI to handle the full email body including greeting and signature.
                 // We provide the name explicitly to avoid placeholders.
-                const structureInstruction = `Start with "Hi ${name}," and end with "Best regards, \\n${profile.name}\\n${profile.current_role}\\n${profile.current_company}".`;
+                // We use <br> tags in the prompt instruction because 'marked' often squashes newlines.
+                const structureInstruction = `Start with "Hi ${name}," and end with the signature exactly like this:\nBest regards,<br>${profile.name}<br>${profile.current_role}<br>${profile.current_company}`;
 
                 if (requestType === "Project Review") {
                     aiPrompt = `
