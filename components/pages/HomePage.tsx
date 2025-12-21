@@ -19,6 +19,8 @@ import { EditableField } from "../EditableField";
 import { Typewriter } from "@/components/Typewriter";
 import { Marquee } from "../Marquee";
 import { usePortfolio } from "../PortfolioContext";
+import { extractFirstImage } from "@/lib/utils";
+import { BlogPlaceholder } from "../BlogPlaceholder";
 
 const ProfileAvatar = ({ photoLight, photoDark, name, theme }: { photoLight?: string, photoDark?: string, name: string, theme?: string }) => {
     const [error, setError] = useState(false);
@@ -301,57 +303,62 @@ export const HomePage: React.FC = () => {
                 </div>
 
                 <div className="grid md:grid-cols-3 gap-6 px-4">
-                    {blogs.map((blog) => (
-                        <article
-                            key={blog.id}
-                            onClick={() => router.push(`/blogs/${blog.id}`)}
-                            className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl p-6 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group cursor-pointer shadow-sm"
-                        >
-                            <div className="relative h-48 mb-4 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
-                                {blog.image ? (
-                                    <img
-                                        src={blog.image}
-                                        alt={blog.title}
-                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).style.display = 'none';
-                                            (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
-                                        }}
-                                    />
-                                ) : null}
-                                <div className={`absolute inset-0 flex items-center justify-center text-slate-300 dark:text-slate-600 ${blog.image ? 'hidden' : ''}`}>
-                                    <Terminal size={48} />
+                    {blogs.map((blog) => {
+                        const displayImage = blog.image || extractFirstImage(blog.content);
+                        return (
+                            <article
+                                key={blog.id}
+                                onClick={() => router.push(`/blogs/${blog.id}`)}
+                                className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl p-6 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group cursor-pointer shadow-sm flex flex-col"
+                            >
+                                <div className="relative h-48 mb-4 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
+                                    {displayImage ? (
+                                        <img
+                                            src={displayImage}
+                                            alt={blog.title}
+                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).style.display = 'none';
+                                                (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                                            }}
+                                        />
+                                    ) : (
+                                        <BlogPlaceholder title={blog.title} />
+                                    )}
+                                    <div className="hidden w-full h-full absolute inset-0">
+                                        <BlogPlaceholder title={blog.title} />
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div className="flex justify-between items-center text-xs text-slate-500 mb-4">
-                                <span>{blog.date}</span>
-                                <span className="flex items-center gap-1">
-                                    <Coffee size={12} /> {blog.readTime}
-                                </span>
-                            </div>
-                            <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-3 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                                {blog.title}
-                            </h4>
-                            {/* Render excerpt as HTML since it comes from RTE */}
-                            <div
-                                className="text-slate-600 dark:text-slate-400 text-sm mb-4 line-clamp-3 prose dark:prose-invert max-w-none break-words [&>*]:m-0"
-                                dangerouslySetInnerHTML={{ __html: blog.excerpt || '' }}
-                            />
-                            <div className="flex gap-2 mt-auto">
-                                {blog.tags.map((tag: string) => (
-                                    <span
-                                        key={tag}
-                                        className="text-[10px] uppercase font-bold tracking-wider text-slate-500 bg-slate-100 dark:bg-slate-950 px-2 py-1 rounded"
-                                    >
-                                        #{tag}
+                                <div className="flex justify-between items-center text-xs text-slate-500 mb-4">
+                                    <span>{blog.date}</span>
+                                    <span className="flex items-center gap-1">
+                                        <Coffee size={12} /> {blog.readTime}
                                     </span>
-                                ))}
-                            </div>
-                        </article>
-                    ))}
+                                </div>
+                                <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-3 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                    {blog.title}
+                                </h4>
+                                {/* Render excerpt as HTML since it comes from RTE */}
+                                <div
+                                    className="text-slate-600 dark:text-slate-400 text-sm mb-4 line-clamp-3 prose dark:prose-invert max-w-none break-words [&>*]:m-0"
+                                    dangerouslySetInnerHTML={{ __html: blog.excerpt || '' }}
+                                />
+                                <div className="flex gap-2 mt-auto">
+                                    {blog.tags.map((tag: string) => (
+                                        <span
+                                            key={tag}
+                                            className="text-[10px] uppercase font-bold tracking-wider text-slate-500 bg-slate-100 dark:bg-slate-950 px-2 py-1 rounded"
+                                        >
+                                            #{tag}
+                                        </span>
+                                    ))}
+                                </div>
+                            </article>
+                        );
+                    })}
                 </div>
             </section>
-        </div>
+        </div >
     );
 };

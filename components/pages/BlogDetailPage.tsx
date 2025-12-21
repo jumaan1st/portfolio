@@ -6,16 +6,21 @@ import { ChevronLeft, Coffee, Tag, Edit } from "lucide-react";
 import type { BlogPost } from "@/data/portfolioData";
 import { usePortfolio } from "@/components/PortfolioContext";
 import { BlogEditor } from "./BlogEditor";
+import { BlogPlaceholder } from "../BlogPlaceholder";
 
 interface BlogDetailPageProps {
     blog: BlogPost;
 }
+
+import { extractFirstImage } from "@/lib/utils";
 
 export const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ blog: initialBlog }) => {
     const router = useRouter();
     const { isAuthenticated, refreshData } = usePortfolio();
     const [blog, setBlog] = useState(initialBlog);
     const [isEditing, setIsEditing] = useState(false);
+
+    const displayImage = blog.image || extractFirstImage(blog.content);
 
     const handleSave = async (updatedBlog: BlogPost) => {
         try {
@@ -78,9 +83,9 @@ export const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ blog: initialBlo
             <article className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 md:p-10 shadow-2xl">
                 <header className="mb-6">
                     <div className="relative h-64 md:h-96 w-full mb-8 overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800 shadow-md">
-                        {blog.image ? (
+                        {displayImage ? (
                             <img
-                                src={blog.image}
+                                src={displayImage}
                                 alt={blog.title}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
@@ -88,12 +93,11 @@ export const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ blog: initialBlo
                                     (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
                                 }}
                             />
-                        ) : null}
-                        <div className={`absolute inset-0 flex items-center justify-center text-slate-300 dark:text-slate-600 ${blog.image ? 'hidden' : ''}`}>
-                            <div className="flex flex-col items-center gap-2">
-                                <Coffee size={64} />
-                                <span className="text-sm font-mono uppercase tracking-widest opacity-50">Cover Image</span>
-                            </div>
+                        ) : (
+                            <BlogPlaceholder title={blog.title} />
+                        )}
+                        <div className="hidden w-full h-full absolute inset-0">
+                            <BlogPlaceholder title={blog.title} />
                         </div>
                     </div>
 

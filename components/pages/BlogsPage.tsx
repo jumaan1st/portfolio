@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { Coffee, Tag, Search } from "lucide-react";
 import { usePortfolio } from "../PortfolioContext";
 import { BLOG_TAGS } from "@/data/constants";
+import { extractFirstImage } from "@/lib/utils";
+import { BlogPlaceholder } from "../BlogPlaceholder";
 
 export const BlogsPage: React.FC = () => {
     const { data: globalData } = usePortfolio(); // Use global data mainly for UI strings
@@ -108,40 +110,62 @@ export const BlogsPage: React.FC = () => {
             ) : (
                 <>
                     <div className="grid md:grid-cols-3 gap-6 mb-12">
-                        {blogs.length > 0 ? blogs.map((blog: any) => (
-                            <article
-                                key={blog.id}
-                                onClick={() => router.push(`/blogs/${blog.id}`)}
-                                className="bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 hover:bg-slate-50 dark:hover:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-600 transition-all cursor-pointer group shadow-sm flex flex-col"
-                            >
-                                <div className="flex justify-between items-center text-xs text-slate-500 mb-3">
-                                    <span>{blog.date}</span>
-                                    <span className="flex items-center gap-1">
-                                        <Coffee size={12} /> {blog.readTime}
-                                    </span>
-                                </div>
+                        {blogs.length > 0 ? blogs.map((blog: any) => {
+                            const displayImage = blog.image || extractFirstImage(blog.content);
+                            return (
+                                <article
+                                    key={blog.id}
+                                    onClick={() => router.push(`/blogs/${blog.id}`)}
+                                    className="bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 hover:bg-slate-50 dark:hover:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-600 transition-all cursor-pointer group shadow-sm flex flex-col"
+                                >
+                                    <div className="relative h-48 mb-4 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
+                                        {displayImage ? (
+                                            <img
+                                                src={displayImage}
+                                                alt={blog.title}
+                                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                onError={(e) => {
+                                                    (e.target as HTMLImageElement).style.display = 'none';
+                                                    (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                                                }}
+                                            />
+                                        ) : (
+                                            <BlogPlaceholder title={blog.title} />
+                                        )}
+                                        <div className="hidden w-full h-full absolute inset-0">
+                                            <BlogPlaceholder title={blog.title} />
+                                        </div>
+                                    </div>
 
-                                <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
-                                    {blog.title}
-                                </h2>
-
-                                <div
-                                    className="text-slate-600 dark:text-slate-400 text-sm mb-4 line-clamp-3 prose dark:prose-invert max-w-none break-words [&>*]:m-0"
-                                    dangerouslySetInnerHTML={{ __html: blog.excerpt || '' }}
-                                />
-
-                                <div className="flex flex-wrap gap-2 mt-auto">
-                                    {blog.tags && blog.tags.map((t: string) => (
-                                        <span
-                                            key={t}
-                                            className="inline-flex items-center gap-1 text-[10px] uppercase font-bold tracking-wider text-slate-500 bg-slate-100 dark:bg-slate-950 px-2 py-1 rounded-full"
-                                        >
-                                            <Tag size={10} /> {t}
+                                    <div className="flex justify-between items-center text-xs text-slate-500 mb-3">
+                                        <span>{blog.date}</span>
+                                        <span className="flex items-center gap-1">
+                                            <Coffee size={12} /> {blog.readTime}
                                         </span>
-                                    ))}
-                                </div>
-                            </article>
-                        )) : (
+                                    </div>
+
+                                    <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
+                                        {blog.title}
+                                    </h2>
+
+                                    <div
+                                        className="text-slate-600 dark:text-slate-400 text-sm mb-4 line-clamp-3 prose dark:prose-invert max-w-none break-words [&>*]:m-0"
+                                        dangerouslySetInnerHTML={{ __html: blog.excerpt || '' }}
+                                    />
+
+                                    <div className="flex flex-wrap gap-2 mt-auto">
+                                        {blog.tags && blog.tags.map((t: string) => (
+                                            <span
+                                                key={t}
+                                                className="inline-flex items-center gap-1 text-[10px] uppercase font-bold tracking-wider text-slate-500 bg-slate-100 dark:bg-slate-950 px-2 py-1 rounded-full"
+                                            >
+                                                <Tag size={10} /> {t}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </article>
+                            );
+                        }) : (
                             <div className="col-span-full text-center py-20 text-slate-500">
                                 No blogs found matching your criteria.
                             </div>
