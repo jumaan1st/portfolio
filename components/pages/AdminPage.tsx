@@ -506,6 +506,11 @@ const AdminContent: React.FC = () => {
                                 <div className="space-y-4">
                                     <Input label="Full Name" value={profileForm.name} onChange={v => setProfileForm({ ...profileForm, name: v })} />
                                     <Input label="Current Role" value={profileForm.currentRole} onChange={v => setProfileForm({ ...profileForm, currentRole: v })} />
+                                    <Input
+                                        label="Roles (comma separated)"
+                                        value={Array.isArray(profileForm.roles) ? profileForm.roles.join(', ') : profileForm.roles}
+                                        onChange={v => setProfileForm({ ...profileForm, roles: v.split(',').map(s => s.trim()) })}
+                                    />
                                     <Input label="Email Address" value={profileForm.email} onChange={v => setProfileForm({ ...profileForm, email: v })} />
                                 </div>
                                 <div className="space-y-4">
