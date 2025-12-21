@@ -61,14 +61,14 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { title, excerpt, content, tags, date, image } = body;
+    const { title, excerpt, content, tags, date, readTime } = body;
 
     const idRes = await pool.query('SELECT COALESCE(MAX(id), 0) + 1 as new_id FROM portfolio.blogs');
     const newId = idRes.rows[0].new_id;
 
     const { rows } = await pool.query(
-      'INSERT INTO portfolio.blogs (id, title, excerpt, content, tags, date, image) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-      [newId, title, excerpt, content, JSON.stringify(tags), date, image]
+      'INSERT INTO portfolio.blogs (id, title, excerpt, content, tags, date, read_time) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+      [newId, title, excerpt, content, JSON.stringify(tags), date, readTime]
     );
     return NextResponse.json(rows[0]);
   } catch (error: any) {
@@ -82,7 +82,7 @@ export async function PUT(request: Request) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     const body = await request.json();
-    const { title, excerpt, content, tags, date, image } = body;
+    const { title, excerpt, content, tags, date, readTime } = body;
 
     const { rows } = await pool.query(`
             UPDATE portfolio.blogs 
@@ -91,9 +91,9 @@ export async function PUT(request: Request) {
                 content = COALESCE($3, content), 
                 tags = COALESCE($4, tags), 
                 date = COALESCE($5, date),
-                image = COALESCE($6, image)
+                read_time = COALESCE($6, read_time)
             WHERE id = $7 RETURNING *
-         `, [title, excerpt, content, JSON.stringify(tags), date, image, id]);
+         `, [title, excerpt, content, JSON.stringify(tags), date, readTime, id]);
 
     return NextResponse.json(rows[0]);
   } catch (error: any) {

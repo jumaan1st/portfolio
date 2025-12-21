@@ -659,6 +659,14 @@ const AdminContent: React.FC = () => {
                                     onSave={saveBlog}
                                 >
                                     <Input label="Article Title" value={editingBlog.title} onChange={v => setEditingBlog({ ...editingBlog, title: v })} />
+                                    <div className="md:col-span-2">
+                                        <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-2 block">Excerpt (Short Summary)</label>
+                                        <textarea
+                                            className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 h-20 outline-none focus:ring-2 ring-blue-500"
+                                            value={editingBlog.excerpt || ''}
+                                            onChange={e => setEditingBlog({ ...editingBlog, excerpt: e.target.value })}
+                                        />
+                                    </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <Input label="Publish Date" value={editingBlog.date} onChange={v => setEditingBlog({ ...editingBlog, date: v })} />
                                         <Input label="Read Time" value={editingBlog.readTime} onChange={v => setEditingBlog({ ...editingBlog, readTime: v })} />

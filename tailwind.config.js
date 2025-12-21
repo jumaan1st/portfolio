@@ -13,11 +13,11 @@ module.exports = {
             keyframes: {
                 marquee: {
                     '0%': { transform: 'translateX(0)' },
-                    '100%': { transform: 'translateX(-50%)' },
+                    '100%': { transform: 'translateX(-33.333333%)' },
                 }
             },
             animation: {
-                marquee: 'marquee 120s linear infinite',
+                marquee: 'marquee 150s linear infinite',
             }
         },
     },
