@@ -65,19 +65,19 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ blog, onSave, onCancel, 
     };
 
     return (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 md:p-10 shadow-2xl animate-in fade-in zoom-in-95 duration-300">
-            <div className="flex justify-between items-center mb-8">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 sm:p-6 md:p-10 shadow-2xl animate-in fade-in zoom-in-95 duration-300">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                     {isCreating ? "New Article" : "Edit Article"}
                 </h2>
-                <div className="flex gap-2">
+                <div className="flex gap-2 w-full sm:w-auto">
                     <button onClick={onCancel} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
                         <X size={20} className="text-slate-500" />
                     </button>
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-all disabled:opacity-50"
+                        className="flex-1 sm:flex-none justify-center flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-all disabled:opacity-50"
                     >
                         <Save size={18} />
                         {saving ? 'Saving...' : 'Save Changes'}

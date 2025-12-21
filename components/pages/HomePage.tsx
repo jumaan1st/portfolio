@@ -103,7 +103,7 @@ export const HomePage: React.FC = () => {
     }
 
     return (
-        <div className="space-y-20 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-12">
+        <div className="space-y-20 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-12 overflow-x-hidden w-full max-w-[100vw]">
             {/* Hero */}
             <section className="flex flex-col items-center justify-start pt-0 pb-12 text-center relative gap-4">
                 <div className="relative flex flex-col items-center justify-center">
@@ -302,14 +302,14 @@ export const HomePage: React.FC = () => {
 
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-6 px-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 px-4 w-full">
                     {blogs.map((blog) => {
                         const displayImage = blog.image || extractFirstImage(blog.content);
                         return (
                             <article
                                 key={blog.id}
                                 onClick={() => router.push(`/blogs/${blog.id}`)}
-                                className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl p-6 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group cursor-pointer shadow-sm flex flex-col"
+                                className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl p-6 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group cursor-pointer shadow-sm flex flex-col w-full"
                             >
                                 <div className="relative h-48 mb-4 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
                                     {displayImage ? (
@@ -341,7 +341,7 @@ export const HomePage: React.FC = () => {
                                 </h4>
                                 {/* Render excerpt as HTML since it comes from RTE */}
                                 <div
-                                    className="text-slate-600 dark:text-slate-400 text-sm mb-4 line-clamp-3 prose dark:prose-invert max-w-none break-words [&>*]:m-0"
+                                    className="text-slate-600 dark:text-slate-400 text-sm mb-4 line-clamp-3 prose dark:prose-invert max-w-none break-words [&>*]:m-0 overflow-hidden"
                                     dangerouslySetInnerHTML={{ __html: blog.excerpt || '' }}
                                 />
                                 <div className="flex gap-2 mt-auto">

@@ -128,8 +128,8 @@ function Shell({ children }: { children: React.ReactNode }) {
     return (
         <div className="min-h-screen font-sans flex flex-col overflow-x-hidden">
             <Navbar />
-            <main className="flex-grow max-w-6xl w-full mx-auto px-4 py-8 md:py-12 relative">
-                <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[100px] -z-10 pointer-events-none" />
+            <main className="flex-grow max-w-6xl w-full mx-auto px-4 py-8 md:py-12 relative overflow-hidden">
+                <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[100px] -z-10 pointer-events-none max-w-full" />
                 {children}
             </main>
 

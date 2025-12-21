@@ -66,7 +66,7 @@ const AdminContent: React.FC = () => {
         createExperience, updateExperience, deleteExperience,
         updateProfile,
         createEducation, updateEducation, deleteEducation,
-        createBlog, updateBlog, deleteBlog
+
     } = usePortfolio();
 
     const { addToast } = useToast();
@@ -98,9 +98,6 @@ const AdminContent: React.FC = () => {
 
     const [editingEducation, setEditingEducation] = useState<Partial<typeof data.education[0]> | null>(null);
     const [isCreatingEdu, setIsCreatingEdu] = useState(false);
-
-    const [editingBlog, setEditingBlog] = useState<any>(null);
-    const [isCreatingBlog, setIsCreatingBlog] = useState(false);
 
     const [newSkill, setNewSkill] = useState({ name: '', icon: 'devicon-react-original' });
     const [profileForm, setProfileForm] = useState<typeof data.profile | null>(null);
@@ -192,33 +189,6 @@ const AdminContent: React.FC = () => {
         if (confirm("Delete project?")) handleSave(() => deleteProject(id), "Project deleted.");
     };
 
-    // Blogs
-    const saveBlog = async () => {
-        if (!editingBlog) return;
-        const success = await handleSave(async () => {
-            const b = { ...editingBlog };
-            if (typeof b.tags === 'string') b.tags = b.tags.split(',').map((t: string) => t.trim());
-
-            if (isCreatingBlog) await createBlog(b);
-            else if (b.id) await updateBlog(b.id, b);
-        }, "Blog post saved!");
-        if (success) {
-            setEditingBlog(null);
-            setIsCreatingBlog(false);
-        }
-    };
-
-    const deleteBlogPost = async (id: number) => {
-        if (confirm("Delete blog?")) handleSave(() => deleteBlog(id), "Blog deleted.");
-    };
-
-    // Skills
-    const addSkill = async () => {
-        if (!newSkill.name) return;
-        await handleSave(() => createSkill(newSkill), "Skill added!");
-        setNewSkill({ ...newSkill, name: '' });
-    };
-
     // Experience
     const saveExp = async () => {
         if (!editingExperience) return;
@@ -228,6 +198,13 @@ const AdminContent: React.FC = () => {
         }, "Experience saved!");
         if (success) setEditingExperience(null);
     };
+    const addSkill = async () => {
+        if (!newSkill.name) return;
+        await handleSave(() => createSkill(newSkill), "Skill added!");
+        setNewSkill({ ...newSkill, name: '' });
+    };
+
+
 
     // Education
     const saveEdu = async () => {
@@ -359,7 +336,11 @@ const AdminContent: React.FC = () => {
                 <div className="p-4 space-y-2 overflow-y-auto h-[calc(100vh-140px)]">
                     <SidebarItem icon={User} label="Profile" active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
                     <SidebarItem icon={FolderOpen} label="Projects" active={activeTab === 'projects'} onClick={() => setActiveTab('projects')} />
-                    <SidebarItem icon={BookOpen} label="Blogs" active={activeTab === 'blogs'} onClick={() => setActiveTab('blogs')} />
+                    <a href="/blogs" className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <BookOpen size={20} />
+                        <span>Manage Blogs</span>
+                        <ExternalLink size={16} className="ml-auto opacity-50" />
+                    </a>
                     <SidebarItem icon={PenTool} label="Skills" active={activeTab === 'skills'} onClick={() => setActiveTab('skills')} />
                     <SidebarItem icon={Briefcase} label="Experience" active={activeTab === 'experience'} onClick={() => setActiveTab('experience')} />
                     <SidebarItem icon={GraduationCap} label="Education" active={activeTab === 'education'} onClick={() => setActiveTab('education')} />
@@ -501,99 +482,7 @@ const AdminContent: React.FC = () => {
                     )}
 
                     {/* BLOGS */}
-                    {activeTab === 'blogs' && (
-                        <div className="space-y-6">
-                            {!editingBlog ? (
-                                <div className="space-y-4">
-                                    <button onClick={() => { setEditingBlog({}); setIsCreatingBlog(true); }} className="w-full py-4 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl flex items-center justify-center gap-2 text-slate-500 font-bold hover:text-pink-600 hover:border-pink-500 hover:bg-pink-50 dark:hover:bg-pink-900/10 transition-all">
-                                        <Plus size={20} /> Write New Article
-                                    </button>
-                                    {data.blogs.map(b => (
-                                        <div key={b.id} className="flex flex-col md:flex-row md:items-center justify-between bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all gap-4">
-                                            <div>
-                                                <h3 className="font-bold text-lg">{b.title}</h3>
-                                                <div className="flex gap-3 text-xs text-slate-500 mt-1">
-                                                    <span>{b.date}</span>
-                                                    <span>•</span>
-                                                    <span>{b.readTime}</span>
-                                                </div>
-                                            </div>
-                                            <div className="flex gap-3">
-                                                <button onClick={() => { setEditingBlog(b); setIsCreatingBlog(false); }} className="px-4 py-2 bg-slate-100 dark:bg-slate-700 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-200">Edit</button>
-                                                <button onClick={() => deleteBlogPost(b.id)} className="px-4 py-2 bg-red-50 dark:bg-red-900/20 rounded-lg text-sm font-bold text-red-600 hover:bg-red-100">Delete</button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <EditorLayout
-                                    title={isCreatingBlog ? "New Article" : "Edit Article"}
-                                    onCancel={() => setEditingBlog(null)}
-                                    onSave={saveBlog}
-                                >
-                                    <Input label="Article Title" value={editingBlog.title} onChange={v => setEditingBlog({ ...editingBlog, title: v })} />
 
-                                    <div className="grid md:grid-cols-2 gap-4">
-                                        <Input label="Publish Date" value={editingBlog.date} onChange={v => setEditingBlog({ ...editingBlog, date: v })} />
-                                        <Input label="Read Time" value={editingBlog.readTime} onChange={v => setEditingBlog({ ...editingBlog, readTime: v })} />
-                                    </div>
-
-                                    <FileUploader
-                                        label="Cover Image"
-                                        value={editingBlog.image || ''}
-                                        onChange={(v: string) => setEditingBlog({ ...editingBlog, image: v })}
-                                        folder="blogs"
-                                    />
-
-                                    <div>
-                                        <Input label="Tags (comma separated)" value={Array.isArray(editingBlog.tags) ? editingBlog.tags.join(', ') : editingBlog.tags} onChange={v => setEditingBlog({ ...editingBlog, tags: v.split(',').map(s => s.trim()) })} />
-                                        <div className="flex flex-wrap gap-2 mt-2 px-1">
-                                            <span className="text-xs text-slate-400">Quick Add:</span>
-                                            {BLOG_TAGS.slice(0, 8).map(tag => (
-                                                <button
-                                                    key={tag}
-                                                    onClick={() => {
-                                                        const currentTags = Array.isArray(editingBlog.tags)
-                                                            ? editingBlog.tags
-                                                            : (editingBlog.tags ? editingBlog.tags.split(',') : []);
-                                                        const cleanTags = currentTags.map((t: string) => t.trim()).filter(Boolean);
-
-                                                        if (!cleanTags.includes(tag)) {
-                                                            const newTags = [...cleanTags, tag];
-                                                            setEditingBlog({ ...editingBlog, tags: newTags });
-                                                        }
-                                                    }}
-                                                    className="text-xs px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-md hover:bg-purple-100 hover:text-purple-600 transition-colors"
-                                                >
-                                                    + {tag}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="md:col-span-2 space-y-4">
-                                        <div>
-                                            <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-2 block">Excerpt (Summary)</label>
-                                            <RichTextEditor
-                                                value={editingBlog.excerpt || ''}
-                                                onChange={v => setEditingBlog({ ...editingBlog, excerpt: v })}
-                                                placeholder="Short summary..."
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-2 block">Content</label>
-                                            <RichTextEditor
-                                                value={editingBlog.content || ''}
-                                                onChange={v => setEditingBlog({ ...editingBlog, content: v })}
-                                                placeholder="Write your article here..."
-                                            />
-                                        </div>
-                                    </div>
-                                </EditorLayout>
-                            )}
-                        </div>
-                    )}
 
                     {/* SKILLS */}
                     {activeTab === 'skills' && (

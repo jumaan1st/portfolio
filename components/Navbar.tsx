@@ -158,7 +158,7 @@ export const Navbar: React.FC = () => {
 
                 {/* Mobile Menu Dropdown (Simplified - Admin & Socials only) */}
                 {isMenuOpen && (
-                    <div className="md:hidden mt-4 pb-4 animate-in slide-in-from-top-4 fade-in duration-200">
+                    <div className="md:hidden mt-4 pb-4 animate-in slide-in-from-top-4 fade-in duration-200 overflow-hidden">
                         <div className="flex flex-col gap-2 p-2 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800">
 
                             <Link

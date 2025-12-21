@@ -85,14 +85,14 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
         }
     }, []);
 
-    // Fetches EVERYTHING (for Admin Dashboard)
+    // Fetches EVERYTHING (for Admin Dashboard) EXCEPT Blogs (handled separately/publicly)
     const fetchAdminData = React.useCallback(async () => {
         // Do not set global isLoading here, as it unmounts the entire app in layout.tsx!
         // AdminPage handles its own loading state.
         try {
             const [
                 configRes, uiRes, profileRes,
-                projectRes, skillsRes, expRes, eduRes, blogsRes
+                projectRes, skillsRes, expRes, eduRes
             ] = await Promise.all([
                 fetch('/api/config'),
                 fetch('/api/ui-config'),
@@ -100,8 +100,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
                 fetch('/api/projects?limit=1000'),
                 fetch('/api/skills'),
                 fetch('/api/experience'),
-                fetch('/api/education'),
-                fetch('/api/blogs?limit=1000')
+                fetch('/api/education')
             ]);
 
             const config = await parseOrNull(configRes, initialEmptyData.config);
@@ -109,24 +108,19 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
             const profile = await parseOrNull(profileRes, initialEmptyData.profile);
 
             // Handle pagination wrappers if present, though Admin likely wants all
-            // Ideally we stick to simple arrays for local state in Admin for now, 
-            // or we adapt AdminPage to handle the 'data' property.
-            // For now, let's assume the API returns { data: [...] } for paginated endpoints
-            // so we extract .data.
             const projJson = await parseOrNull(projectRes, { data: [] });
-            const blogsJson = await parseOrNull(blogsRes, { data: [] });
-
             const projects = Array.isArray(projJson) ? projJson : (projJson.data || []);
-            const blogs = Array.isArray(blogsJson) ? blogsJson : (blogsJson.data || []);
 
             const skills = await parseOrNull(skillsRes, []);
             const experience = await parseOrNull(expRes, []);
             const education = await parseOrNull(eduRes, []);
 
-            setData({
+            // We keep the previous blogs data if it exists, or empty, as we don't fetch it here anymore
+            setData(prev => ({
+                ...prev,
                 config, ui, profile,
-                projects, skills, experience, education, blogs
-            });
+                projects, skills, experience, education
+            }));
         } catch (e) { console.error(e); }
     }, []);
 

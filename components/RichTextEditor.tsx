@@ -159,6 +159,11 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeh
                     margin: 1rem 0;
                     display: block;
                 }
+                /* FORCE TOOLBAR WRAPPING FOR MOBILE RESPONSIVENESS */
+                .ql-toolbar {
+                    display: flex !important;
+                    flex-wrap: wrap !important;
+                }
             `}</style>
         </div>
     );

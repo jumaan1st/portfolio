@@ -57,7 +57,7 @@ export const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ blog: initialBlo
     }
 
     return (
-        <div className="max-w-3xl mx-auto animate-in fade-in slide-in-from-right-8 duration-500 pb-12">
+        <div className="max-w-3xl w-full mx-auto animate-in fade-in slide-in-from-right-8 duration-500 pb-12 overflow-x-hidden">
             <div className="flex justify-between items-center mb-6">
                 <button
                     onClick={() => router.push("/blogs")}
