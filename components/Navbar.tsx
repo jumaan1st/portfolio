@@ -26,14 +26,23 @@ export const Navbar: React.FC = () => {
     const [mounted, setMounted] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isSocialOpen, setIsSocialOpen] = useState(false); // Sub-dropdown for socials
+    const [showThemeTutorial, setShowThemeTutorial] = useState(false);
 
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setMounted(true);
+        const hasSeenTutorial = localStorage.getItem("has_seen_theme_tutorial");
+        if (!hasSeenTutorial) {
+            setShowThemeTutorial(true);
+        }
     }, []);
 
     const toggleTheme = () => {
         setTheme(theme === "dark" ? "light" : "dark");
+        if (showThemeTutorial) {
+            localStorage.setItem("has_seen_theme_tutorial", "true");
+            setShowThemeTutorial(false);
+        }
     };
 
     return (
@@ -94,12 +103,23 @@ export const Navbar: React.FC = () => {
 
                         <div className="w-px h-6 bg-slate-200 dark:bg-slate-800 mx-1" />
 
-                        <button
-                            onClick={toggleTheme}
-                            className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800 transition-all"
-                        >
-                            {mounted && (theme === "dark" ? <Sun size={18} /> : <Moon size={18} />)}
-                        </button>
+                        <div className="relative">
+                            <button
+                                onClick={toggleTheme}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${showThemeTutorial
+                                        ? "bg-blue-100 text-blue-600 ring-2 ring-blue-500 ring-offset-2 animate-pulse dark:ring-offset-slate-900"
+                                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800"
+                                    }`}
+                            >
+                                {mounted && (theme === "dark" ? <Sun size={18} /> : <Moon size={18} />)}
+                            </button>
+                            {showThemeTutorial && (
+                                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-32 bg-blue-600 text-white text-xs font-bold py-1 px-2 rounded-lg shadow-lg text-center animate-bounce z-50">
+                                    Try Dark Mode!
+                                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-blue-600 rotate-45" />
+                                </div>
+                            )}
+                        </div>
 
                         <Link
                             href="/admin"
@@ -124,12 +144,23 @@ export const Navbar: React.FC = () => {
                         </Link>
 
                         <div className="flex items-center gap-2">
-                            <button
-                                onClick={toggleTheme}
-                                className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
-                            >
-                                {mounted && (theme === "dark" ? <Sun size={18} /> : <Moon size={18} />)}
-                            </button>
+                            <div className="relative">
+                                <button
+                                    onClick={toggleTheme}
+                                    className={`p-2 rounded-lg ${showThemeTutorial
+                                            ? "bg-blue-100 text-blue-600 ring-2 ring-blue-500 ring-offset-2 animate-pulse"
+                                            : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                                        }`}
+                                >
+                                    {mounted && (theme === "dark" ? <Sun size={18} /> : <Moon size={18} />)}
+                                </button>
+                                {showThemeTutorial && (
+                                    <div className="absolute top-full mt-2 right-0 w-32 bg-blue-600 text-white text-xs font-bold py-1 px-2 rounded-lg shadow-lg text-center animate-bounce z-50">
+                                        Try Dark Mode!
+                                        <div className="absolute -top-1 right-3 w-2 h-2 bg-blue-600 rotate-45" />
+                                    </div>
+                                )}
+                            </div>
                             <button
                                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                                 className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white"

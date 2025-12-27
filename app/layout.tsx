@@ -264,7 +264,7 @@ export default function RootLayout({
                 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css" />
             </head>
             <body className="bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-200 transition-colors duration-300">
-                <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+                <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
                     <PortfolioProvider>
                         <ToastProvider>
                             <Shell>{children}</Shell>
