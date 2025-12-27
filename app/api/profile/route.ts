@@ -22,7 +22,8 @@ const getProfile = unstable_cache(
         twitter,
         resume_url AS "resumeUrl",
         photo_light_url AS "photoLightUrl",
-        photo_dark_url AS "photoDarkUrl"
+        photo_dark_url AS "photoDarkUrl",
+        currently_learning AS "currentlyLearning"
       FROM portfolio.profile
       LIMIT 1
     `);
@@ -60,7 +61,8 @@ export async function PUT(request: Request) {
       twitter,
       resumeUrl,
       photoLightUrl,
-      photoDarkUrl
+      photoDarkUrl,
+      currentlyLearning
     } = body;
 
     // Assuming id=1 is the only profile for now, or fetch the first one
@@ -81,17 +83,19 @@ export async function PUT(request: Request) {
                 twitter = COALESCE($12, twitter),
                 resume_url = COALESCE($13, resume_url),
                 photo_light_url = COALESCE($14, photo_light_url),
-                photo_dark_url = COALESCE($15, photo_dark_url)
+                photo_dark_url = COALESCE($15, photo_dark_url),
+                currently_learning = COALESCE($16, currently_learning)
             WHERE id = (SELECT id FROM portfolio.profile LIMIT 1)
             RETURNING 
                 id, name, roles, role as "currentRole", current_company as "currentCompany", 
                 current_company_url as "currentCompanyUrl", summary, location, email, phone, 
                 linkedin, github, twitter, resume_url as "resumeUrl", 
-                photo_light_url as "photoLightUrl", photo_dark_url as "photoDarkUrl"
+                photo_light_url as "photoLightUrl", photo_dark_url as "photoDarkUrl",
+                currently_learning as "currentlyLearning"
         `, [
       name, JSON.stringify(roles), currentRole, currentCompany, currentCompanyUrl, summary,
       location, email, phone, linkedin, github, twitter, resumeUrl,
-      photoLightUrl, photoDarkUrl
+      photoLightUrl, photoDarkUrl, JSON.stringify(currentlyLearning)
     ]);
 
     return NextResponse.json(rows[0]);

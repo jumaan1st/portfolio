@@ -411,6 +411,78 @@ const AdminContent: React.FC = () => {
                                         <Input label="Twitter/X" value={profileForm.twitter} onChange={v => setProfileForm({ ...profileForm, twitter: v })} />
                                     </div>
                                 </div>
+
+                                <div className="md:col-span-2 space-y-4 pt-4 border-t dark:border-slate-700">
+                                    <h4 className="font-bold text-sm text-slate-500 uppercase flex justify-between items-center">
+                                        Currently Learning
+                                        <button onClick={() => setProfileForm({
+                                            ...profileForm,
+                                            currentlyLearning: [...(profileForm.currentlyLearning || []), { topic: '', status: 'In Progress' }]
+                                        })} className="text-blue-600 text-xs flex items-center gap-1 hover:underline">
+                                            <Plus size={14} /> Add Item
+                                        </button>
+                                    </h4>
+
+                                    <div className="space-y-3">
+                                        {(profileForm.currentlyLearning || []).map((item, idx) => (
+                                            <div key={idx} className="flex flex-col md:flex-row gap-3 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 flex-1">
+                                                    <input placeholder="Topic" className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-blue-500"
+                                                        value={item.topic} onChange={e => {
+                                                            const newList = [...(profileForm.currentlyLearning || [])];
+                                                            newList[idx].topic = e.target.value;
+                                                            setProfileForm({ ...profileForm, currentlyLearning: newList });
+                                                        }}
+                                                    />
+                                                    <input placeholder="Category" className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-blue-500"
+                                                        value={item.category || ''} onChange={e => {
+                                                            const newList = [...(profileForm.currentlyLearning || [])];
+                                                            newList[idx].category = e.target.value;
+                                                            setProfileForm({ ...profileForm, currentlyLearning: newList });
+                                                        }}
+                                                    />
+                                                    <select className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-blue-500"
+                                                        value={item.status || 'In Progress'} onChange={e => {
+                                                            const newList = [...(profileForm.currentlyLearning || [])];
+                                                            newList[idx].status = e.target.value;
+                                                            setProfileForm({ ...profileForm, currentlyLearning: newList });
+                                                        }}
+                                                    >
+                                                        <option value="In Progress">In Progress</option>
+                                                        <option value="Planned">Planned</option>
+                                                        <option value="Completed">Completed</option>
+                                                    </select>
+                                                    <input placeholder="Reference URL" className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-blue-500"
+                                                        value={item.referenceUrl || ''} onChange={e => {
+                                                            const newList = [...(profileForm.currentlyLearning || [])];
+                                                            newList[idx].referenceUrl = e.target.value;
+                                                            setProfileForm({ ...profileForm, currentlyLearning: newList });
+                                                        }}
+                                                    />
+                                                    <input placeholder="Level (e.g. Beginner)" className="md:col-span-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-blue-500"
+                                                        value={item.level || ''} onChange={e => {
+                                                            const newList = [...(profileForm.currentlyLearning || [])];
+                                                            newList[idx].level = e.target.value;
+                                                            setProfileForm({ ...profileForm, currentlyLearning: newList });
+                                                        }}
+                                                    />
+                                                </div>
+                                                <button onClick={() => {
+                                                    const newList = [...(profileForm.currentlyLearning || [])];
+                                                    newList.splice(idx, 1);
+                                                    setProfileForm({ ...profileForm, currentlyLearning: newList });
+                                                }} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-lg transition-colors self-start md:self-center">
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        {(!profileForm.currentlyLearning || profileForm.currentlyLearning.length === 0) && (
+                                            <div className="text-center py-6 text-slate-400 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
+                                                No learning items added.
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}

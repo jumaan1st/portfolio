@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Briefcase, GraduationCap, Zap, Github, Linkedin } from "lucide-react";
+import { Briefcase, GraduationCap, Zap, Github, Linkedin, ExternalLink, Search } from "lucide-react";
 import { usePortfolio } from "@/components/PortfolioContext";
 import { IconRenderer } from "@/components/IconRenderer";
 
@@ -121,9 +121,9 @@ export const AboutPage: React.FC = () => {
                     {experience.map((exp) => (
                         <div key={exp.id} className="relative group">
                             <div className="absolute -left-[41px] top-0 w-6 h-6 bg-white dark:bg-slate-900 border-4 border-blue-600 dark:border-blue-500 rounded-full group-hover:scale-125 transition-transform duration-300" />
-                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-2">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-2 gap-2">
                                 <h4 className="text-xl font-bold text-slate-900 dark:text-white">{exp.role}</h4>
-                                <span className="text-xs font-bold bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700">
+                                <span className="w-fit text-xs font-bold bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700">
                                     {exp.period}
                                 </span>
                             </div>
@@ -179,11 +179,66 @@ export const AboutPage: React.FC = () => {
                         ))}
                     </div>
                     <div className="bg-slate-100 dark:bg-slate-800/20 p-6 rounded-xl border border-slate-200 dark:border-slate-700/50">
-                        <h4 className="font-bold text-slate-900 dark:text-white mb-2">Currently Learning</h4>
-                        <p className="text-slate-600 dark:text-slate-400 text-sm">
-                            Explaining High Level System Design Architecture, Advanced
-                            Kubernetes Patterns, and Generative AI Model Fine-Tuning.
-                        </p>
+                        <h4 className="font-bold text-slate-900 dark:text-white mb-4">Currently Learning</h4>
+                        {globalData.profile.currentlyLearning && globalData.profile.currentlyLearning.length > 0 ? (
+                            <div className="space-y-4">
+                                {globalData.profile.currentlyLearning.map((item, idx) => {
+                                    const hasLink = !!item.referenceUrl;
+                                    const linkUrl = hasLink ? item.referenceUrl : `https://www.google.com/search?q=${encodeURIComponent(item.topic + " " + (item.category || ""))}`;
+                                    const LinkIcon = hasLink ? ExternalLink : Search;
+
+                                    return (
+                                        <div key={idx} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 p-5 rounded-2xl hover:shadow-lg hover:shadow-blue-500/5 hover:border-blue-500/30 transition-all group relative overflow-hidden">
+                                            <div className="flex justify-between items-start gap-4">
+                                                <div className="space-y-3 flex-1 min-w-0">
+                                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                                                        <h5 className="font-bold text-slate-900 dark:text-white text-base">
+                                                            {item.topic}
+                                                        </h5>
+                                                        {item.status && (
+                                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${item.status === 'In Progress'
+                                                                ? 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800'
+                                                                : 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
+                                                                }`}>
+                                                                {item.status}
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        {item.category && (
+                                                            <span className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700">
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-500" />
+                                                                {item.category}
+                                                            </span>
+                                                        )}
+                                                        {item.level && (
+                                                            <span className="text-xs text-slate-500 dark:text-slate-500 font-medium px-1">
+                                                                {item.level}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <a
+                                                    href={linkUrl}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="flex-shrink-0 p-2 -mr-2 -mt-2 text-slate-300 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-all"
+                                                    title={hasLink ? "Visit Resource" : "Search Topic"}
+                                                >
+                                                    <LinkIcon size={18} />
+                                                </a>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <p className="text-slate-600 dark:text-slate-400 text-sm italic">
+                                Always exploring new technologies...
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>

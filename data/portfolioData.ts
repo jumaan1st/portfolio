@@ -64,6 +64,15 @@ export interface Profile {
     resumeUrl: string;
     photoLightUrl?: string; // New field
     photoDarkUrl?: string;  // New field
+    currentlyLearning?: CurrentlyLearningItem[];
+}
+
+export interface CurrentlyLearningItem {
+    topic: string;
+    category?: string;
+    level?: string;
+    status?: string;
+    referenceUrl?: string;
 }
 
 export interface UIConfig {
