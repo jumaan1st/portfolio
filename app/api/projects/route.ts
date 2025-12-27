@@ -112,7 +112,7 @@ export async function POST(request: Request) {
     }
     return NextResponse.json({ error: 'Failed to create project' }, { status: 500 });
   } finally {
-    revalidateTag('projects');
+    revalidateTag('projects', { expire: 0 });
   }
 }
 
@@ -172,7 +172,7 @@ export async function PUT(request: Request) {
     }
     return NextResponse.json({ error: 'Failed to update project' }, { status: 500 });
   } finally {
-    revalidateTag('projects');
+    revalidateTag('projects', { expire: 0 });
   }
 }
 
@@ -199,6 +199,6 @@ export async function DELETE(request: Request) {
     }
     return NextResponse.json({ error: 'Failed to delete project' }, { status: 500 });
   } finally {
-    revalidateTag('projects');
+    revalidateTag('projects', { expire: 0 });
   }
 }
