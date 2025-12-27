@@ -194,9 +194,12 @@ export const ProjectsPage: React.FC = () => {
                                                     <ExternalLink size={18} />
                                                 </ProjectLink>
                                             </div>
-                                            <span className="text-xs font-bold text-purple-600 dark:text-purple-400 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                                            <Link
+                                                href={`/projects/${project.id}`}
+                                                className="text-xs font-bold text-purple-600 dark:text-purple-400 flex items-center gap-1 group-hover:translate-x-1 transition-transform relative z-10"
+                                            >
                                                 View Details <ArrowRight size={14} />
-                                            </span>
+                                            </Link>
                                         </div>
                                     </div>
                                 </div>
