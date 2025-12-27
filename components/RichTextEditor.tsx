@@ -27,13 +27,38 @@ const formats = [
 ];
 
 import { Code, Eye, X } from 'lucide-react';
+import { marked } from 'marked';
 import { Quill } from 'react-quill-new';
 import BlotFormatter from 'quill-blot-formatter';
+import MarkdownShortcuts from 'quill-markdown-shortcuts';
 
 Quill.register('modules/blotFormatter', BlotFormatter);
+Quill.register('modules/markdownShortcuts', MarkdownShortcuts);
 
 const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeholder, className, allowImages = true }) => {
     const [isCodeView, setIsCodeView] = React.useState(false);
+
+    // Auto-convert Markdown to HTML if the value doesn't look like HTML
+    const displayValue = useMemo(() => {
+        if (!value) return '';
+        const trimmed = value.trim();
+        // If it starts with <, it's likely already HTML (Quill output). 
+        // If not, assume it's Markdown/Text and convert it.
+        // We use a loose check because simple text "Hello" is also not HTML start.
+        if (trimmed && !trimmed.startsWith('<')) {
+            try {
+                // marked.parse returns a string (Promise<string> in newer versions? No, sync by default unless async option used)
+                // Typescript might complain if marked.parse returns Promise. 
+                // Using 'await' inside useMemo isn't possible.
+                // We'll assume sync version for now or handle it carefully.
+                // Check marked version. 12+ is sync by default.
+                return marked.parse(trimmed, { async: false }) as string;
+            } catch (e) {
+                return value;
+            }
+        }
+        return value;
+    }, [value]);
 
     // Use a ref to access the quill instance
     const containerRef = useRef<HTMLDivElement>(null);
@@ -123,7 +148,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeh
             clipboard: {
                 matchVisual: false
             },
-            blotFormatter: {}
+            blotFormatter: {},
+            markdownShortcuts: {}
         };
     }, [imageHandler, allowImages]);
 
@@ -160,7 +186,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeh
                     <ReactQuill
                         ref={quillRef}
                         theme="snow"
-                        value={value}
+                        value={displayValue}
                         onChange={onChange}
                         modules={modules}
                         formats={finalFormats}
