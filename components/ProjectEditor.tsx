@@ -34,6 +34,16 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({ initialData, onSav
     }, [project, initialData, onDirtyChange]);
 
     const handleSave = async () => {
+        if (!project.title?.trim()) {
+            alert("Project Title is required");
+            return;
+        }
+
+        if (!project.description?.trim()) {
+            alert("Short Summary is required");
+            return;
+        }
+
         setIsSaving(true);
         try {
             // Auto-set cover image if missing
@@ -42,6 +52,9 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({ initialData, onSav
                 if (extracted) project.image = extracted;
             }
             await onSave(project);
+        } catch (error) {
+            console.error("Failed to save project:", error);
+            alert("Failed to save project. Please try again.");
         } finally {
             setIsSaving(false);
         }
@@ -60,7 +73,7 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({ initialData, onSav
                 </button>
             </div>
 
-            <Input label="Project Title" value={project.title} onChange={v => setProject({ ...project, title: v })} />
+            <Input label="Project Title *" value={project.title} onChange={v => setProject({ ...project, title: v })} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-2 block">Category</label>
@@ -86,7 +99,7 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({ initialData, onSav
 
             <div className="space-y-4">
                 <div>
-                    <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-2 block">Short Summary (Card Preview)</label>
+                    <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-2 block">Short Summary (Card Preview) *</label>
                     <textarea
                         className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 h-24 outline-none focus:ring-2 ring-blue-500 text-sm text-slate-700 dark:text-slate-200"
                         value={project.description}

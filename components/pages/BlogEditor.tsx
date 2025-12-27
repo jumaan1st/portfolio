@@ -49,6 +49,22 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ blog, onSave, onCancel, 
 
     const handleSave = async () => {
         setSaving(true);
+        if (!editingBlog.title?.trim()) {
+            alert("Title is required");
+            setSaving(false);
+            return;
+        }
+        if (!editingBlog.excerpt?.trim() || editingBlog.excerpt === '<p><br></p>') {
+            alert("Excerpt is required");
+            setSaving(false);
+            return;
+        }
+        if (!editingBlog.content?.trim() || editingBlog.content === '<p><br></p>') {
+            alert("Content is required");
+            setSaving(false);
+            return;
+        }
+
         try {
             const finalBlog = { ...editingBlog };
             // Auto-set cover image if missing
@@ -59,6 +75,9 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ blog, onSave, onCancel, 
                 }
             }
             await onSave(finalBlog as BlogPost);
+        } catch (e) {
+            console.error(e);
+            alert("Failed to save blog post");
         } finally {
             setSaving(false);
         }
@@ -87,7 +106,7 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ blog, onSave, onCancel, 
 
             <div className="space-y-6">
                 <Input
-                    label="Article Title"
+                    label="Article Title *"
                     value={editingBlog.title}
                     onChange={(v: string) => setEditingBlog({ ...editingBlog, title: v })}
                     placeholder="Enter an engaging title..."
@@ -148,7 +167,7 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ blog, onSave, onCancel, 
 
                 <div className="space-y-6 pt-4 border-t border-slate-100 dark:border-slate-800">
                     <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-2 block">Excerpt (Summary)</label>
+                        <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-2 block">Excerpt (Summary) *</label>
                         <RichTextEditor
                             value={editingBlog.excerpt || ''}
                             onChange={v => setEditingBlog({ ...editingBlog, excerpt: v })}
@@ -159,7 +178,7 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ blog, onSave, onCancel, 
                     </div>
 
                     <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-2 block">Content</label>
+                        <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-2 block">Content *</label>
                         <RichTextEditor
                             value={editingBlog.content || ''}
                             onChange={v => setEditingBlog({ ...editingBlog, content: v })}

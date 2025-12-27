@@ -81,6 +81,26 @@ export async function POST(request: Request) {
 
             Return ONLY the raw JSON object. No markdown formatting, no code fences.
             `;
+        } else if (type === 'text') {
+            // Context aware generation for Editor
+            const context = body.context || {};
+            finalSystemPrompt = `
+            You are an expert content writer and HTML formatter.
+            The user wants you to generate or improve text for a blog post.
+            
+            Instructions:
+            1. Return semantic, valid HTML (e.g., <p>, <h2>, <ul>, <strong>).
+            2. Do NOT wrap the entire answer in markdown code fences (like \`\`\`html). just return the HTML string.
+            3. If images are provided in the context, try to incorporate them intelligently using <img src="..."> tags.
+               - Context Images: ${JSON.stringify(context.images || [])}
+               - You can add inline styles for floating or sizing (e.g. style="float: right; width: 300px; margin: 0 0 1rem 1rem;") if it makes sense.
+            
+            Current Content Context (if any):
+            ${context.content || "None"}
+
+            User's Specific Request:
+            ${userPrompt}
+            `;
         } else {
             finalSystemPrompt = SYSTEM_PROMPT + "\n\nUser Input:\n" + userPrompt;
         }
@@ -132,7 +152,7 @@ export async function POST(request: Request) {
 
         console.log("AI Raw Output:", generatedText.substring(0, 100) + "...");
 
-        const result = JSON.parse(generatedText);
+        const result = type === 'text' ? { text: generatedText } : JSON.parse(generatedText);
         return NextResponse.json(result);
 
     } catch (error: any) {

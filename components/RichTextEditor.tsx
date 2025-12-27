@@ -22,15 +22,21 @@ const formats = [
     'bold', 'italic', 'underline', 'strike', 'blockquote',
     'list', 'indent',
     'link', 'image',
-    'color', 'background'
+    'color', 'background',
+    'align', 'font', 'size'
 ];
 
-import { Code, Eye } from 'lucide-react';
+import { Code, Eye, X } from 'lucide-react';
+import { Quill } from 'react-quill-new';
+import BlotFormatter from 'quill-blot-formatter';
+
+Quill.register('modules/blotFormatter', BlotFormatter);
 
 const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeholder, className, allowImages = true }) => {
     const [isCodeView, setIsCodeView] = React.useState(false);
 
     // Use a ref to access the quill instance
+    const containerRef = useRef<HTMLDivElement>(null);
     const quillRef = useRef<any>(null);
 
     // Custom File (Image/PDF) Handler
@@ -80,18 +86,31 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeh
         };
     }, []);
 
+
+
+
+
+
+
+
+
+
+
     const modules = useMemo(() => {
         const toolbarContainer = [
             [{ 'header': [1, 2, 3, false] }],
+            [{ 'font': [] }],
+            [{ 'size': ['small', false, 'large', 'huge'] }],
             ['bold', 'italic', 'underline', 'strike', 'blockquote'],
             [{ 'color': [] }, { 'background': [] }],
-            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+            [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'align': [] }],
             ['link'], // Always allow links
             ['clean']
         ];
 
         if (allowImages) {
-            (toolbarContainer[3] as any[]).push('image');
+            // With the new additions, the list/bullet/align line is at index 5
+            (toolbarContainer[5] as any[]).push('image');
         }
 
         return {
@@ -103,7 +122,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeh
             },
             clipboard: {
                 matchVisual: false
-            }
+            },
+            blotFormatter: {}
         };
     }, [imageHandler, allowImages]);
 
@@ -111,35 +131,44 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeh
 
 
     return (
-        <div className={`rich-text-editor ${className} relative`}>
-            <button
-                type="button"
-                onClick={() => setIsCodeView(!isCodeView)}
-                className="absolute right-2 top-2 z-10 p-2 bg-white dark:bg-slate-800 text-slate-500 hover:text-blue-600 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 transition-colors"
-                title={isCodeView ? "Switch to Visual Editor" : "View Source Code"}
-            >
-                {isCodeView ? <Eye size={18} /> : <Code size={18} />}
-            </button>
+        <div ref={containerRef} className={`rich-text-editor ${className} relative`} >
+            {/* Toolbar Actions */}
+            < div className="absolute right-2 top-2 z-20 flex gap-2" >
 
-            {isCodeView ? (
-                <textarea
-                    className="w-full h-full min-h-[150px] p-4 font-mono text-sm bg-slate-900 text-slate-50 rounded-xl outline-none resize-y"
-                    value={value}
-                    onChange={(e) => onChange(e.target.value)}
-                    placeholder="Write HTML here..."
-                />
-            ) : (
-                <ReactQuill
-                    ref={quillRef}
-                    theme="snow"
-                    value={value}
-                    onChange={onChange}
-                    modules={modules}
-                    formats={finalFormats}
-                    placeholder={placeholder}
-                    className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-xl overflow-hidden"
-                />
-            )}
+                <button
+                    type="button"
+                    onClick={() => setIsCodeView(!isCodeView)}
+                    className="p-2 bg-white dark:bg-slate-800 text-slate-500 hover:text-blue-600 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 transition-colors"
+                    title={isCodeView ? "Switch to Visual Editor" : "View Source Code"}
+                >
+                    {isCodeView ? <Eye size={18} /> : <Code size={18} />}
+                </button>
+            </div >
+
+            {/* AI Magic Popover */}
+
+
+            {
+                isCodeView ? (
+                    <textarea
+                        className="w-full h-full min-h-[150px] p-4 font-mono text-sm bg-slate-900 text-slate-50 rounded-xl outline-none resize-y"
+                        value={value}
+                        onChange={(e) => onChange(e.target.value)}
+                        placeholder="Write HTML here..."
+                    />
+                ) : (
+                    <ReactQuill
+                        ref={quillRef}
+                        theme="snow"
+                        value={value}
+                        onChange={onChange}
+                        modules={modules}
+                        formats={finalFormats}
+                        placeholder={placeholder}
+                        className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-xl overflow-hidden"
+                    />
+                )
+            }
             {/* Custom Styles for Quill in Dark Mode */}
             <style jsx global>{`
                 .ql-toolbar.ql-snow {
@@ -171,6 +200,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeh
                     border-color: #334155;
                     background-color: #0f172a;
                     color: white;
+                    /* Ensure text is white in dark mode and selected text is visible */
                 }
                 .ql-editor {
                     min-height: 150px;
@@ -180,8 +210,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeh
                 .ql-editor img {
                     max-width: 100%;
                     border-radius: 0.5rem;
-                    margin: 1rem 0;
-                    display: block;
                 }
                 /* FORCE TOOLBAR WRAPPING FOR MOBILE RESPONSIVENESS */
                 .ql-toolbar {
@@ -189,7 +217,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeh
                     flex-wrap: wrap !important;
                 }
             `}</style>
-        </div>
+        </div >
     );
 };
 

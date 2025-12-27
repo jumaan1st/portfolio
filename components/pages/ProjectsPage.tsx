@@ -156,9 +156,11 @@ export const ProjectsPage: React.FC = () => {
                                             </div>
                                         )}
                                         <div className="absolute top-4 right-4 flex gap-2 z-10">
-                                            <div className="bg-slate-900/80 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-white border border-slate-700">
-                                                {project.tech[0]}
-                                            </div>
+                                            {project.tech && project.tech.length > 0 && (
+                                                <div className="bg-slate-900/80 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-white border border-slate-700">
+                                                    {project.tech[0]}
+                                                </div>
+                                            )}
                                             {isAuthenticated && (
                                                 <button
                                                     onClick={(e) => {

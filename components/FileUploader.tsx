@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Loader2, Upload, ExternalLink, RefreshCw } from "lucide-react";
+import { Loader2, Upload, ExternalLink, RefreshCw, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 
 interface FileUploaderProps {
@@ -129,6 +129,25 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ label, value, onChan
                                 accept={folder === 'resumes' ? ".pdf" : "image/*"}
                             />
                         </div>
+                        <button
+                            onClick={async () => {
+                                if (confirm("Remove this image?")) {
+                                    // Optional: Delete from server
+                                    // await handleDeleteOld(value); 
+                                    // Actually, let's just clear it from the form for now to be safe, 
+                                    // or strictly follow "delete" which implies server removal.
+                                    // The existing handleDeleteOld function is available.
+                                    // Let's use it if we want to clean up.
+                                    await handleDeleteOld(value);
+                                    onChange("");
+                                }
+                            }}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                            title="Remove File"
+                            type="button"
+                        >
+                            <Trash2 size={16} />
+                        </button>
                     </div>
 
                     {uploading && (
