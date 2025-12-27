@@ -126,7 +126,23 @@ const AdminContent: React.FC = () => {
 
     // Initialize profile form
     useEffect(() => {
-        if (data?.profile) setProfileForm(data.profile);
+        if (data?.profile) {
+            const safeProfile = { ...data.profile };
+
+            // Ensure roles is array
+            if (typeof safeProfile.roles === 'string') {
+                try { safeProfile.roles = JSON.parse(safeProfile.roles); } catch (e) { safeProfile.roles = []; }
+            }
+            if (!Array.isArray(safeProfile.roles)) safeProfile.roles = [];
+
+            // Ensure currentlyLearning is array
+            if (typeof safeProfile.currentlyLearning === 'string') {
+                try { safeProfile.currentlyLearning = JSON.parse(safeProfile.currentlyLearning); } catch (e) { safeProfile.currentlyLearning = []; }
+            }
+            if (!Array.isArray(safeProfile.currentlyLearning)) safeProfile.currentlyLearning = [];
+
+            setProfileForm(safeProfile);
+        }
     }, [data]);
 
     // --- Actions ---
