@@ -199,8 +199,14 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeh
                 .dark .ql-container.ql-snow {
                     border-color: #334155;
                     background-color: #0f172a;
-                    color: white;
-                    /* Ensure text is white in dark mode and selected text is visible */
+                    color: #f8fafc; /* Slate-50 */
+                }
+                .dark .ql-editor {
+                    color: #f8fafc;
+                }
+                .dark .ql-editor.ql-blank::before {
+                    color: #94a3b8; /* Slate-400 */
+                    font-style: italic;
                 }
                 .ql-editor {
                     min-height: 150px;
