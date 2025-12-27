@@ -2,6 +2,13 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 
+// Helper to map DB row to Frontend Interface
+const mapRow = (row: any) => ({
+  ...row,
+  readTime: row.read_time,
+  // Ensure we consistently provide readTime (camelCase)
+});
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -11,7 +18,7 @@ export async function GET(request: Request) {
     if (id) {
       const { rows } = await pool.query('SELECT * FROM portfolio.blogs WHERE id = $1', [id]);
       if (rows.length === 0) return NextResponse.json({ error: 'Blog not found' }, { status: 404 });
-      return NextResponse.json(rows[0]);
+      return NextResponse.json(mapRow(rows[0]));
     }
 
     const limit = parseInt(searchParams.get('limit') || '100');
@@ -20,7 +27,14 @@ export async function GET(request: Request) {
     const tag = searchParams.get('tag') || '';
     const offset = (page - 1) * limit;
 
+    const includeHidden = searchParams.get('include_hidden') === 'true';
     let query = 'SELECT * FROM portfolio.blogs WHERE 1=1';
+
+    // By default, exclude hidden blogs unless specifically requested (Admin) 
+    // OR if we are fetching a specific ID (which is handled above individually).
+    if (!includeHidden) {
+      query += ' AND is_hidden = FALSE';
+    }
     const params: any[] = [];
 
     if (search) {
@@ -44,7 +58,7 @@ export async function GET(request: Request) {
     const { rows } = await pool.query(query, params);
 
     return NextResponse.json({
-      data: rows,
+      data: rows.map(mapRow),
       meta: {
         total,
         page,
@@ -61,16 +75,16 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { title, excerpt, content, tags, date, readTime, image } = body;
+    const { title, excerpt, content, tags, date, readTime, image, is_hidden } = body;
 
     const idRes = await pool.query('SELECT COALESCE(MAX(id), 0) + 1 as new_id FROM portfolio.blogs');
     const newId = idRes.rows[0].new_id;
 
     const { rows } = await pool.query(
-      'INSERT INTO portfolio.blogs (id, title, excerpt, content, tags, date, read_time, image) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-      [newId, title, excerpt, content, JSON.stringify(tags), date, readTime, image]
+      'INSERT INTO portfolio.blogs (id, title, excerpt, content, tags, date, read_time, image, is_hidden) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
+      [newId, title, excerpt, content, JSON.stringify(tags), date, readTime, image, is_hidden || false]
     );
-    return NextResponse.json(rows[0]);
+    return NextResponse.json(mapRow(rows[0]));
   } catch (error: any) {
     if (error.code === '42501') return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
     return NextResponse.json({ error: 'Failed: ' + error.message }, { status: 500 });
@@ -82,7 +96,7 @@ export async function PUT(request: Request) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     const body = await request.json();
-    const { title, excerpt, content, tags, date, readTime, image } = body;
+    const { title, excerpt, content, tags, date, readTime, image, is_hidden } = body;
 
     const { rows } = await pool.query(`
             UPDATE portfolio.blogs 
@@ -92,11 +106,12 @@ export async function PUT(request: Request) {
                 tags = COALESCE($4, tags), 
                 date = COALESCE($5, date),
                 read_time = COALESCE($6, read_time),
-                image = COALESCE($7, image)
-            WHERE id = $8 RETURNING *
-         `, [title, excerpt, content, JSON.stringify(tags), date, readTime, image, id]);
+                image = COALESCE($7, image),
+                is_hidden = COALESCE($8, is_hidden)
+            WHERE id = $9 RETURNING *
+         `, [title, excerpt, content, JSON.stringify(tags), date, readTime, image, is_hidden, id]);
 
-    return NextResponse.json(rows[0]);
+    return NextResponse.json(mapRow(rows[0]));
   } catch (error: any) {
     if (error.code === '42501') return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
     return NextResponse.json({ error: 'Failed' }, { status: 500 });

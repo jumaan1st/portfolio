@@ -36,7 +36,8 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ blog, onSave, onCancel, 
         tags: [],
         date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
         readTime: '5 min read',
-        image: ''
+        image: '',
+        is_hidden: false
     });
     const [saving, setSaving] = useState(false);
 
@@ -45,6 +46,33 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ blog, onSave, onCancel, 
         // Simple regex to find src of first img tag
         const match = htmlContent.match(/<img[^>]+src="([^">]+)"/);
         return match ? match[1] : undefined;
+    };
+
+    // Auto-calculate read time
+    React.useEffect(() => {
+        if (!editingBlog.content) return;
+        const text = editingBlog.content.replace(/<[^>]*>/g, ''); // Strip HTML
+        const words = text.trim().split(/\s+/).length;
+        const minutes = Math.ceil(words / 200);
+        const readTime = `${minutes} min read`;
+        if (readTime !== editingBlog.readTime) {
+            setEditingBlog(prev => ({ ...prev, readTime }));
+        }
+    }, [editingBlog.content]);
+
+    // Helpers for Date Picker
+    const formatDateForInput = (dateString: string | undefined) => {
+        if (!dateString) return new Date().toISOString().split('T')[0];
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return new Date().toISOString().split('T')[0];
+        return date.toISOString().split('T')[0]; // YYYY-MM-DD
+    };
+
+    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const date = new Date(e.target.value);
+        // Format to "Jan 1, 2024" style
+        const formatted = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        setEditingBlog({ ...editingBlog, date: formatted });
     };
 
     const handleSave = async () => {
@@ -113,16 +141,34 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ blog, onSave, onCancel, 
                 />
 
                 <div className="grid md:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-2">
+                        <label className="text-xs font-bold text-slate-500 uppercase ml-1">Publish Date</label>
+                        <input
+                            type="date"
+                            className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 outline-none focus:ring-2 ring-blue-500 transition-all text-slate-700 dark:text-slate-200"
+                            value={formatDateForInput(editingBlog.date)}
+                            onChange={handleDateChange}
+                        />
+                    </div>
                     <Input
-                        label="Publish Date"
-                        value={editingBlog.date}
-                        onChange={(v: string) => setEditingBlog({ ...editingBlog, date: v })}
-                    />
-                    <Input
-                        label="Read Time"
+                        label="Read Time (Auto)"
                         value={editingBlog.readTime}
                         onChange={(v: string) => setEditingBlog({ ...editingBlog, readTime: v })}
+                        placeholder="Calculated automatically..."
                     />
+                </div>
+
+                <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-xl">
+                    <input
+                        type="checkbox"
+                        id="is_hidden"
+                        checked={editingBlog.is_hidden || false}
+                        onChange={(e) => setEditingBlog({ ...editingBlog, is_hidden: e.target.checked })}
+                        className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                    <label htmlFor="is_hidden" className="text-sm font-bold text-slate-700 dark:text-slate-300 cursor-pointer select-none">
+                        Keep this post Hidden (Draft)
+                    </label>
                 </div>
 
                 {/* Cover Image Upload Logic inline or component */}

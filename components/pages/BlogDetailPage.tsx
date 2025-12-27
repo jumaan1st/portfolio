@@ -106,6 +106,11 @@ export const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ blog: initialBlo
                         <span className="flex items-center gap-1">
                             <Coffee size={12} /> {blog.readTime}
                         </span>
+                        {blog.is_hidden && (
+                            <span className="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 text-xs font-bold rounded-full border border-yellow-200 dark:border-yellow-900 ml-auto">
+                                Hidden (Draft)
+                            </span>
+                        )}
                     </div>
 
                     <h1 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6 leading-tight">

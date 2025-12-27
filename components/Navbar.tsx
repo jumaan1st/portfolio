@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Edit3, Home, Layout, Mail, User, Lock, Sun, Moon, Github, Linkedin } from "lucide-react";
+import { Edit3, Home, Layout, Mail, User, Lock, Sun, Moon, Github, Linkedin, BookOpen } from "lucide-react";
 import { usePortfolio } from "./PortfolioContext";
 import { useTheme } from "next-themes";
 
@@ -16,6 +16,7 @@ const navItems: NavItem[] = [
     { href: "/", label: "Home", icon: Home },
     { href: "/about", label: "About", icon: User },
     { href: "/projects", label: "Projects", icon: Layout },
+    { href: "/blogs", label: "Blogs", icon: BookOpen },
     { href: "/contact", label: "Contact", icon: Mail },
 ];
 

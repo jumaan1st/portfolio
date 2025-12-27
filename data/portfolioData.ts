@@ -38,6 +38,7 @@ export interface BlogPost {
     tags: string[];
     content?: string;
     image?: string; // Cover image URL
+    is_hidden?: boolean;
 }
 
 export interface Education {

@@ -52,7 +52,7 @@ export const BlogsPage: React.FC = () => {
             fetchBlogs(1, search, tag);
         }, 500);
         return () => clearTimeout(timer);
-    }, [search, tag]);
+    }, [search, tag, isAuthenticated]); // Re-fetch when auth status changes
 
     const fetchBlogs = async (p: number, s: string, t: string) => {
         setIsLoading(true);
@@ -63,6 +63,10 @@ export const BlogsPage: React.FC = () => {
                 search: s,
                 tag: t
             });
+            if (isAuthenticated) {
+                query.append('include_hidden', 'true');
+            }
+
             const res = await fetch(`/api/blogs?${query.toString()}`);
             const json = await res.json();
 
@@ -151,10 +155,18 @@ export const BlogsPage: React.FC = () => {
                                 <article
                                     key={blog.id}
                                     onClick={() => router.push(`/blogs/${blog.id}`)}
-                                    className="bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 hover:bg-slate-50 dark:hover:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-600 transition-all cursor-pointer group shadow-sm flex flex-col w-full relative"
+                                    className={`bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 hover:bg-slate-50 dark:hover:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-600 transition-all cursor-pointer group shadow-sm flex flex-col w-full relative ${blog.is_hidden ? 'opacity-75' : ''}`}
                                 >
+                                    {isAuthenticated && blog.is_hidden && (
+                                        <div className="absolute top-4 right-4 z-20">
+                                            <span className="px-3 py-1 bg-yellow-400 text-yellow-900 text-[10px] font-bold uppercase tracking-wider rounded-full shadow-md animate-pulse">
+                                                Hidden
+                                            </span>
+                                        </div>
+                                    )}
+
                                     {isAuthenticated && (
-                                        <div className="absolute top-4 right-4 z-10 flex gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                                        <div className="absolute top-14 right-4 z-10 flex flex-col gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); router.push(`/blogs/${blog.id}/edit`); }}
                                                 className="p-2 bg-white dark:bg-slate-800 text-blue-500 rounded-lg shadow-md hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
