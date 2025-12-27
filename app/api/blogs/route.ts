@@ -52,7 +52,7 @@ export async function GET(request: Request) {
     const total = parseInt(countRes.rows[0].count);
 
     // Fetch Data
-    query += ` ORDER BY date DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    query += ` ORDER BY id DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
     params.push(limit, offset);
 
     const { rows } = await pool.query(query, params);

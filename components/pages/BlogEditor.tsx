@@ -51,10 +51,21 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ blog, onSave, onCancel, 
     // Auto-calculate read time
     React.useEffect(() => {
         if (!editingBlog.content) return;
-        const text = editingBlog.content.replace(/<[^>]*>/g, ''); // Strip HTML
-        const words = text.trim().split(/\s+/).length;
+
+        let text = "";
+        if (typeof window !== 'undefined') {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = editingBlog.content;
+            text = tempDiv.textContent || tempDiv.innerText || "";
+        } else {
+            text = editingBlog.content.replace(/<[^>]*>/g, '');
+        }
+
+        const words = text.trim().split(/\s+/).filter(w => w.length > 0).length;
         const minutes = Math.ceil(words / 200);
         const readTime = `${minutes} min read`;
+
+        // Only update if different and valid
         if (readTime !== editingBlog.readTime) {
             setEditingBlog(prev => ({ ...prev, readTime }));
         }
