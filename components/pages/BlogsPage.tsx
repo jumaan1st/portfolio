@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Coffee, Tag, Search, Plus } from "lucide-react";
+import { Coffee, Tag, Search, Plus, Edit2, Trash2 } from "lucide-react";
 import { usePortfolio } from "../PortfolioContext";
 import { BLOG_TAGS } from "@/data/constants";
 import { extractFirstImage } from "@/lib/utils";
@@ -13,39 +13,28 @@ export const BlogsPage: React.FC = () => {
     const { data: globalData, isAuthenticated, createBlog } = usePortfolio();
     const router = useRouter();
 
-    const handleCreate = async () => {
-        if (!confirm("Start a new draft?")) return;
+    const handleCreate = () => {
+        router.push('/blogs/new');
+    };
+
+    const handleDelete = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation(); // Prevent card click
+        if (!confirm("Are you sure you want to delete this blog?")) return;
+
         try {
-            // Create a temporary draft object
-            const newBlog = {
-                title: "New Draft Blog",
-                content: "<p>Start writing...</p>",
-                date: new Date().toISOString().split('T')[0],
-                readTime: "5 min read",
-                tags: ["Draft"],
-            };
-
-            // We need to know the ID of the created blog to redirect. 
-            // The current createBlog returns void and refreshes data.
-            // We might need to modify createBlog or just fetch the latest one/reload.
-            // However, createProject returns the new object. createBlog does not (in context).
-            // Let's call the API directly here to get the ID.
-
-            const res = await fetch('/api/blogs', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newBlog)
+            const res = await fetch(`/api/blogs?id=${id}`, {
+                method: 'DELETE'
             });
 
             if (res.ok) {
-                const created = await res.json();
-                router.push(`/blogs/${created.id}`);
+                // Remove from local state to avoid refetch
+                setBlogs(prev => prev.filter(b => b.id !== id));
             } else {
-                alert("Failed to create draft");
+                alert("Failed to delete blog");
             }
         } catch (e) {
             console.error(e);
-            alert("Error creating draft");
+            alert("Error deleting blog");
         }
     };
 
@@ -123,7 +112,6 @@ export const BlogsPage: React.FC = () => {
                 </div>
 
                 {/* SEARCH & FILTER BAR */}
-                {/* SEARCH & FILTER BAR */}
                 <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-xl mx-auto px-4">
                     <div className="relative flex-1 group">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
@@ -163,8 +151,27 @@ export const BlogsPage: React.FC = () => {
                                 <article
                                     key={blog.id}
                                     onClick={() => router.push(`/blogs/${blog.id}`)}
-                                    className="bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 hover:bg-slate-50 dark:hover:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-600 transition-all cursor-pointer group shadow-sm flex flex-col w-full"
+                                    className="bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 hover:bg-slate-50 dark:hover:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-600 transition-all cursor-pointer group shadow-sm flex flex-col w-full relative"
                                 >
+                                    {isAuthenticated && (
+                                        <div className="absolute top-4 right-4 z-10 flex gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); router.push(`/blogs/${blog.id}/edit`); }}
+                                                className="p-2 bg-white dark:bg-slate-800 text-blue-500 rounded-lg shadow-md hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                                                title="Edit"
+                                            >
+                                                <Edit2 size={16} />
+                                            </button>
+                                            <button
+                                                onClick={(e) => handleDelete(e, blog.id)}
+                                                className="p-2 bg-white dark:bg-slate-800 text-red-500 rounded-lg shadow-md hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                                                title="Delete"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    )}
+
                                     <div className="relative h-48 mb-4 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
                                         {displayImage ? (
                                             <img
