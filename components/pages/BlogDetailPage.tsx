@@ -118,7 +118,7 @@ export const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ blog: initialBlo
                     </h1>
 
                     <div
-                        className="text-slate-600 dark:text-slate-400 text-lg mb-6 leading-relaxed italic border-l-4 border-blue-500 pl-4 prose dark:prose-invert max-w-none"
+                        className="text-slate-600 dark:text-slate-400 text-lg mb-6 leading-relaxed italic border-l-4 border-blue-500 pl-4 break-words w-full min-w-0 [&_*]:whitespace-normal [&_*]:break-words"
                         dangerouslySetInnerHTML={{ __html: blog.excerpt || '' }}
                     />
 

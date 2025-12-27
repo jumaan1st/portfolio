@@ -215,7 +215,7 @@ export const BlogsPage: React.FC = () => {
                                     </h2>
 
                                     <div
-                                        className="text-slate-600 dark:text-slate-400 text-sm mb-4 line-clamp-3 prose dark:prose-invert max-w-none break-words [&>*]:m-0 overflow-hidden"
+                                        className="text-slate-600 dark:text-slate-400 text-sm mb-4 line-clamp-3 break-words [&>*]:m-0 overflow-hidden w-full min-w-0 [&_*]:!whitespace-normal [&_*]:!break-words [&_*]:!max-w-full [&_blockquote]:border-l-4 [&_blockquote]:border-blue-500 [&_blockquote]:pl-4 [&_blockquote]:py-1 [&_blockquote]:my-2 [&_blockquote]:italic [&_blockquote]:bg-slate-50 [&_blockquote]:dark:bg-slate-800/50 [&_blockquote]:rounded-r"
                                         dangerouslySetInnerHTML={{ __html: blog.excerpt || '' }}
                                     />
 
