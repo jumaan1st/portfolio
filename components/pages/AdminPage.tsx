@@ -76,6 +76,7 @@ const AdminContent: React.FC = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
     const [loginForm, setLoginForm] = useState({ email: "", password: "" });
     const [isLoadingData, setIsLoadingData] = useState(false);
+    const [isSyncingGithub, setIsSyncingGithub] = useState(false);
 
     const [currentPage, setCurrentPage] = useState(1);
     const projectsPerPage = 10;
@@ -177,6 +178,26 @@ const AdminContent: React.FC = () => {
     const saveProfile = () => handleSave(async () => {
         if (profileForm) await updateProfile(profileForm);
     }, "Profile updated!");
+
+    const handleGitHubSync = async () => {
+        setIsSyncingGithub(true);
+        try {
+            const res = await fetch('/api/admin/github/sync', { method: 'POST' });
+            const data = await res.json();
+            if (res.ok) {
+                // Determine message based on response (created vs updated)
+                const msg = data.message || "README Updated!";
+                setSuccessMessage(msg);
+                setShowSuccessModal(true);
+            } else {
+                addToast(data.error || "Failed to sync to GitHub", "error");
+            }
+        } catch (e) {
+            addToast("Network error during sync", "error");
+        } finally {
+            setIsSyncingGithub(false);
+        }
+    };
 
 
 
@@ -379,6 +400,10 @@ const AdminContent: React.FC = () => {
                             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pb-4 border-b dark:border-slate-700">
                                 <h3 className="text-lg font-bold">Personal Information</h3>
                                 <button onClick={saveProfile} className="w-full md:w-auto bg-blue-600 text-white px-6 py-2 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors"><Save size={16} /> Save Changes</button>
+                                <button onClick={handleGitHubSync} disabled={isSyncingGithub} className="w-full md:w-auto bg-slate-800 text-white px-6 py-2 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-slate-900 transition-colors border border-slate-700">
+                                    {isSyncingGithub ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                                    Sync to GitHub
+                                </button>
                             </div>
                             <div className="grid md:grid-cols-2 gap-6">
                                 <div className="space-y-4">
