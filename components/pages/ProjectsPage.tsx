@@ -6,6 +6,7 @@ import { FolderOpen, Github, ExternalLink, ArrowRight, Search } from "lucide-rea
 import Link from "next/link";
 import { usePortfolio } from "../PortfolioContext";
 import { PROJECT_CATEGORIES } from "@/data/constants";
+import { ProjectLink } from "../ProjectLink";
 
 export const ProjectsPage: React.FC = () => {
     const { data: globalData } = usePortfolio();
@@ -141,9 +142,12 @@ export const ProjectsPage: React.FC = () => {
                                             <span className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
                                                 <Github size={18} />
                                             </span>
-                                            <span className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                                            <ProjectLink
+                                                href={project.link}
+                                                className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors block"
+                                            >
                                                 <ExternalLink size={18} />
-                                            </span>
+                                            </ProjectLink>
                                         </div>
                                         <span className="text-xs font-bold text-purple-600 dark:text-purple-400 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                                             View Details <ArrowRight size={14} />

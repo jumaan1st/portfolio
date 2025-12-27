@@ -11,6 +11,7 @@ import {
 import { useRouter } from "next/navigation";
 import type { Project } from "@/data/portfolioData";
 import ReactMarkdown from 'react-markdown';
+import { ProjectLink } from "../ProjectLink";
 
 interface Props {
     project: Project;
@@ -151,14 +152,12 @@ export const ProjectDetailPage: React.FC<Props> = ({ project, onBack }) => {
                                 </button>
                             ))}
 
-                            <a
+                            <ProjectLink
                                 href={project.link}
-                                target="_blank"
-                                rel="noreferrer"
                                 className="w-full flex items-center gap-2 px-4 py-3 mt-8 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all justify-center"
                             >
                                 <ExternalLink size={18} /> Live Demo
-                            </a>
+                            </ProjectLink>
                         </div>
 
                         {/* Right content */}
