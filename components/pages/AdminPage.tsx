@@ -13,6 +13,7 @@ import { IconPicker } from "@/components/ui/IconPicker";
 import { PROJECT_CATEGORIES, BLOG_TAGS } from "@/data/constants";
 import RichTextEditor from "@/components/RichTextEditor";
 import { FileUploader } from "@/components/FileUploader";
+import { extractFirstImage } from "@/lib/utils";
 
 // --- Sub-components (could be separate files, kept here for cohesion during migration) ---
 
@@ -176,6 +177,12 @@ const AdminContent: React.FC = () => {
     const saveProject = async () => {
         if (!editingProject) return;
         const success = await handleSave(async () => {
+            // Auto-set cover image if missing
+            if (!editingProject.image && editingProject.longDescription) {
+                const extracted = extractFirstImage(editingProject.longDescription);
+                if (extracted) editingProject.image = extracted;
+            }
+
             if (isCreatingProject) await createProject(editingProject);
             else if (editingProject.id) await updateProject(editingProject.id, editingProject);
         }, isCreatingProject ? "Project created!" : "Project updated!");
@@ -472,9 +479,25 @@ const AdminContent: React.FC = () => {
                                     </div>
                                     <Input label="Technologies (comma separated)" value={Array.isArray(editingProject.tech) ? editingProject.tech.join(', ') : editingProject.tech} onChange={v => setEditingProject({ ...editingProject, tech: v.split(',').map(s => s.trim()) })} />
                                     <FileUploader label="Project Image" value={editingProject.image || ''} onChange={(v: string) => setEditingProject({ ...editingProject, image: v })} folder="projects" />
-                                    <div className="md:col-span-2">
-                                        <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-2 block">Description</label>
-                                        <textarea className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 h-32 outline-none focus:ring-2 ring-blue-500" value={editingProject.description} onChange={e => setEditingProject({ ...editingProject, description: e.target.value })} />
+                                    <div className="md:col-span-2 space-y-4">
+                                        <div>
+                                            <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-2 block">Short Summary (Card Preview)</label>
+                                            <textarea
+                                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 h-24 outline-none focus:ring-2 ring-blue-500 text-sm"
+                                                value={editingProject.description}
+                                                onChange={e => setEditingProject({ ...editingProject, description: e.target.value })}
+                                                placeholder="Brief summary shown on the project card..."
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-2 block">Full Project Details</label>
+                                            <RichTextEditor
+                                                value={editingProject.longDescription || editingProject.description || ''}
+                                                onChange={val => setEditingProject({ ...editingProject, longDescription: val })}
+                                                placeholder="Write the full case study here..."
+                                                allowImages={true}
+                                            />
+                                        </div>
                                     </div>
                                 </EditorLayout>
                             )}

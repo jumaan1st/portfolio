@@ -19,7 +19,7 @@ interface Props {
 }
 
 export const ProjectDetailPage: React.FC<Props> = ({ project, onBack }) => {
-    const [activeTab, setActiveTab] = useState<"overview" | "tech" | "outcome" | "ai">("overview");
+    const [activeTab, setActiveTab] = useState<"overview" | "case-study" | "tech" | "outcome" | "ai">("overview");
     const [aiInsight, setAiInsight] = useState<string | null>(null);
     const [loadingAi, setLoadingAi] = useState(false);
     const router = useRouter();
@@ -132,6 +132,7 @@ export const ProjectDetailPage: React.FC<Props> = ({ project, onBack }) => {
                         <div className="md:w-1/4 space-y-2">
                             {[
                                 { key: "overview", label: "Overview" },
+                                { key: "case-study", label: "Case Study" },
                                 { key: "tech", label: "Tech" },
                                 { key: "outcome", label: "Outcome" },
                                 { key: "ai", label: "✨ AI Insights" },
@@ -140,7 +141,7 @@ export const ProjectDetailPage: React.FC<Props> = ({ project, onBack }) => {
                                     key={tab.key}
                                     onClick={() =>
                                         setActiveTab(
-                                            tab.key as "overview" | "tech" | "outcome" | "ai"
+                                            tab.key as "overview" | "case-study" | "tech" | "outcome" | "ai"
                                         )
                                     }
                                     className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all flex items-center gap-2 ${activeTab === tab.key
@@ -163,13 +164,13 @@ export const ProjectDetailPage: React.FC<Props> = ({ project, onBack }) => {
                         {/* Right content */}
                         <div className="md:w-3/4 min-h-[300px]">
                             {activeTab === "overview" && (
-                                <div className="space-y-6 animate-in fade-in duration-300">
+                                <div className="space-y-8 animate-in fade-in duration-300">
                                     <div>
                                         <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">
-                                            The Challenge
+                                            Highlights
                                         </h3>
-                                        <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                                            {project.longDescription || project.description}
+                                        <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-lg">
+                                            {project.description}
                                         </p>
                                     </div>
                                     <div>
@@ -193,6 +194,15 @@ export const ProjectDetailPage: React.FC<Props> = ({ project, onBack }) => {
                                             ))}
                                         </ul>
                                     </div>
+                                </div>
+                            )}
+
+                            {activeTab === "case-study" && (
+                                <div className="animate-in fade-in duration-300">
+                                    <div
+                                        className="text-slate-600 dark:text-slate-400 leading-relaxed prose prose-slate dark:prose-invert max-w-none break-words"
+                                        dangerouslySetInnerHTML={{ __html: project.longDescription || "<p>No case study available yet.</p>" }}
+                                    />
                                 </div>
                             )}
 
