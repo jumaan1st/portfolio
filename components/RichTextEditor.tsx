@@ -21,10 +21,14 @@ const formats = [
     'header',
     'bold', 'italic', 'underline', 'strike', 'blockquote',
     'list', 'indent',
-    'link', 'image'
+    'link', 'image',
+    'color', 'background'
 ];
 
+import { Code, Eye } from 'lucide-react';
+
 const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeholder, className, allowImages = true }) => {
+    const [isCodeView, setIsCodeView] = React.useState(false);
 
     // Use a ref to access the quill instance
     const quillRef = useRef<any>(null);
@@ -80,6 +84,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeh
         const toolbarContainer = [
             [{ 'header': [1, 2, 3, false] }],
             ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+            [{ 'color': [] }, { 'background': [] }],
             [{ 'list': 'ordered' }, { 'list': 'bullet' }],
             ['link'], // Always allow links
             ['clean']
@@ -104,18 +109,37 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeh
 
     const finalFormats = useMemo(() => allowImages ? formats : formats.filter(f => f !== 'image'), [allowImages]);
 
+
     return (
-        <div className={`rich-text-editor ${className}`}>
-            <ReactQuill
-                ref={quillRef}
-                theme="snow"
-                value={value}
-                onChange={onChange}
-                modules={modules}
-                formats={finalFormats}
-                placeholder={placeholder}
-                className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-xl overflow-hidden"
-            />
+        <div className={`rich-text-editor ${className} relative`}>
+            <button
+                type="button"
+                onClick={() => setIsCodeView(!isCodeView)}
+                className="absolute right-2 top-2 z-10 p-2 bg-white dark:bg-slate-800 text-slate-500 hover:text-blue-600 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 transition-colors"
+                title={isCodeView ? "Switch to Visual Editor" : "View Source Code"}
+            >
+                {isCodeView ? <Eye size={18} /> : <Code size={18} />}
+            </button>
+
+            {isCodeView ? (
+                <textarea
+                    className="w-full h-full min-h-[150px] p-4 font-mono text-sm bg-slate-900 text-slate-50 rounded-xl outline-none resize-y"
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    placeholder="Write HTML here..."
+                />
+            ) : (
+                <ReactQuill
+                    ref={quillRef}
+                    theme="snow"
+                    value={value}
+                    onChange={onChange}
+                    modules={modules}
+                    formats={finalFormats}
+                    placeholder={placeholder}
+                    className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-xl overflow-hidden"
+                />
+            )}
             {/* Custom Styles for Quill in Dark Mode */}
             <style jsx global>{`
                 .ql-toolbar.ql-snow {
