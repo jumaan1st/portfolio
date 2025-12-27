@@ -7,6 +7,7 @@ import { initialEmptyData, PortfolioData, Skill } from "@/data/portfolioData";
 type PortfolioContextType = {
     data: PortfolioData;
     setData: React.Dispatch<React.SetStateAction<PortfolioData>>;
+    projectsMeta?: { total: number; page: number; limit: number; totalPages: number };
     isAuthenticated: boolean;
     setIsAuthenticated: (v: boolean) => void;
     isLoading: boolean;
@@ -33,7 +34,7 @@ type PortfolioContextType = {
     createEducation: (e: any) => Promise<void>;
     updateEducation: (id: number, e: any) => Promise<void>;
     deleteEducation: (id: number) => Promise<void>;
-    fetchAdminData: () => Promise<void>;
+    fetchAdminData: (skipEssentials?: boolean, includeProjects?: boolean, page?: number, limit?: number) => Promise<void>;
     refreshData: () => Promise<void>;
 };
 
@@ -43,6 +44,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
     children,
 }) => {
     const [data, setData] = useState<PortfolioData>(initialEmptyData);
+    const [projectsMeta, setProjectsMeta] = useState<{ total: number; page: number; limit: number; totalPages: number } | undefined>(undefined);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -58,13 +60,12 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
     // Fetches ONLY essential data for public pages (faster load)
     const fetchEssentials = React.useCallback(async () => {
         try {
-            const [configRes, uiRes, profileRes, skillsRes, projectRes, blogsRes] = await Promise.all([
+            const [configRes, uiRes, profileRes, skillsRes, blogsRes] = await Promise.all([
                 fetch('/api/config'),
                 fetch('/api/ui-config'),
                 fetch('/api/profile'),
                 fetch('/api/skills'),
-                fetch('/api/projects?limit=50'),
-                fetch('/api/blogs?limit=50')
+                fetch('/api/blogs?limit=50') // Blogs are still global for now (HomePage etc)
             ]);
 
             const config = await parseOrNull(configRes, initialEmptyData.config);
@@ -72,12 +73,11 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
             const profile = await parseOrNull(profileRes, initialEmptyData.profile);
             const skills = await parseOrNull(skillsRes, []);
 
-            const projJson = await parseOrNull(projectRes, { data: [] });
             const blogsJson = await parseOrNull(blogsRes, { data: [] });
-            const projects = Array.isArray(projJson) ? projJson : (projJson.data || []);
             const blogs = Array.isArray(blogsJson) ? blogsJson : (blogsJson.data || []);
 
-            setData(prev => ({ ...prev, config, ui, profile, skills, projects, blogs }));
+            // Note: Projects are no longer fetched globally. Pages fetch them on demand.
+            setData(prev => ({ ...prev, config, ui, profile, skills, blogs }));
         } catch (e) {
             console.error("Essential data fetch failed", e);
         } finally {
@@ -86,40 +86,69 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
     }, []);
 
     // Fetches EVERYTHING (for Admin Dashboard) EXCEPT Blogs (handled separately/publicly)
-    const fetchAdminData = React.useCallback(async () => {
+    const fetchAdminData = React.useCallback(async (skipEssentials = false, includeProjects = false, page = 1, limit = 10) => {
         // Do not set global isLoading here, as it unmounts the entire app in layout.tsx!
         // AdminPage handles its own loading state.
         try {
-            const [
-                configRes, uiRes, profileRes,
-                projectRes, skillsRes, expRes, eduRes
-            ] = await Promise.all([
-                fetch('/api/config'),
-                fetch('/api/ui-config'),
-                fetch('/api/profile'),
-                fetch('/api/projects?limit=1000'),
-                fetch('/api/skills'),
+            const promises: Promise<Response>[] = [
+                // 0: experience
                 fetch('/api/experience'),
-                fetch('/api/education')
-            ]);
+                // 1: education
+                fetch('/api/education'),
+            ];
 
-            const config = await parseOrNull(configRes, initialEmptyData.config);
-            const ui = await parseOrNull(uiRes, initialEmptyData.ui);
-            const profile = await parseOrNull(profileRes, initialEmptyData.profile);
+            // If we want projects
+            if (includeProjects) {
+                promises.push(fetch(`/api/projects?limit=${limit}&page=${page}`)); // Index will be variable
+            }
 
-            // Handle pagination wrappers if present, though Admin likely wants all
-            const projJson = await parseOrNull(projectRes, { data: [] });
-            const projects = Array.isArray(projJson) ? projJson : (projJson.data || []);
+            // If NOT skipping essentials, fetch them too
+            if (!skipEssentials) {
+                promises.push(fetch('/api/config'));
+                promises.push(fetch('/api/ui-config'));
+                promises.push(fetch('/api/profile'));
+                promises.push(fetch('/api/skills'));
+            }
 
-            const skills = await parseOrNull(skillsRes, []);
+            const results = await Promise.all(promises);
+
+            // Fixed indices are tricky now. Let's shift.
+            const expRes = results[0];
+            const eduRes = results[1];
+
+            let projJson: any = { data: [] };
+            let currentIdx = 2;
+
+            if (includeProjects) {
+                const projectRes = results[currentIdx];
+                projJson = await parseOrNull(projectRes, { data: [] });
+                if (projJson.meta) setProjectsMeta(projJson.meta);
+                currentIdx++;
+            }
+
             const experience = await parseOrNull(expRes, []);
             const education = await parseOrNull(eduRes, []);
 
-            // We keep the previous blogs data if it exists, or empty, as we don't fetch it here anymore
+            let config: any, ui: any, profile: any, skills: any;
+
+            if (!skipEssentials) {
+                const configRes = results[currentIdx];
+                const uiRes = results[currentIdx + 1];
+                const profileRes = results[currentIdx + 2];
+                const skillsRes = results[currentIdx + 3];
+
+                config = await parseOrNull(configRes, initialEmptyData.config);
+                ui = await parseOrNull(uiRes, initialEmptyData.ui);
+                profile = await parseOrNull(profileRes, initialEmptyData.profile);
+                skills = await parseOrNull(skillsRes, []);
+            }
+
+            // Update state
             setData(prev => ({
                 ...prev,
-                config, ui, profile,
-                projects, skills, experience, education
+                experience, education,
+                ...(includeProjects ? { projects: Array.isArray(projJson) ? projJson : (projJson.data || []) } : {}),
+                ...(skipEssentials ? {} : { config, ui, profile, skills })
             }));
         } catch (e) { console.error(e); }
     }, []);
@@ -176,20 +205,40 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     const updateProject = async (id: number, project: Partial<PortfolioData['projects'][0]>) => {
+        // Optimistic update
+        setData(prev => ({
+            ...prev,
+            projects: prev.projects.map(p => p.id === id ? { ...p, ...project } : p)
+        }));
+
         const response = await fetch(`/api/projects?id=${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(project),
         });
-        if (!response.ok) throw new Error("Failed to update project");
+        if (!response.ok) {
+            refreshData(); // Revert/Refresh on error
+            throw new Error("Failed to update project");
+        }
         refreshData();
     };
 
     const deleteProject = async (id: number) => {
+        // Optimistic update
+        setData(prev => ({
+            ...prev,
+            projects: prev.projects.filter(p => p.id !== id)
+        }));
+
         const response = await fetch(`/api/projects?id=${id}`, {
             method: 'DELETE',
         });
-        if (!response.ok) throw new Error("Failed to delete project");
+        if (!response.ok) {
+            // Revert on failure (optional, but good practice usually involves complex revert logic. 
+            // For now, simpler to just throw, refresh will eventually fix it if it persisted.)
+            refreshData();
+            throw new Error("Failed to delete project");
+        }
         refreshData();
     };
 
@@ -256,6 +305,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
     const contextValue = React.useMemo(() => ({
         data,
         setData,
+        projectsMeta,
         isAuthenticated,
         setIsAuthenticated,
         isLoading,

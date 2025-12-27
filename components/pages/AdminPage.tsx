@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
     Trash2, Plus, Save, X, Edit2, Loader2, SaveAll, Sparkles,
     LayoutDashboard, User, FolderOpen, PenTool, BookOpen, Briefcase, GraduationCap,
@@ -10,8 +10,7 @@ import { usePortfolio } from "@/components/PortfolioContext";
 import { Project } from "@/data/portfolioData";
 import { useToast } from "@/components/ui/Toast";
 import { IconPicker } from "@/components/ui/IconPicker";
-import { PROJECT_CATEGORIES, BLOG_TAGS } from "@/data/constants";
-import RichTextEditor from "@/components/RichTextEditor";
+import { BLOG_TAGS } from "@/data/constants";
 import { FileUploader } from "@/components/FileUploader";
 import { extractFirstImage } from "@/lib/utils";
 
@@ -59,6 +58,7 @@ const SuccessModal = ({ isOpen, message, onClose }: { isOpen: boolean, message: 
 const AdminContent: React.FC = () => {
     const {
         data,
+        projectsMeta,
         isAuthenticated,
         setIsAuthenticated,
         fetchAdminData,
@@ -67,7 +67,6 @@ const AdminContent: React.FC = () => {
         createExperience, updateExperience, deleteExperience,
         updateProfile,
         createEducation, updateEducation, deleteEducation,
-
     } = usePortfolio();
 
     const { addToast } = useToast();
@@ -78,22 +77,28 @@ const AdminContent: React.FC = () => {
     const [loginForm, setLoginForm] = useState({ email: "", password: "" });
     const [isLoadingData, setIsLoadingData] = useState(false);
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const projectsPerPage = 10;
+    const lastFetchedPage = useRef<number | null>(null);
+
     // Fetch Admin Data on Auth
     useEffect(() => {
         if (isAuthenticated) {
+            // Prevent duplicate fetch for the same page (React Strict Mode fix)
+            if (lastFetchedPage.current === currentPage) return;
+
             const load = async () => {
                 setIsLoadingData(true);
-                await fetchAdminData();
+                lastFetchedPage.current = currentPage;
+                // Fetch Admin Data (skip projects as they are managed in /projects now)
+                await fetchAdminData(true, false, currentPage, projectsPerPage);
                 setIsLoadingData(false);
             };
             load();
         }
-    }, [isAuthenticated]);
+    }, [isAuthenticated, currentPage]); // Re-fetch when page changes
 
     // Forms State
-    const [editingProject, setEditingProject] = useState<Partial<Project> | null>(null);
-    const [isCreatingProject, setIsCreatingProject] = useState(false);
-
     const [editingExperience, setEditingExperience] = useState<Partial<typeof data.experience[0]> | null>(null);
     const [isCreatingExp, setIsCreatingExp] = useState(false);
 
@@ -173,28 +178,7 @@ const AdminContent: React.FC = () => {
         if (profileForm) await updateProfile(profileForm);
     }, "Profile updated!");
 
-    // Projects
-    const saveProject = async () => {
-        if (!editingProject) return;
-        const success = await handleSave(async () => {
-            // Auto-set cover image if missing
-            if (!editingProject.image && editingProject.longDescription) {
-                const extracted = extractFirstImage(editingProject.longDescription);
-                if (extracted) editingProject.image = extracted;
-            }
 
-            if (isCreatingProject) await createProject(editingProject);
-            else if (editingProject.id) await updateProject(editingProject.id, editingProject);
-        }, isCreatingProject ? "Project created!" : "Project updated!");
-        if (success) {
-            setEditingProject(null);
-            setIsCreatingProject(false);
-        }
-    };
-
-    const deleteProj = async (id: number) => {
-        if (confirm("Delete project?")) handleSave(() => deleteProject(id), "Project deleted.");
-    };
 
     // Experience
     const saveExp = async () => {
@@ -342,7 +326,11 @@ const AdminContent: React.FC = () => {
 
                 <div className="p-4 space-y-2 overflow-y-auto h-[calc(100vh-140px)]">
                     <SidebarItem icon={User} label="Profile" active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
-                    <SidebarItem icon={FolderOpen} label="Projects" active={activeTab === 'projects'} onClick={() => setActiveTab('projects')} />
+                    <a href="/projects" className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <FolderOpen size={20} />
+                        <span>Manage Projects</span>
+                        <ExternalLink size={16} className="ml-auto opacity-50" />
+                    </a>
                     <a href="/blogs" className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
                         <BookOpen size={20} />
                         <span>Manage Blogs</span>
@@ -427,82 +415,8 @@ const AdminContent: React.FC = () => {
                         </div>
                     )}
 
-                    {/* PROJECTS */}
-                    {activeTab === 'projects' && (
-                        <div className="space-y-6">
-                            {!editingProject ? (
-                                <>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        <button onClick={() => { setEditingProject({}); setIsCreatingProject(true); }} className="min-h-[200px] border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl flex flex-col items-center justify-center text-slate-500 hover:text-blue-600 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all group">
-                                            <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center shadow-sm mb-3 group-hover:scale-110 transition-transform">
-                                                <Plus size={24} />
-                                            </div>
-                                            <span className="font-bold">Add New Project</span>
-                                        </button>
-                                        {data.projects.map(p => (
-                                            <div key={p.id} className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
-                                                <div className="h-32 bg-slate-100 dark:bg-slate-900 rounded-xl mb-4 overflow-hidden">
-                                                    {p.image ? <img src={p.image} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-slate-400"><FolderOpen size={32} /></div>}
-                                                </div>
-                                                <h3 className="font-bold text-lg mb-1">{p.title}</h3>
-                                                <p className="text-xs text-slate-500 mb-4 line-clamp-2">{p.description}</p>
-                                                <div className="flex gap-2">
-                                                    <button onClick={() => { setEditingProject(p); setIsCreatingProject(false); }} className="flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 py-2 rounded-lg font-bold text-sm transition-colors">Edit</button>
-                                                    <button onClick={() => deleteProj(p.id)} className="px-3 bg-red-50 dark:bg-red-900/20 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-lg transition-colors"><Trash2 size={18} /></button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </>
-                            ) : (
-                                <EditorLayout
-                                    title={isCreatingProject ? "New Project" : "Edit Project"}
-                                    onCancel={() => setEditingProject(null)}
-                                    onSave={saveProject}
-                                >
-                                    <Input label="Project Title" value={editingProject.title} onChange={v => setEditingProject({ ...editingProject, title: v })} />
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-2 block">Category</label>
-                                            <select
-                                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 outline-none focus:ring-2 ring-blue-500 appearance-none"
-                                                value={editingProject.category}
-                                                onChange={e => setEditingProject({ ...editingProject, category: e.target.value })}
-                                            >
-                                                <option value="">Select Category</option>
-                                                {PROJECT_CATEGORIES.map(cat => (
-                                                    <option key={cat} value={cat}>{cat}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <Input label="Link" value={editingProject.link} onChange={v => setEditingProject({ ...editingProject, link: v })} />
-                                    </div>
-                                    <Input label="Technologies (comma separated)" value={Array.isArray(editingProject.tech) ? editingProject.tech.join(', ') : editingProject.tech} onChange={v => setEditingProject({ ...editingProject, tech: v.split(',').map(s => s.trim()) })} />
-                                    <FileUploader label="Project Image" value={editingProject.image || ''} onChange={(v: string) => setEditingProject({ ...editingProject, image: v })} folder="projects" />
-                                    <div className="md:col-span-2 space-y-4">
-                                        <div>
-                                            <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-2 block">Short Summary (Card Preview)</label>
-                                            <textarea
-                                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 h-24 outline-none focus:ring-2 ring-blue-500 text-sm"
-                                                value={editingProject.description}
-                                                onChange={e => setEditingProject({ ...editingProject, description: e.target.value })}
-                                                placeholder="Brief summary shown on the project card..."
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-2 block">Full Project Details</label>
-                                            <RichTextEditor
-                                                value={editingProject.longDescription || editingProject.description || ''}
-                                                onChange={val => setEditingProject({ ...editingProject, longDescription: val })}
-                                                placeholder="Write the full case study here..."
-                                                allowImages={true}
-                                            />
-                                        </div>
-                                    </div>
-                                </EditorLayout>
-                            )}
-                        </div>
-                    )}
+
+                    {/* PROJECTS REMOVED - Managed in /projects */}
 
                     {/* BLOGS */}
 
