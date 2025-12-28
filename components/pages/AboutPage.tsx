@@ -18,10 +18,16 @@ export const AboutPage: React.FC = () => {
                     fetch('/api/experience'),
                     fetch('/api/education')
                 ]);
-                setExperience(await expRes.json());
-                setEducation(await eduRes.json());
+
+                const expData = expRes.ok ? await expRes.json() : [];
+                const eduData = eduRes.ok ? await eduRes.json() : [];
+
+                setExperience(Array.isArray(expData) ? expData : []);
+                setEducation(Array.isArray(eduData) ? eduData : []);
             } catch (e) {
-                console.error(e);
+                console.error("Failed to fetch about data", e);
+                setExperience([]);
+                setEducation([]);
             } finally {
                 setIsLoading(false);
             }
