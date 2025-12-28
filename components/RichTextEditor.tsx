@@ -32,8 +32,11 @@ import { Quill } from 'react-quill-new';
 import BlotFormatter from 'quill-blot-formatter';
 import MarkdownShortcuts from 'quill-markdown-shortcuts';
 
-Quill.register('modules/blotFormatter', BlotFormatter);
-Quill.register('modules/markdownShortcuts', MarkdownShortcuts);
+// Move registration inside component or conditional block
+if (typeof window !== 'undefined') {
+    Quill.register('modules/blotFormatter', BlotFormatter);
+    Quill.register('modules/markdownShortcuts', MarkdownShortcuts);
+}
 
 const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeholder, className, allowImages = true }) => {
     const [isCodeView, setIsCodeView] = React.useState(false);
