@@ -6,7 +6,34 @@ import 'react-quill-new/dist/quill.snow.css';
 
 // Dynamic import to avoid "document is not defined" error in Next.js SSR
 // Dynamic import to avoid "document is not defined" error in Next.js SSR
-const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false }) as any;
+// Comprehensive dynamic import to handle SSR and Plugin Registration
+const ReactQuill = dynamic(async () => {
+    const { default: RQ, Quill } = await import('react-quill-new');
+
+    // Dynamic import of plugins to avoid server-side 'document' errors
+    const { default: BlotFormatter } = await import('quill-blot-formatter');
+    // markdown-shortcuts might be a commonjs export, handling that:
+    const MarkdownShortcutsImport = await import('quill-markdown-shortcuts');
+    const MarkdownShortcuts = MarkdownShortcutsImport.default || MarkdownShortcutsImport;
+
+    // Register modules safely on client
+    if (Quill) { // Ensure Quill exists
+        if (!Quill.imports['modules/blotFormatter']) {
+            Quill.register('modules/blotFormatter', BlotFormatter);
+        }
+        if (!Quill.imports['modules/markdownShortcuts']) {
+            Quill.register('modules/markdownShortcuts', MarkdownShortcuts);
+        }
+    }
+
+    // Return the component. forwardRef is handled by Next.js dynamic if the underlying component supports it.
+    // However, explicit forwarding is safer if RQ is a class component.
+    // For now, returning RQ directly usually works.
+    return ({ forwardedRef, ...props }: any) => <RQ ref={forwardedRef} {...props} />;
+}, {
+    ssr: false,
+    loading: () => <div className="h-40 bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse" />
+});
 
 interface RichTextEditorProps {
     value: string;
@@ -28,15 +55,7 @@ const formats = [
 
 import { Code, Eye, X } from 'lucide-react';
 import { marked } from 'marked';
-import { Quill } from 'react-quill-new';
-import BlotFormatter from 'quill-blot-formatter';
-import MarkdownShortcuts from 'quill-markdown-shortcuts';
 
-// Move registration inside component or conditional block
-if (typeof window !== 'undefined') {
-    Quill.register('modules/blotFormatter', BlotFormatter);
-    Quill.register('modules/markdownShortcuts', MarkdownShortcuts);
-}
 
 const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeholder, className, allowImages = true }) => {
     const [isCodeView, setIsCodeView] = React.useState(false);
@@ -187,7 +206,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeh
                     />
                 ) : (
                     <ReactQuill
-                        ref={quillRef}
+                        forwardedRef={quillRef}
                         theme="snow"
                         value={displayValue}
                         onChange={onChange}
