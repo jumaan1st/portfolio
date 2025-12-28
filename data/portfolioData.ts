@@ -25,6 +25,7 @@ export interface Project {
     features?: string[];
     challenges?: string;
     link: string;
+    githubLink?: string;
     color: string;
     image?: string;
 }

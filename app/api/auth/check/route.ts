@@ -7,13 +7,13 @@ export async function GET(request: NextRequest) {
     const token = request.cookies.get('portfolio_auth')?.value;
 
     if (!token) {
-        return NextResponse.json({ isAuthenticated: false }, { status: 401 });
+        return NextResponse.json({ isAuthenticated: false }, { status: 200 });
     }
 
     try {
         const { payload } = await jwtVerify(token, new TextEncoder().encode(JWT_SECRET));
         return NextResponse.json({ isAuthenticated: true, user: payload });
     } catch (error) {
-        return NextResponse.json({ isAuthenticated: false }, { status: 401 });
+        return NextResponse.json({ isAuthenticated: false }, { status: 200 });
     }
 }

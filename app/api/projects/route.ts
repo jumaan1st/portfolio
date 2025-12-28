@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { revalidateTag } from 'next/cache';
 
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -14,7 +15,7 @@ export async function GET(request: Request) {
             SELECT 
                 id, title, category, tech, description, 
                 long_description AS "longDescription", 
-                features, challenges, link, color, image
+                features, challenges, link, github_link AS "githubLink", color, image
             FROM portfolio.projects
             WHERE id = $1
         `, [id]);
@@ -34,7 +35,7 @@ export async function GET(request: Request) {
       ? `
         SELECT 
           id, title, category, tech, description, 
-          link, color, image
+          link, github_link AS "githubLink", color, image
         FROM portfolio.projects
         WHERE 1=1
       `
@@ -42,7 +43,7 @@ export async function GET(request: Request) {
         SELECT 
           id, title, category, tech, description, 
           long_description AS "longDescription", 
-          features, challenges, link, color, image
+          features, challenges, link, github_link AS "githubLink", color, image
         FROM portfolio.projects
         WHERE 1=1
       `;
@@ -95,6 +96,7 @@ export async function POST(request: Request) {
       features,
       challenges,
       link,
+      githubLink,
       color,
       image
     } = body;
@@ -106,12 +108,12 @@ export async function POST(request: Request) {
     const { rows } = await pool.query(`
             INSERT INTO portfolio.projects (
                 id, title, category, tech, description, long_description,
-                features, challenges, link, color, image
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-            RETURNING *, long_description as "longDescription"
+                features, challenges, link, github_link, color, image
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            RETURNING *, long_description as "longDescription", github_link as "githubLink"
         `, [
       newId, title, category, JSON.stringify(tech), description, longDescription,
-      JSON.stringify(features), challenges, link, color, image
+      JSON.stringify(features), challenges, link, githubLink, color, image
     ]);
 
     return NextResponse.json(rows[0]);
@@ -145,6 +147,7 @@ export async function PUT(request: Request) {
       features,
       challenges,
       link,
+      githubLink,
       color,
       image
     } = body;
@@ -160,13 +163,14 @@ export async function PUT(request: Request) {
                 features = COALESCE($6, features),
                 challenges = COALESCE($7, challenges),
                 link = COALESCE($8, link),
-                color = COALESCE($9, color),
-                image = COALESCE($10, image)
-            WHERE id = $11
-            RETURNING *, long_description as "longDescription"
+                github_link = COALESCE($9, github_link),
+                color = COALESCE($10, color),
+                image = COALESCE($11, image)
+            WHERE id = $12
+            RETURNING *, long_description as "longDescription", github_link as "githubLink"
         `, [
       title, category, JSON.stringify(tech), description, longDescription,
-      JSON.stringify(features), challenges, link, color, image,
+      JSON.stringify(features), challenges, link, githubLink, color, image,
       id
     ]);
 
