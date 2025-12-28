@@ -70,7 +70,8 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
 
             const config = await parseOrNull(configRes, initialEmptyData.config);
             const ui = await parseOrNull(uiRes, initialEmptyData.ui);
-            const profile = await parseOrNull(profileRes, initialEmptyData.profile);
+            const profileData = await parseOrNull(profileRes, initialEmptyData.profile);
+            const profile = { ...profileData, currentlyLearning: Array.isArray(profileData.currentlyLearning) ? profileData.currentlyLearning : [] };
             const skillsData = await parseOrNull(skillsRes, []);
             const skills = Array.isArray(skillsData) ? skillsData : [];
 
@@ -140,7 +141,8 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
 
                 config = await parseOrNull(configRes, initialEmptyData.config);
                 ui = await parseOrNull(uiRes, initialEmptyData.ui);
-                profile = await parseOrNull(profileRes, initialEmptyData.profile);
+                const profileData = await parseOrNull(profileRes, initialEmptyData.profile);
+                profile = { ...profileData, currentlyLearning: Array.isArray(profileData.currentlyLearning) ? profileData.currentlyLearning : [] };
                 skills = await parseOrNull(skillsRes, []);
             }
 
