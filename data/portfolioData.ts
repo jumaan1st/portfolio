@@ -129,6 +129,7 @@ export const initialEmptyData: PortfolioData = {
         github: "",
         twitter: "",
         resumeUrl: "",
+        currentlyLearning: [],
     },
     experience: [],
     projects: [],
