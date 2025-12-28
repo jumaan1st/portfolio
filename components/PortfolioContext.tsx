@@ -71,7 +71,8 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
             const config = await parseOrNull(configRes, initialEmptyData.config);
             const ui = await parseOrNull(uiRes, initialEmptyData.ui);
             const profile = await parseOrNull(profileRes, initialEmptyData.profile);
-            const skills = await parseOrNull(skillsRes, []);
+            const skillsData = await parseOrNull(skillsRes, []);
+            const skills = Array.isArray(skillsData) ? skillsData : [];
 
             const blogsJson = await parseOrNull(blogsRes, { data: [] });
             const blogs = Array.isArray(blogsJson) ? blogsJson : (blogsJson.data || []);

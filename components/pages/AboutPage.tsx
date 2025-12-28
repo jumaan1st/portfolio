@@ -172,7 +172,7 @@ export const AboutPage: React.FC = () => {
                         <Zap className="text-yellow-500 dark:text-yellow-400" /> Technical Arsenal
                     </h3>
                     <div className="flex flex-wrap justify-center md:justify-start gap-3">
-                        {globalData.skills.map((skill, idx) => (
+                        {globalData.skills?.map((skill, idx) => (
                             <div
                                 key={idx}
                                 className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-lg shadow-sm"
