@@ -91,6 +91,8 @@ async function pushToGitHub(owner: string, repo: string, content: string) {
         })
     });
 
+
+
     if (!putRes.ok) {
         const errText = await putRes.text();
         if (putRes.status === 404) {
