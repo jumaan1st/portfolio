@@ -36,6 +36,10 @@ const getProfile = unstable_cache(
 export async function GET() {
   try {
     const data = await getProfile();
+    // Ensure currentlyLearning is parsed if stored as string
+    if (typeof data.currentlyLearning === 'string') {
+      try { data.currentlyLearning = JSON.parse(data.currentlyLearning); } catch (e) { data.currentlyLearning = []; }
+    }
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error fetching profile:', error);
@@ -98,7 +102,11 @@ export async function PUT(request: Request) {
       photoLightUrl, photoDarkUrl, JSON.stringify(currentlyLearning)
     ]);
 
-    return NextResponse.json(rows[0]);
+    const updated = rows[0];
+    if (typeof updated.currentlyLearning === 'string') {
+      try { updated.currentlyLearning = JSON.parse(updated.currentlyLearning); } catch (e) { updated.currentlyLearning = []; }
+    }
+    return NextResponse.json(updated);
   } catch (error) {
     console.error('Error updating profile:', error);
     return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 });
