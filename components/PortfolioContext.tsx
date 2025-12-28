@@ -183,6 +183,9 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
             });
             if (!res.ok) throw new Error("Failed to update profile");
             const updated = await res.json();
+            if (typeof updated.currentlyLearning === 'string') {
+                try { updated.currentlyLearning = JSON.parse(updated.currentlyLearning); } catch (e) { updated.currentlyLearning = []; }
+            }
             setData(prev => ({ ...prev, profile: { ...prev.profile, ...updated } }));
         } catch (error) {
             console.error("Error updating profile:", error);
