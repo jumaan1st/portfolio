@@ -22,6 +22,10 @@ export async function POST(request: Request) {
         const projectsRes = await pool.query('SELECT title, description, tech, link FROM portfolio.projects ORDER BY id DESC LIMIT 4');
         const projects = projectsRes.rows;
 
+        // Fetch Blogs
+        const blogsRes = await pool.query('SELECT id, title, excerpt FROM portfolio.blogs WHERE is_hidden = false ORDER BY date DESC LIMIT 4');
+        const blogs = blogsRes.rows;
+
         // 3. Generate Markdown Content
         // Use safe defaults if fields are missing
         const name = profile?.name || username;
@@ -103,28 +107,41 @@ ${projects.map((p: any) => {
 
 <br />
 
+### ✍️ Latest Articles
+
+${blogs && blogs.length > 0 ? blogs.map((b: any) => {
+            // Strip HTML from excerpt if present
+            const cleanExcerpt = b.excerpt ? b.excerpt.replace(/<[^>]*>?/gm, "") : "";
+            // Truncate if too long
+            const shortExcerpt = cleanExcerpt.length > 100 ? cleanExcerpt.substring(0, 100) + '...' : cleanExcerpt;
+
+            return `- **[${b.title}](https://www.jumaan.me/blogs/${b.id})**: ${shortExcerpt}`;
+        }).join('\n') : '_No articles yet._'}
+
+
+
 ### 📈 GitHub Stats
 
 <div align="center">
-  <img 
-    src="https://github-readme-stats.vercel.app/api?username=${safeUsername}&show_icons=true&theme=dark&hide_border=true&cache_seconds=86400"
-    height="180"
-    alt="${safeUsername}'s GitHub Stats"
-  />
-  <img 
-    src="https://github-readme-stats.vercel.app/api/top-langs/?username=${safeUsername}&layout=compact&theme=dark&hide_border=true&cache_seconds=86400"
-    height="180"
-    alt="Top Languages"
-  />
+  <img src="https://github-readme-stats-fast.vercel.app/api?username=${safeUsername}&show_icons=true&theme=radical&hide_border=true&hide_title=true" height="180" alt="${safeUsername}'s GitHub Stats" />
 </div>
 
 <br />
 
 <div align="center">
-  <p><i>Check out my full interactive portfolio for more details!</i></p>
-  <a href="https://www.jumaan.me">
-    <img src="https://img.shields.io/badge/🚀_Visit_jumaan.me-000000?style=for-the-badge&logo=googlechrome&logoColor=white" />
+  <h3>✍️ Read My Blogs</h3>
+  <p>I write about technology, coding, and my journey.</p>
+  <a href="https://www.jumaan.me/blogs">
+    <img src="https://img.shields.io/badge/📖_Read_My_Blogs_on_Jumaan.me-7025F5?style=for-the-badge&logo=hashnode&logoColor=white" alt="Read My Blogs" />
   </a>
+</div>
+
+<br />
+
+<div align="center">
+  <i>"The only way to do great work is to love what you do."</i>
+  <br/>
+  — <b>Steve Jobs</b>
 </div>
 `;
 
