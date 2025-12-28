@@ -65,7 +65,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
                 fetch('/api/ui-config'),
                 fetch('/api/profile'),
                 fetch('/api/skills'),
-                fetch('/api/blogs?limit=50') // Blogs are still global for now (HomePage etc)
+                fetch('/api/blogs?limit=50&summary=true') // Blogs are still global for now (HomePage etc)
             ]);
 
             const config = await parseOrNull(configRes, initialEmptyData.config);

@@ -61,7 +61,8 @@ export const BlogsPage: React.FC = () => {
                 page: p.toString(),
                 limit: "9",
                 search: s,
-                tag: t
+                tag: t,
+                summary: "true"
             });
             if (isAuthenticated) {
                 query.append('include_hidden', 'true');

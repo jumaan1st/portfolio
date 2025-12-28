@@ -35,7 +35,8 @@ export const ProjectsPage: React.FC = () => {
                 page: p.toString(),
                 limit: "9",
                 search: s,
-                category: c
+                category: c,
+                summary: "true"
             });
             const res = await fetch(`/api/projects?${query.toString()}`);
             const json = await res.json();

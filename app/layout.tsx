@@ -117,13 +117,15 @@ function Shell({ children }: { children: React.ReactNode }) {
         }
     };
 
-    if (isLoading) {
-        return (
-            <div className="flex h-screen items-center justify-center bg-white dark:bg-slate-950">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            </div>
-        );
-    }
+    // Non-blocking loading: We render children immediately so pages can fetch their own data
+    // while global context loads in background.
+    // if (isLoading) {
+    //     return (
+    //         <div className="flex h-screen items-center justify-center bg-white dark:bg-slate-950">
+    //             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    //         </div>
+    //     );
+    // }
 
     return (
         <div className="min-h-screen font-sans flex flex-col overflow-x-hidden">

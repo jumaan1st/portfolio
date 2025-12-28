@@ -60,7 +60,7 @@ export const HomePage: React.FC = () => {
             try {
                 const [blogsRes, projectsRes] = await Promise.all([
                     fetch('/api/blogs?limit=3'),
-                    fetch('/api/projects?limit=5') // Fetch a few for carousel
+                    fetch('/api/projects?limit=5&summary=true') // Fetch a few for carousel, summary only
                 ]);
 
                 const blogsData = await blogsRes.json();

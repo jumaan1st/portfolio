@@ -28,7 +28,12 @@ export async function GET(request: Request) {
     const offset = (page - 1) * limit;
 
     const includeHidden = searchParams.get('include_hidden') === 'true';
-    let query = 'SELECT * FROM portfolio.blogs WHERE 1=1';
+    const summaryMode = searchParams.get('summary') === 'true';
+
+    // If summary mode, select only necessary fields (exclude content strings to reduce payload)
+    let query = summaryMode
+      ? 'SELECT id, title, excerpt, tags, date, read_time, image, is_hidden FROM portfolio.blogs WHERE 1=1'
+      : 'SELECT * FROM portfolio.blogs WHERE 1=1';
 
     // By default, exclude hidden blogs unless specifically requested (Admin) 
     // OR if we are fetching a specific ID (which is handled above individually).

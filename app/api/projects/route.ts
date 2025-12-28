@@ -27,16 +27,26 @@ export async function GET(request: Request) {
     const page = parseInt(searchParams.get('page') || '1');
     const search = searchParams.get('search') || '';
     const category = searchParams.get('category') || '';
+    const summaryMode = searchParams.get('summary') === 'true';
     const offset = (page - 1) * limit;
 
-    let query = `
-      SELECT 
-        id, title, category, tech, description, 
-        long_description AS "longDescription", 
-        features, challenges, link, color, image
-      FROM portfolio.projects
-      WHERE 1=1
-    `;
+    let query = summaryMode
+      ? `
+        SELECT 
+          id, title, category, tech, description, 
+          link, color, image
+        FROM portfolio.projects
+        WHERE 1=1
+      `
+      : `
+        SELECT 
+          id, title, category, tech, description, 
+          long_description AS "longDescription", 
+          features, challenges, link, color, image
+        FROM portfolio.projects
+        WHERE 1=1
+      `;
+
     const params: any[] = [];
 
     if (search) {
