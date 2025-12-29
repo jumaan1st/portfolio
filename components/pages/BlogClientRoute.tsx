@@ -13,7 +13,7 @@ export function BlogClientRoute() {
 
     // Check if we have the blog in global state first
     const [blog, setBlog] = React.useState(data.blogs.find((b) => b.id === id));
-    const [loading, setLoading] = React.useState(!blog);
+    const [loading, setLoading] = React.useState(!blog || !blog.content);
 
     React.useEffect(() => {
         // If we have the blog AND it has content (not just a summary), stop loading
