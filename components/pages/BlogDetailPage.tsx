@@ -20,6 +20,11 @@ export const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ blog: initialBlo
     const [blog, setBlog] = useState(initialBlog);
     const [isEditing, setIsEditing] = useState(false);
 
+    // Sync local state with prop when it changes (e.g. after fetching full content)
+    React.useEffect(() => {
+        setBlog(initialBlog);
+    }, [initialBlog]);
+
     const displayImage = blog.image || extractFirstImage(blog.content);
 
     const handleSave = async (updatedBlog: BlogPost) => {
