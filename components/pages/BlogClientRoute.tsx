@@ -16,8 +16,8 @@ export function BlogClientRoute() {
     const [loading, setLoading] = React.useState(!blog);
 
     React.useEffect(() => {
-        // If we already have the blog, or if ID is invalid, stop
-        if (blog || isNaN(id)) {
+        // If we have the blog AND it has content (not just a summary), stop loading
+        if ((blog && blog.content) || isNaN(id)) {
             setLoading(false);
             return;
         }
