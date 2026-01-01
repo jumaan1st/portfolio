@@ -107,12 +107,20 @@ export const BlogsPage: React.FC = () => {
                     </p>
 
                     {isAuthenticated && (
-                        <button
-                            onClick={handleCreate}
-                            className="mt-6 flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-full font-bold hover:bg-blue-700 transition-all shadow-lg hover:shadow-blue-500/30"
-                        >
-                            <Plus size={18} /> New Post
-                        </button>
+                        <div className="mt-6 flex gap-4">
+                            <button
+                                onClick={handleCreate}
+                                className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-full font-bold hover:bg-blue-700 transition-all shadow-lg hover:shadow-blue-500/30"
+                            >
+                                <Plus size={18} /> New Post
+                            </button>
+                            <button
+                                onClick={() => router.push('/admin/reorder-blogs')}
+                                className="flex items-center gap-2 bg-slate-800 text-white px-6 py-2 rounded-full font-bold hover:bg-slate-900 transition-all border border-slate-700"
+                            >
+                                Reorder Blogs
+                            </button>
+                        </div>
                     )}
                 </div>
 

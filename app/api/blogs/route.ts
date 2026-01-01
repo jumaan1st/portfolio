@@ -57,7 +57,7 @@ export async function GET(request: Request) {
     const total = parseInt(countRes.rows[0].count);
 
     // Fetch Data
-    query += ` ORDER BY id DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    query += ` ORDER BY sort_order DESC, id DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
     params.push(limit, offset);
 
     const { rows } = await pool.query(query, params);
@@ -85,9 +85,13 @@ export async function POST(request: Request) {
     const idRes = await pool.query('SELECT COALESCE(MAX(id), 0) + 1 as new_id FROM portfolio.blogs');
     const newId = idRes.rows[0].new_id;
 
+    // Get Max Sort Order to put new blog at top
+    const sortRes = await pool.query('SELECT COALESCE(MAX(sort_order), 0) + 1 as new_sort FROM portfolio.blogs');
+    const newSortOrder = sortRes.rows[0].new_sort;
+
     const { rows } = await pool.query(
-      'INSERT INTO portfolio.blogs (id, title, excerpt, content, tags, date, read_time, image, is_hidden) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
-      [newId, title, excerpt, content, JSON.stringify(tags), date, readTime, image, is_hidden || false]
+      'INSERT INTO portfolio.blogs (id, title, excerpt, content, tags, date, read_time, image, is_hidden, sort_order) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
+      [newId, title, excerpt, content, JSON.stringify(tags), date, readTime, image, is_hidden || false, newSortOrder]
     );
     return NextResponse.json(mapRow(rows[0]));
   } catch (error: any) {

@@ -63,7 +63,7 @@ export async function GET(request: Request) {
     const countRes = await pool.query(`SELECT COUNT(*) FROM (${query}) as sub`, params);
     const total = parseInt(countRes.rows[0].count);
 
-    query += ` ORDER BY id ASC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    query += ` ORDER BY sort_order DESC, id DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
     params.push(limit, offset);
 
     const { rows } = await pool.query(query, params);
@@ -105,15 +105,19 @@ export async function POST(request: Request) {
     const idRes = await pool.query('SELECT COALESCE(MAX(id), 0) + 1 as new_id FROM portfolio.projects');
     const newId = idRes.rows[0].new_id;
 
+    // Get Max Sort Order to put new project at top
+    const sortRes = await pool.query('SELECT COALESCE(MAX(sort_order), 0) + 1 as new_sort FROM portfolio.projects');
+    const newSortOrder = sortRes.rows[0].new_sort;
+
     const { rows } = await pool.query(`
             INSERT INTO portfolio.projects (
                 id, title, category, tech, description, long_description,
-                features, challenges, link, github_link, color, image
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                features, challenges, link, github_link, color, image, sort_order
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
             RETURNING *, long_description as "longDescription", github_link as "githubLink"
         `, [
       newId, title, category, JSON.stringify(tech), description, longDescription,
-      JSON.stringify(features), challenges, link, githubLink, color, image
+      JSON.stringify(features), challenges, link, githubLink, color, image, newSortOrder
     ]);
 
     return NextResponse.json(rows[0]);

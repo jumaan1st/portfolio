@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { FolderOpen, Github, ExternalLink, ArrowRight, Search } from "lucide-react";
+import { FolderOpen, Github, ExternalLink, ArrowRight, Search, ArrowUp, ArrowDown } from "lucide-react";
 import Link from "next/link";
 import { usePortfolio } from "../PortfolioContext";
 import { PROJECT_CATEGORIES } from "@/data/constants";
@@ -100,6 +100,15 @@ export const ProjectsPage: React.FC = () => {
                         className="mt-6 inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-full font-bold hover:bg-blue-700 transition-all shadow-lg hover:shadow-blue-500/30"
                     >
                         <Plus size={18} /> Add New Project
+                    </Link>
+                )}
+
+                {isAuthenticated && (
+                    <Link
+                        href="/admin/reorder"
+                        className="mt-6 ml-4 inline-flex items-center gap-2 bg-slate-800 text-white px-6 py-2 rounded-full font-bold hover:bg-slate-900 transition-all border border-slate-700"
+                    >
+                        Reorder Projects
                     </Link>
                 )}
 

@@ -21,6 +21,7 @@ import { Marquee } from "../Marquee";
 import { usePortfolio } from "../PortfolioContext";
 import { extractFirstImage } from "@/lib/utils";
 import { BlogPlaceholder } from "../BlogPlaceholder";
+import { HomeSkeleton } from "./HomeSkeleton";
 
 const ProfileAvatar = ({ photoLight, photoDark, name, theme }: { photoLight?: string, photoDark?: string, name: string, theme?: string }) => {
     const [error, setError] = useState(false);
@@ -98,8 +99,7 @@ export const HomePage: React.FC = () => {
     const project = projects[currentProjectIndex];
 
     if (isLoading) {
-        // Minimal loading skeleton
-        return <div className="min-h-screen animate-pulse bg-slate-50 dark:bg-slate-900" />;
+        return <HomeSkeleton />;
     }
 
     return (
