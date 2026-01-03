@@ -16,6 +16,7 @@ import type { Project } from "@/data/portfolioData";
 import ReactMarkdown from 'react-markdown';
 import { ProjectLink } from "../ProjectLink";
 import { usePortfolio } from "../PortfolioContext";
+import { useCodeBlockEnhancer } from "@/hooks/useCodeBlockEnhancer";
 
 interface Props {
     project: Project;
@@ -30,10 +31,16 @@ export const ProjectDetailPage: React.FC<Props> = ({ project: initialProject, on
     const [aiInsight, setAiInsight] = useState<string | null>(null);
     const [loadingAi, setLoadingAi] = useState(false);
     const router = useRouter();
+    const contentRef = React.useRef<HTMLDivElement>(null);
+    useCodeBlockEnhancer(contentRef, [project.longDescription, activeTab]);
 
     React.useEffect(() => {
         localStorage.setItem("visited_project_id", String(project.id));
     }, [project.id]);
+
+    // Code Block Enhancer - Removed duplicate logic in favor of hook
+    // React.useEffect(() => { ... }, [...]); 
+    // The hook call on line 35 handles this now.
 
     const handleBack = () => {
         if (onBack) onBack();
@@ -195,7 +202,7 @@ export const ProjectDetailPage: React.FC<Props> = ({ project: initialProject, on
                         </div>
 
                         {/* Right content */}
-                        <div className="md:w-3/4 min-h-[300px]">
+                        <div className="md:w-3/4 min-h-[300px]" ref={contentRef}>
                             {activeTab === "overview" && (
                                 <div className="space-y-8 animate-in fade-in duration-300">
                                     <div>

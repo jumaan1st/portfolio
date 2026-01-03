@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, Coffee, Tag, Edit } from "lucide-react";
 import type { BlogPost } from "@/data/portfolioData";
 import { usePortfolio } from "@/components/PortfolioContext";
+import { useCodeBlockEnhancer } from "@/hooks/useCodeBlockEnhancer";
 import { BlogEditor } from "./BlogEditor";
 import { BlogPlaceholder } from "../BlogPlaceholder";
 
@@ -19,11 +20,16 @@ export const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ blog: initialBlo
     const { isAuthenticated, refreshData } = usePortfolio();
     const [blog, setBlog] = useState(initialBlog);
     const [isEditing, setIsEditing] = useState(false);
+    const contentRef = React.useRef<HTMLElement>(null);
+
+    useCodeBlockEnhancer(contentRef, [blog.content, blog.excerpt]);
 
     // Sync local state with prop when it changes (e.g. after fetching full content)
     React.useEffect(() => {
         setBlog(initialBlog);
     }, [initialBlog]);
+
+
 
     const displayImage = blog.image || extractFirstImage(blog.content);
 
@@ -85,7 +91,7 @@ export const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ blog: initialBlo
                 )}
             </div>
 
-            <article className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 md:p-10 shadow-2xl">
+            <article ref={contentRef} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 md:p-10 shadow-2xl">
                 <header className="mb-6">
                     <div className="relative h-64 md:h-96 w-full mb-8 overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800 shadow-md">
                         {displayImage ? (

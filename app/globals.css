@@ -187,3 +187,358 @@
     margin-bottom: 2em;
     border-radius: 0.5rem;
 }
+
+/* CODE BLOCK OVERRIDES - Mac Style & Consistency */
+.blog-content pre,
+.prose pre,
+.ql-editor pre.ql-syntax {
+    background-color: #0f172a !important;
+    /* Slate-900 */
+    color: #f8fafc !important;
+    padding: 1.5rem !important;
+    /* padding-top: 3.5rem !important;  <- Removed to fix double padding */
+    border-radius: 0.75rem !important;
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+    overflow-x: auto;
+    margin: 2rem 0;
+    border: 1px solid #334155;
+    position: relative;
+    line-height: 1.6;
+}
+
+/* RESET for Wrapped Blocks (prevent double box) */
+.code-block-wrapper pre,
+.code-block-wrapper .ql-syntax,
+.code-block-wrapper pre.ql-syntax {
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background-color: transparent !important;
+    padding-top: 1.5rem !important;
+    /* Restore normal padding inside wrapper */
+    box-shadow: none !important;
+}
+
+/* Ensure the language isn't just plain text - styling the HLJS tokens */
+.blog-content pre code,
+.ql-editor pre.ql-syntax {
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+/* Scrollbar Styling */
+.blog-content pre::-webkit-scrollbar,
+.ql-editor pre.ql-syntax::-webkit-scrollbar {
+    height: 8px;
+    background: transparent;
+}
+
+.blog-content pre::-webkit-scrollbar-thumb,
+.ql-editor pre.ql-syntax::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 4px;
+}
+
+.blog-content pre::-webkit-scrollbar-thumb:hover,
+.ql-editor pre.ql-syntax::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+}
+
+/* Line Numbers (Used by the hook's line-number logic) */
+.code-line-number {
+    display: inline-block;
+    width: 2rem;
+    margin-right: 1rem;
+    color: #475569;
+    text-align: right;
+    user-select: none;
+    font-size: 0.85em;
+}
+
+/* Highlight.js Theme Overrides for Atomic One Dark consistency */
+.hljs-comment,
+.hljs-quote {
+    color: #5c6370;
+    font-style: italic;
+}
+
+.hljs-doctag,
+.hljs-keyword,
+.hljs-formula {
+    color: #c678dd;
+}
+
+.hljs-section,
+.hljs-name,
+.hljs-selector-tag,
+.hljs-deletion,
+.hljs-subst {
+    color: #e06c75;
+}
+
+.hljs-literal {
+    color: #56b6c2;
+}
+
+.hljs-string,
+.hljs-regexp,
+.hljs-addition,
+.hljs-attribute,
+.hljs-meta-string {
+    color: #98c379;
+}
+
+.hljs-built_in,
+.hljs-class .hljs-title {
+    color: #e6c07b;
+}
+
+.hljs-attr,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-type,
+.hljs-selector-class,
+.hljs-selector-attr,
+.hljs-selector-pseudo,
+.hljs-number {
+    color: #d19a66;
+}
+
+.hljs-symbol,
+.hljs-bullet,
+.hljs-link,
+.hljs-meta,
+.hljs-selector-id,
+.hljs-title {
+    color: #61aeee;
+}
+
+/* ========================================
+   QUILL DROPDOWN VISIBILITY FIX - GLOBAL
+   ======================================== */
+
+/* Force dropdown options container */
+.ql-snow .ql-picker-options {
+    background-color: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1) !important;
+    border-radius: 0.5rem !important;
+    padding: 0.5rem !important;
+    z-index: 9999 !important;
+    /* Extremely high z-index */
+}
+
+/* Individual items text color */
+.ql-snow .ql-picker-item {
+    color: #1e293b !important;
+    /* Dark slate text */
+    padding: 0.5rem 0.75rem !important;
+}
+
+/* Hover state */
+.ql-snow .ql-picker-item:hover {
+    color: #2563eb !important;
+    /* Blue on hover */
+    background-color: #eff6ff !important;
+    /* Light blue background */
+}
+
+/* Selected state */
+.ql-snow .ql-picker-item.ql-selected {
+    color: #2563eb !important;
+    /* Blue when selected */
+    font-weight: 600 !important;
+    background-color: transparent !important;
+}
+
+/* --- Dark Mode Overrides --- */
+.dark .ql-snow .ql-picker-options {
+    background-color: #1e293b !important;
+    /* Dark slate bg */
+    border-color: #334155 !important;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.5) !important;
+}
+
+.dark .ql-snow .ql-picker-item {
+    color: #f1f5f9 !important;
+    /* Light text */
+}
+
+.dark .ql-snow .ql-picker-item:hover {
+    color: #60a5fa !important;
+    /* Lighter blue */
+    background-color: #334155 !important;
+    /* Darker hover bg */
+}
+
+.dark .ql-snow .ql-picker-item.ql-selected {
+    color: #60a5fa !important;
+    background-color: #334155 !important;
+}
+
+/* Fix the Picker Label itself (the "button" part) */
+.ql-snow .ql-picker-label {
+    color: #475569 !important;
+    padding-left: 0.5rem !important;
+}
+
+.dark .ql-snow .ql-picker-label {
+    color: #94a3b8 !important;
+}
+
+/* Fix the Icons (stroke/fill) */
+.ql-snow .ql-stroke {
+    stroke: #475569 !important;
+}
+
+.ql-snow .ql-fill {
+    fill: #475569 !important;
+}
+
+.dark .ql-snow .ql-stroke {
+    stroke: #94a3b8 !important;
+}
+
+.dark .ql-snow .ql-fill {
+    fill: #94a3b8 !important;
+}
+
+.hljs-emphasis {
+    font-style: italic;
+}
+
+.hljs-strong {
+    font-weight: bold;
+}
+
+.hljs-link {
+    text-decoration: underline;
+}
+
+/* ========================================
+   EDITOR MAC-STYLE CODE BLOCKS (CSS Only)
+   ======================================== */
+
+/* 1. The Container (Mac Window Shell) */
+.ql-code-block-container {
+    background-color: #0f172a !important;
+    /* Slate 900 */
+    border: 1px solid #334155 !important;
+    border-radius: 0.75rem !important;
+    margin: 1.5rem 0 !important;
+    overflow: hidden !important;
+    position: relative !important;
+    padding-top: 3.5rem !important;
+    /* Space for Header + extra padding */
+    padding-bottom: 1rem !important;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+}
+
+/* 2. Header Bar Background */
+.ql-code-block-container::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3rem;
+    /* Height of the header bar */
+    background-color: #1e293b;
+    /* Slate 800 */
+    border-bottom: 1px solid #334155;
+    z-index: 10;
+    pointer-events: none;
+}
+
+/* 3. Traffic Lights (Red/Yellow/Green Dots) */
+.ql-code-block-container::before {
+    content: "";
+    position: absolute;
+    top: 1.15rem;
+    /* Vertically centered in 3rem header */
+    left: 1.25rem;
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+    background-color: #ff5f56;
+    /* Red Dot */
+    box-shadow:
+        1.25rem 0 0 #ffbd2e,
+        /* Yellow offset */
+        2.5rem 0 0 #27c93f;
+    /* Green offset */
+    z-index: 20;
+    pointer-events: none;
+}
+
+/* 4. Language Dropdown (Positioned in Header) */
+.ql-code-block-container .ql-ui {
+    position: absolute !important;
+    top: 0.65rem !important;
+    right: 0.75rem !important;
+    z-index: 30 !important;
+    /* Above header and lights */
+    margin: 0 !important;
+    height: 1.75rem !important;
+    min-width: 6rem !important;
+    background-color: transparent !important;
+    color: #94a3b8 !important;
+    /* Muted Slate Text */
+    border: none !important;
+
+    font-size: 0.75rem !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    outline: none !important;
+
+    /* Custom Arrow (Chevron Down) */
+    appearance: none !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+    background-position: right 0 center !important;
+    background-repeat: no-repeat !important;
+    background-size: 1em 1em !important;
+    padding: 0 1.5rem 0 0.5rem !important;
+    /* Space for arrow */
+    text-align: right !important;
+    /* Align text to the right near arrow */
+}
+
+/* Dropdown Hover State */
+.ql-code-block-container .ql-ui:hover {
+    color: #f8fafc !important;
+    /* White on hover */
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 0.25rem !important;
+}
+
+/* Valid styling for options (browser dependent but we try) */
+.ql-code-block-container .ql-ui option {
+    background-color: #1e293b;
+    color: #f8fafc;
+    padding: 0.5rem;
+}
+
+/* 5. The Content Lines - Ensure they sit BELOW the header */
+.ql-code-block {
+    background-color: transparent !important;
+    border: none !important;
+    padding: 0.1rem 1.5rem !important;
+    /* Left/Right padding */
+    color: #cbd5e1 !important;
+    /* Slate 300 */
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 0.9em !important;
+    line-height: 1.7 !important;
+    position: relative;
+    z-index: 5;
+    /* Below header layer if overlapping, but padding handles it */
+}
+
+/* Fix selection color inside code blocks */
+.ql-code-block::selection,
+.ql-code-block *::selection {
+    background-color: rgba(56, 189, 248, 0.2) !important;
+}
