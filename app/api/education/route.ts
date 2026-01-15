@@ -4,25 +4,25 @@ import pool from '@/lib/db';
 
 export async function GET() {
   try {
-    const { rows } = await pool.query('SELECT * FROM portfolio.education ORDER BY id DESC');
+    const { rows } = await pool.query('SELECT * FROM portfolio.education ORDER BY start_date DESC NULLS LAST, id DESC');
     return NextResponse.json(rows);
   } catch (error) {
-    return NextResponse.json({ error: 'Failed' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to fetch education' }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { degree, school, year, grade } = body;
+    const { degree, school, grade, start_date, end_date } = body;
 
     // Manual ID generation (not serial)
     const idRes = await pool.query('SELECT COALESCE(MAX(id), 0) + 1 as new_id FROM portfolio.education');
     const newId = idRes.rows[0].new_id;
 
     const { rows } = await pool.query(
-      'INSERT INTO portfolio.education (id, degree, school, year, grade) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [newId, degree, school, year, grade]
+      'INSERT INTO portfolio.education (id, degree, school, grade, start_date, end_date) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [newId, degree, school, grade, start_date || null, end_date || null]
     );
     return NextResponse.json(rows[0]);
   } catch (error: any) {
@@ -36,11 +36,11 @@ export async function PUT(request: Request) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     const body = await request.json();
-    const { degree, school, year, grade } = body;
+    const { degree, school, grade, start_date, end_date } = body;
 
     const { rows } = await pool.query(
-      'UPDATE portfolio.education SET degree = $1, school = $2, year = $3, grade = $4 WHERE id = $5 RETURNING *',
-      [degree, school, year, grade, id]
+      'UPDATE portfolio.education SET degree = $1, school = $2, grade = $3, start_date = $4, end_date = $5 WHERE id = $6 RETURNING *',
+      [degree, school, grade, start_date || null, end_date || null, id]
     );
 
     return NextResponse.json(rows[0]);

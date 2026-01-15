@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import {
     Trash2, Plus, Save, X, Edit2, Loader2, SaveAll, Sparkles,
     LayoutDashboard, User, FolderOpen, PenTool, BookOpen, Briefcase, GraduationCap,
-    LogOut, Menu, ChevronRight, Search, Upload, ExternalLink, RefreshCw, CheckCircle
+    LogOut, Menu, ChevronRight, Search, Upload, ExternalLink, RefreshCw, CheckCircle, Award
 } from "lucide-react";
 import { usePortfolio } from "@/components/PortfolioContext";
 import { Project } from "@/data/portfolioData";
@@ -12,7 +12,7 @@ import { useToast } from "@/components/ui/Toast";
 import { IconPicker } from "@/components/ui/IconPicker";
 import { BLOG_TAGS } from "@/data/constants";
 import { FileUploader } from "@/components/FileUploader";
-import { extractFirstImage } from "@/lib/utils";
+import { extractFirstImage, formatDateRange } from "@/lib/utils";
 
 // --- Sub-components (could be separate files, kept here for cohesion during migration) ---
 
@@ -67,13 +67,21 @@ const AdminContent: React.FC = () => {
         createExperience, updateExperience, deleteExperience,
         updateProfile,
         createEducation, updateEducation, deleteEducation,
+        createCertification, updateCertification, deleteCertification,
     } = usePortfolio();
 
     const { addToast } = useToast();
 
     // UI State
-    const [activeTab, setActiveTab] = useState<'profile' | 'projects' | 'skills' | 'experience' | 'education' | 'blogs'>('profile');
+    const [activeTab, setActiveTab] = useState<'profile' | 'projects' | 'skills' | 'experience' | 'education' | 'blogs' | 'certifications'>('profile');
     const [isSidebarOpen, setSidebarOpen] = useState(false);
+
+    // Date helper
+    const formatDateForInput = (dateStr: string | undefined) => {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        return !isNaN(d.getTime()) ? d.toISOString().split('T')[0] : '';
+    };
     const [loginForm, setLoginForm] = useState({ email: "", password: "" });
     const [isLoadingData, setIsLoadingData] = useState(false);
     const [isSyncingGithub, setIsSyncingGithub] = useState(false);
@@ -107,6 +115,9 @@ const AdminContent: React.FC = () => {
     const [isCreatingEdu, setIsCreatingEdu] = useState(false);
 
     const [newSkill, setNewSkill] = useState({ name: '', icon: 'devicon-react-original' });
+    const [newCertification, setNewCertification] = useState({ name: '', issuer: '', url: '', date: '', icon: 'devicon-google-plain' });
+    const [editingCertification, setEditingCertification] = useState<Partial<typeof data.certifications[0]> | null>(null);
+    const [isCreatingCert, setIsCreatingCert] = useState(false);
     const [profileForm, setProfileForm] = useState<typeof data.profile | null>(null);
 
     // AI & Resume State
@@ -230,6 +241,15 @@ const AdminContent: React.FC = () => {
         if (!newSkill.name) return;
         await handleSave(() => createSkill(newSkill), "Skill added!");
         setNewSkill({ ...newSkill, name: '' });
+    };
+
+    const saveCertification = async () => {
+        if (!editingCertification || !editingCertification.name) return;
+        const success = await handleSave(async () => {
+            if (isCreatingCert) await createCertification(editingCertification);
+            else if (editingCertification.id) await updateCertification(editingCertification.id, editingCertification);
+        }, "Certification saved!");
+        if (success) setEditingCertification(null);
     };
 
 
@@ -374,6 +394,7 @@ const AdminContent: React.FC = () => {
                         <ExternalLink size={16} className="ml-auto opacity-50" />
                     </a>
                     <SidebarItem icon={PenTool} label="Skills" active={activeTab === 'skills'} onClick={() => setActiveTab('skills')} />
+                    <SidebarItem icon={Award} label="Certifications" active={activeTab === 'certifications'} onClick={() => setActiveTab('certifications')} />
                     <SidebarItem icon={Briefcase} label="Experience" active={activeTab === 'experience'} onClick={() => setActiveTab('experience')} />
                     <SidebarItem icon={GraduationCap} label="Education" active={activeTab === 'education'} onClick={() => setActiveTab('education')} />
                 </div>
@@ -566,12 +587,71 @@ const AdminContent: React.FC = () => {
                         </div>
                     )}
 
+                    {/* CERTIFICATIONS */}
+                    {activeTab === 'certifications' && (
+                        <div className="space-y-8">
+                            <div className="flex justify-between items-center">
+                                <h3 className="font-bold text-xl">Certifications</h3>
+                                <button onClick={() => { setEditingCertification({ icon: 'devicon-google-plain' }); setIsCreatingCert(true); }} className="bg-purple-600 text-white px-3 sm:px-4 py-2 rounded-lg font-bold flex items-center gap-2 whitespace-nowrap text-sm sm:text-base"><Plus size={16} /> Add <span className="hidden sm:inline">Certification</span></button>
+                            </div>
+
+                            {editingCertification ? (
+                                <EditorLayout title={isCreatingCert ? "Add Certification" : "Edit Certification"} onCancel={() => setEditingCertification(null)} onSave={saveCertification}>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <Input label="Name" value={editingCertification.name} onChange={v => setEditingCertification({ ...editingCertification, name: v })} />
+                                        <Input label="Issuer" value={editingCertification.issuer} onChange={v => setEditingCertification({ ...editingCertification, issuer: v })} />
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="w-full min-w-0">
+                                            <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">Date</label>
+                                            <input type="date" className="w-full min-w-0 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 outline-none focus:ring-2 ring-blue-500 transition-all" value={editingCertification.date || ''} onChange={e => setEditingCertification({ ...editingCertification, date: e.target.value })} />
+                                        </div>
+                                        <Input label="Credential URL" value={editingCertification.url} onChange={v => setEditingCertification({ ...editingCertification, url: v })} />
+                                    </div>
+                                    <div className="w-full">
+                                        <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">Icon</label>
+                                        <IconPicker
+                                            value={editingCertification.icon || ''}
+                                            onChange={v => setEditingCertification({ ...editingCertification, icon: v })}
+                                        />
+                                    </div>
+                                </EditorLayout>
+                            ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {data.certifications?.map(c => (
+                                        <div key={c.id} className="relative group bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-start gap-4 hover:border-purple-500/50 transition-all">
+                                            <div className="w-12 h-12 flex-shrink-0 bg-slate-50 dark:bg-slate-900 rounded-xl flex items-center justify-center text-2xl">
+                                                <i className={c.icon}></i>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="font-bold text-slate-900 dark:text-white truncate">{c.name}</h4>
+                                                <p className="text-sm text-slate-500 dark:text-slate-400">{c.issuer}</p>
+                                                <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
+                                                    <span>{c.date}</span>
+                                                    {c.url && (
+                                                        <a href={c.url} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline flex items-center gap-1">
+                                                            View <ExternalLink size={10} />
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button onClick={() => { setEditingCertification(c); setIsCreatingCert(false); }} className="text-blue-500 p-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"><Edit2 size={16} /></button>
+                                                <button onClick={() => handleSave(() => deleteCertification(c.id), "Certification deleted")} className="text-red-500 p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"><Trash2 size={16} /></button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     {/* EXPERIENCE & EDUCATION (Simplified for brevity as structure is similar) */}
                     {activeTab === 'experience' && (
                         <div className="space-y-6">
                             <div className="flex justify-between items-center">
                                 <h3 className="font-bold text-xl">Work Experience</h3>
-                                <button onClick={() => { setEditingExperience({}); setIsCreatingExp(true); }} className="bg-orange-600 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2"><Plus size={16} /> Add Role</button>
+                                <button onClick={() => { setEditingExperience({}); setIsCreatingExp(true); }} className="bg-orange-600 text-white px-3 sm:px-4 py-2 rounded-lg font-bold flex items-center gap-2 whitespace-nowrap text-sm sm:text-base"><Plus size={16} /> Add <span className="hidden sm:inline">Role</span></button>
                             </div>
 
                             {editingExperience ? (
@@ -580,7 +660,40 @@ const AdminContent: React.FC = () => {
                                         <Input label="Role" value={editingExperience.role} onChange={v => setEditingExperience({ ...editingExperience, role: v })} />
                                         <Input label="Company" value={editingExperience.company} onChange={v => setEditingExperience({ ...editingExperience, company: v })} />
                                     </div>
-                                    <Input label="Period" value={editingExperience.period} onChange={v => setEditingExperience({ ...editingExperience, period: v })} />
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="w-full min-w-0">
+                                            <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">Start Date</label>
+                                            <input type="date" className="w-full min-w-0 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 outline-none focus:ring-2 ring-orange-500 transition-all" value={formatDateForInput(editingExperience.start_date)} onChange={e => setEditingExperience({ ...editingExperience, start_date: e.target.value })} />
+                                        </div>
+                                        <div className="w-full min-w-0">
+                                            <div className="flex justify-between items-end mb-2">
+                                                <label className="text-xs font-bold text-slate-500 uppercase ml-1">End Date</label>
+                                                <label className="flex items-center gap-2 text-xs font-bold text-slate-500 cursor-pointer select-none hover:text-orange-600 transition-colors">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={!editingExperience.end_date}
+                                                        onChange={e => setEditingExperience({ ...editingExperience, end_date: e.target.checked ? undefined : new Date().toISOString().split('T')[0] })}
+                                                        className="accent-orange-600 w-4 h-4 cursor-pointer rounded"
+                                                    />
+                                                    Present
+                                                </label>
+                                            </div>
+                                            {!editingExperience.end_date ? (
+                                                <div className="w-full h-[46px] bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-900/30 rounded-xl flex items-center justify-center text-orange-600 dark:text-orange-400 font-bold text-sm gap-2 px-4">
+                                                    <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
+                                                    Present
+                                                </div>
+                                            ) : (
+                                                <input
+                                                    type="date"
+                                                    className="w-full min-w-0 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 outline-none focus:ring-2 ring-orange-500 transition-all h-[46px]"
+                                                    value={formatDateForInput(editingExperience.end_date)}
+                                                    onChange={e => setEditingExperience({ ...editingExperience, end_date: e.target.value })}
+                                                />
+                                            )}
+                                        </div>
+                                    </div>
+
                                     <div className="md:col-span-2">
                                         <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-2 block">Description</label>
                                         <textarea className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 h-32 outline-none focus:ring-2 ring-orange-500" value={editingExperience.description} onChange={e => setEditingExperience({ ...editingExperience, description: e.target.value })} />
@@ -592,7 +705,7 @@ const AdminContent: React.FC = () => {
                                         <div>
                                             <h4 className="font-bold text-lg">{exp.role}</h4>
                                             <p className="text-orange-600 dark:text-orange-400 font-medium">{exp.company}</p>
-                                            <p className="text-xs text-slate-500 mt-1">{exp.period}</p>
+                                            <p className="text-xs text-slate-500 mt-1">{formatDateRange({ start: exp.start_date, end: exp.end_date })}</p>
                                         </div>
                                         <div className="flex gap-2">
                                             <button onClick={() => { setEditingExperience(exp); setIsCreatingExp(false); }} className="text-blue-500 p-2"><Edit2 size={18} /></button>
@@ -608,16 +721,46 @@ const AdminContent: React.FC = () => {
                         <div className="space-y-6">
                             <div className="flex justify-between items-center">
                                 <h3 className="font-bold text-xl">Education</h3>
-                                <button onClick={() => { setEditingEducation({}); setIsCreatingEdu(true); }} className="bg-green-600 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2"><Plus size={16} /> Add Education</button>
+                                <button onClick={() => { setEditingEducation({}); setIsCreatingEdu(true); }} className="bg-green-600 text-white px-3 sm:px-4 py-2 rounded-lg font-bold flex items-center gap-2 whitespace-nowrap text-sm sm:text-base"><Plus size={16} /> Add <span className="hidden sm:inline">Education</span></button>
                             </div>
                             {editingEducation ? (
                                 <EditorLayout title="Edit Education" onCancel={() => setEditingEducation(null)} onSave={saveEdu}>
                                     <Input label="Degree" value={editingEducation.degree} onChange={v => setEditingEducation({ ...editingEducation, degree: v })} />
                                     <Input label="School" value={editingEducation.school} onChange={v => setEditingEducation({ ...editingEducation, school: v })} />
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <Input label="Year" value={editingEducation.year} onChange={v => setEditingEducation({ ...editingEducation, year: v })} />
-                                        <Input label="Grade" value={editingEducation.grade} onChange={v => setEditingEducation({ ...editingEducation, grade: v })} />
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="w-full min-w-0">
+                                            <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">Start Date</label>
+                                            <input type="date" className="w-full min-w-0 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 outline-none focus:ring-2 ring-green-500 transition-all" value={formatDateForInput(editingEducation.start_date)} onChange={e => setEditingEducation({ ...editingEducation, start_date: e.target.value })} />
+                                        </div>
+                                        <div className="w-full min-w-0">
+                                            <div className="flex justify-between items-end mb-2">
+                                                <label className="text-xs font-bold text-slate-500 uppercase ml-1">End Date</label>
+                                                <label className="flex items-center gap-2 text-xs font-bold text-slate-500 cursor-pointer select-none hover:text-green-600 transition-colors">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={!editingEducation.end_date}
+                                                        onChange={e => setEditingEducation({ ...editingEducation, end_date: e.target.checked ? undefined : new Date().toISOString().split('T')[0] })}
+                                                        className="accent-green-600 w-4 h-4 cursor-pointer rounded"
+                                                    />
+                                                    Present
+                                                </label>
+                                            </div>
+                                            {!editingEducation.end_date ? (
+                                                <div className="w-full h-[46px] bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-900/30 rounded-xl flex items-center justify-center text-green-600 dark:text-green-400 font-bold text-sm gap-2 px-4">
+                                                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                                                    Present
+                                                </div>
+                                            ) : (
+                                                <input
+                                                    type="date"
+                                                    className="w-full min-w-0 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 outline-none focus:ring-2 ring-green-500 transition-all h-[46px]"
+                                                    value={formatDateForInput(editingEducation.end_date)}
+                                                    onChange={e => setEditingEducation({ ...editingEducation, end_date: e.target.value })}
+                                                />
+                                            )}
+                                        </div>
                                     </div>
+                                    <Input label="Grade" value={editingEducation.grade} onChange={v => setEditingEducation({ ...editingEducation, grade: v })} />
                                 </EditorLayout>
                             ) : (
                                 data.education.map(edu => (
@@ -625,7 +768,7 @@ const AdminContent: React.FC = () => {
                                         <div>
                                             <h4 className="font-bold text-lg">{edu.degree}</h4>
                                             <p className="text-green-600 dark:text-green-400">{edu.school}</p>
-                                            <p className="text-xs text-slate-500">{edu.year}</p>
+                                            <p className="text-xs text-slate-500">{formatDateRange({ start: edu.start_date, end: edu.end_date })}</p>
                                         </div>
                                         <div className="flex gap-2">
                                             <button onClick={() => { setEditingEducation(edu); setIsCreatingEdu(false); }} className="text-blue-500 p-2"><Edit2 size={18} /></button>

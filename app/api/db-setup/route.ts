@@ -23,8 +23,26 @@ export async function GET() {
                 chat_count INT DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
+
+            CREATE TABLE IF NOT EXISTS portfolio.certifications (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                issuer VARCHAR(255) NOT NULL,
+                url VARCHAR(500),
+                date VARCHAR(50),
+                icon VARCHAR(255)
+            );
+
+            ALTER TABLE portfolio.experience ADD COLUMN IF NOT EXISTS start_date DATE;
+            ALTER TABLE portfolio.experience ADD COLUMN IF NOT EXISTS end_date DATE;
+            
+            ALTER TABLE portfolio.education ADD COLUMN IF NOT EXISTS start_date DATE;
+            ALTER TABLE portfolio.education ADD COLUMN IF NOT EXISTS end_date DATE;
+
+            ALTER TABLE portfolio.experience DROP COLUMN IF EXISTS period;
+            ALTER TABLE portfolio.education DROP COLUMN IF EXISTS year;
         `);
-        return NextResponse.json({ success: true, message: 'Tables ai_email_usage and ai_chat_usage created or already exist.' });
+        return NextResponse.json({ success: true, message: 'Tables ai_email_usage, ai_chat_usage, and certifications created or already exist.' });
     } catch (error) {
         console.error('DB Setup Error:', error);
         return NextResponse.json({ error: 'Failed to setup DB' }, { status: 500 });

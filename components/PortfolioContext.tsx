@@ -34,6 +34,12 @@ type PortfolioContextType = {
     createEducation: (e: any) => Promise<void>;
     updateEducation: (id: number, e: any) => Promise<void>;
     deleteEducation: (id: number) => Promise<void>;
+
+    // Certifications
+    createCertification: (c: any) => Promise<void>;
+    updateCertification: (id: number, c: any) => Promise<void>;
+    deleteCertification: (id: number) => Promise<void>;
+
     fetchAdminData: (skipEssentials?: boolean, includeProjects?: boolean, page?: number, limit?: number) => Promise<void>;
     refreshData: () => Promise<void>;
 };
@@ -60,12 +66,13 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
     // Fetches ONLY essential data for public pages (faster load)
     const fetchEssentials = React.useCallback(async () => {
         try {
-            const [configRes, uiRes, profileRes, skillsRes, blogsRes] = await Promise.all([
+            const [configRes, uiRes, profileRes, skillsRes, blogsRes, certRes] = await Promise.all([
                 fetch('/api/config'),
                 fetch('/api/ui-config'),
                 fetch('/api/profile'),
                 fetch('/api/skills'),
-                fetch('/api/blogs?limit=50&summary=true') // Blogs are still global for now (HomePage etc)
+                fetch('/api/blogs?limit=50&summary=true'), // Blogs are still global for now (HomePage etc)
+                fetch('/api/certifications')
             ]);
 
             const config = await parseOrNull(configRes, initialEmptyData.config);
@@ -74,12 +81,14 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
             const profile = { ...profileData, currentlyLearning: Array.isArray(profileData.currentlyLearning) ? profileData.currentlyLearning : [] };
             const skillsData = await parseOrNull(skillsRes, []);
             const skills = Array.isArray(skillsData) ? skillsData : [];
+            const certData = await parseOrNull(certRes, []);
+            const certifications = Array.isArray(certData) ? certData : [];
 
             const blogsJson = await parseOrNull(blogsRes, { data: [] });
             const blogs = Array.isArray(blogsJson) ? blogsJson : (blogsJson.data || []);
 
             // Note: Projects are no longer fetched globally. Pages fetch them on demand.
-            setData(prev => ({ ...prev, config, ui, profile, skills, blogs }));
+            setData(prev => ({ ...prev, config, ui, profile, skills, blogs, certifications }));
         } catch (e) {
             console.error("Essential data fetch failed", e);
         } finally {
@@ -110,6 +119,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
                 promises.push(fetch('/api/ui-config'));
                 promises.push(fetch('/api/profile'));
                 promises.push(fetch('/api/skills'));
+                promises.push(fetch('/api/certifications'));
             }
 
             const results = await Promise.all(promises);
@@ -131,19 +141,21 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
             const experience = await parseOrNull(expRes, []);
             const education = await parseOrNull(eduRes, []);
 
-            let config: any, ui: any, profile: any, skills: any;
+            let config: any, ui: any, profile: any, skills: any, certifications: any;
 
             if (!skipEssentials) {
                 const configRes = results[currentIdx];
                 const uiRes = results[currentIdx + 1];
                 const profileRes = results[currentIdx + 2];
                 const skillsRes = results[currentIdx + 3];
+                const certRes = results[currentIdx + 4];
 
                 config = await parseOrNull(configRes, initialEmptyData.config);
                 ui = await parseOrNull(uiRes, initialEmptyData.ui);
                 const profileData = await parseOrNull(profileRes, initialEmptyData.profile);
                 profile = { ...profileData, currentlyLearning: Array.isArray(profileData.currentlyLearning) ? profileData.currentlyLearning : [] };
                 skills = await parseOrNull(skillsRes, []);
+                certifications = await parseOrNull(certRes, []);
             }
 
             // Update state
@@ -151,7 +163,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
                 ...prev,
                 experience, education,
                 ...(includeProjects ? { projects: Array.isArray(projJson) ? projJson : (projJson.data || []) } : {}),
-                ...(skipEssentials ? {} : { config, ui, profile, skills })
+                ...(skipEssentials ? {} : { config, ui, profile, skills, certifications })
             }));
         } catch (e) { console.error(e); }
     }, []);
@@ -291,6 +303,24 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
         refreshData();
     };
 
+    const createCertification = async (c: any) => {
+        const res = await fetch('/api/certifications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(c) });
+        if (!res.ok) throw new Error("Failed to create certification");
+        refreshData();
+    };
+
+    const updateCertification = async (id: number, c: any) => {
+        const res = await fetch(`/api/certifications?id=${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(c) });
+        if (!res.ok) throw new Error("Failed to update certification");
+        refreshData();
+    };
+
+    const deleteCertification = async (id: number) => {
+        const res = await fetch(`/api/certifications?id=${id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error("Failed to delete certification");
+        refreshData();
+    };
+
     // Education
     const createEducation = async (e: any) => {
         const res = await fetch('/api/education', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(e) });
@@ -330,6 +360,9 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
         createEducation,
         updateEducation,
         deleteEducation,
+        createCertification,
+        updateCertification,
+        deleteCertification,
         fetchAdminData,
         refreshData
     }), [data, isAuthenticated, isLoading, fetchAdminData, fetchEssentials, refreshData]);

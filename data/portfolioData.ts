@@ -11,8 +11,18 @@ export interface Experience {
     id: number;
     role: string;
     company: string;
-    period: string;
+    start_date?: string;
+    end_date?: string;
     description: string;
+}
+
+export interface Certification {
+    id: number;
+    name: string;
+    issuer: string;
+    url?: string;
+    date: string;
+    icon: string;
 }
 
 export interface Project {
@@ -46,7 +56,8 @@ export interface Education {
     id: number;
     degree: string;
     school: string;
-    year: string;
+    start_date?: string;
+    end_date?: string;
     grade: string;
 }
 
@@ -100,6 +111,7 @@ export interface PortfolioData {
     blogs: BlogPost[];
     education: Education[];
     skills: Skill[];
+    certifications: Certification[];
 }
 
 export const initialEmptyData: PortfolioData = {
@@ -136,4 +148,5 @@ export const initialEmptyData: PortfolioData = {
     blogs: [],
     education: [],
     skills: [],
+    certifications: [],
 };

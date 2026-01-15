@@ -4,6 +4,7 @@ import React from "react";
 import { Briefcase, GraduationCap, Zap, Github, Linkedin, ExternalLink, Search } from "lucide-react";
 import { usePortfolio } from "@/components/PortfolioContext";
 import { IconRenderer } from "@/components/IconRenderer";
+import { formatDateRange, formatDate } from "@/lib/utils";
 
 export const AboutPage: React.FC = () => {
     const { data: globalData, isLoading: globalLoading } = usePortfolio();
@@ -130,7 +131,7 @@ export const AboutPage: React.FC = () => {
                             <div className="flex flex-col md:flex-row md:items-center justify-between mb-2 gap-2">
                                 <h4 className="text-xl font-bold text-slate-900 dark:text-white">{exp.role}</h4>
                                 <span className="w-fit text-xs font-bold bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700">
-                                    {exp.period}
+                                    {formatDateRange({ start: exp.start_date, end: exp.end_date })}
                                 </span>
                             </div>
                             <p className="text-blue-600 dark:text-blue-400 font-medium mb-4">{exp.company}</p>
@@ -142,112 +143,136 @@ export const AboutPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Education + Skills */}
-            <div className="grid md:grid-cols-2 gap-8">
+            {/* Education */}
+            <div className="space-y-8">
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <GraduationCap className="text-purple-600 dark:text-purple-400" /> Education
+                </h3>
+                <div className="grid md:grid-cols-2 gap-6">
+                    {education.map((edu) => (
+                        <div
+                            key={edu.id}
+                            className="bg-white dark:bg-slate-800/30 p-6 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm"
+                        >
+                            <h4 className="text-lg font-bold text-slate-900 dark:text-white">{edu.degree}</h4>
+                            <p className="text-slate-500 dark:text-slate-400 mb-2">{edu.school}</p>
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-slate-500 dark:text-slate-500">{formatDateRange({ start: edu.start_date, end: edu.end_date })}</span>
+                                <span className="text-green-600 dark:text-green-400 font-mono bg-green-100 dark:bg-green-400/10 px-2 py-1 rounded">
+                                    {edu.grade}
+                                </span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Technical Arsenal (Skills) */}
+            <div className="space-y-6">
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <Zap className="text-yellow-500 dark:text-yellow-400" /> Technical Arsenal
+                </h3>
+                <div className="flex flex-wrap gap-3">
+                    {globalData.skills?.map((skill, idx) => (
+                        <div
+                            key={idx}
+                            className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-lg shadow-sm hover:border-purple-500/50 transition-colors"
+                        >
+                            <IconRenderer iconName={skill.icon} size={16} className="text-slate-500 dark:text-slate-400" />
+                            <span className="text-slate-700 dark:text-slate-200 font-medium">
+                                {skill.name}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Currently Learning */}
+            {globalData.profile.currentlyLearning && globalData.profile.currentlyLearning.length > 0 && (
                 <div className="space-y-6">
                     <h3 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <GraduationCap className="text-purple-600 dark:text-purple-400" /> Education
+                        <Search className="text-blue-500 dark:text-blue-400" /> Currently Learning
                     </h3>
-                    <div className="space-y-4">
-                        {education.map((edu) => (
-                            <div
-                                key={edu.id}
-                                className="bg-white dark:bg-slate-800/30 p-6 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-sm"
-                            >
-                                <h4 className="text-lg font-bold text-slate-900 dark:text-white">{edu.degree}</h4>
-                                <p className="text-slate-500 dark:text-slate-400 mb-2">{edu.school}</p>
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-slate-500 dark:text-slate-500">{edu.year}</span>
-                                    <span className="text-green-600 dark:text-green-400 font-mono bg-green-100 dark:bg-green-400/10 px-2 py-1 rounded">
-                                        {edu.grade}
-                                    </span>
+                    <div className={`grid grid-cols-1 ${globalData.profile.currentlyLearning.length > 1 ? 'sm:grid-cols-2' : ''} gap-6`}>
+                        {globalData.profile.currentlyLearning.map((item, idx) => {
+                            const isObj = typeof item === 'object' && item !== null;
+                            const topic = isObj ? (item as any).topic : item;
+                            const status = isObj ? (item as any).status : null;
+                            const category = isObj ? (item as any).category : null;
+                            const level = isObj ? (item as any).level : null;
+                            const url = isObj ? (item as any).referenceUrl : null;
+                            const finalUrl = url || `https://www.google.com/search?q=${encodeURIComponent(topic)}`;
+
+                            return (
+                                <div key={idx} className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:border-blue-500/50 transition-all group relative">
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div className="flex items-center gap-3 flex-wrap">
+                                            <h4 className="font-bold text-lg text-slate-900 dark:text-white">{topic}</h4>
+                                            {status && (
+                                                <span className="text-[10px] uppercase font-bold tracking-wider bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-full">
+                                                    {status}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <a href={finalUrl} target="_blank" rel="noreferrer" className="text-slate-400 hover:text-blue-500 transition-colors">
+                                            <ExternalLink size={16} />
+                                        </a>
+                                    </div>
+
+                                    <div className="flex items-center gap-4 text-sm">
+                                        {category && (
+                                            <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-100 dark:bg-slate-700/50 rounded-md text-slate-600 dark:text-slate-300 font-medium">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-500"></div>
+                                                {category}
+                                            </div>
+                                        )}
+                                        {level && (
+                                            <span className="text-slate-500 dark:text-slate-400 font-medium">
+                                                {level}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* Certifications Section */}
+            {globalData.certifications && globalData.certifications.length > 0 && (
+                <div className="space-y-8">
+                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <div className="bg-green-100 dark:bg-green-900/20 p-1 rounded-lg">
+                            <IconRenderer iconName="Award" size={20} className="text-green-600 dark:text-green-400" />
+                        </div>
+                        Certifications
+                    </h3>
+                    <div className={`grid grid-cols-1 ${(globalData.certifications?.length || 0) > 1 ? 'sm:grid-cols-2 lg:grid-cols-3' : ''} gap-6`}>
+                        {globalData.certifications.map((cert) => (
+                            <div key={cert.id} className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                                <div className="flex items-start gap-4">
+                                    <div className="w-12 h-12 bg-slate-50 dark:bg-slate-900 rounded-xl flex items-center justify-center text-2xl flex-shrink-0">
+                                        <i className={cert.icon}></i>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h4 className="font-bold text-slate-900 dark:text-white truncate" title={cert.name}>{cert.name}</h4>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400">{cert.issuer}</p>
+                                        <div className="flex items-center justify-between mt-4">
+                                            <span className="text-xs font-bold bg-slate-100 dark:bg-slate-900 text-slate-500 px-2 py-1 rounded-md">{formatDate(cert.date)}</span>
+                                            {cert.url && (
+                                                <a href={cert.url} target="_blank" rel="noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline text-xs font-bold flex items-center gap-1">
+                                                    Verify <ExternalLink size={12} />
+                                                </a>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         ))}
                     </div>
                 </div>
-
-                <div className="space-y-6">
-                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center justify-center md:justify-start gap-2">
-                        <Zap className="text-yellow-500 dark:text-yellow-400" /> Technical Arsenal
-                    </h3>
-                    <div className="flex flex-wrap justify-center md:justify-start gap-3">
-                        {globalData.skills?.map((skill, idx) => (
-                            <div
-                                key={idx}
-                                className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-lg shadow-sm"
-                            >
-                                <IconRenderer iconName={skill.icon} size={16} className="text-slate-500 dark:text-slate-400" />
-                                <span className="text-slate-700 dark:text-slate-200 font-medium">
-                                    {skill.name}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                    <div className="bg-slate-100 dark:bg-slate-800/20 p-6 rounded-xl border border-slate-200 dark:border-slate-700/50">
-                        <h4 className="font-bold text-slate-900 dark:text-white mb-4">Currently Learning</h4>
-                        {globalData.profile.currentlyLearning && globalData.profile.currentlyLearning.length > 0 ? (
-                            <div className="space-y-4">
-                                {globalData.profile.currentlyLearning.map((item, idx) => {
-                                    const hasLink = !!item.referenceUrl;
-                                    const linkUrl = hasLink ? item.referenceUrl : `https://www.google.com/search?q=${encodeURIComponent(item.topic + " " + (item.category || ""))}`;
-                                    const LinkIcon = hasLink ? ExternalLink : Search;
-
-                                    return (
-                                        <div key={idx} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 p-5 rounded-2xl hover:shadow-lg hover:shadow-blue-500/5 hover:border-blue-500/30 transition-all group relative overflow-hidden">
-                                            <div className="flex justify-between items-start gap-4">
-                                                <div className="space-y-3 flex-1 min-w-0">
-                                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                                                        <h5 className="font-bold text-slate-900 dark:text-white text-base">
-                                                            {item.topic}
-                                                        </h5>
-                                                        {item.status && (
-                                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${item.status === 'In Progress'
-                                                                ? 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800'
-                                                                : 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
-                                                                }`}>
-                                                                {item.status}
-                                                            </span>
-                                                        )}
-                                                    </div>
-
-                                                    <div className="flex flex-wrap items-center gap-2">
-                                                        {item.category && (
-                                                            <span className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700">
-                                                                <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-500" />
-                                                                {item.category}
-                                                            </span>
-                                                        )}
-                                                        {item.level && (
-                                                            <span className="text-xs text-slate-500 dark:text-slate-500 font-medium px-1">
-                                                                {item.level}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                <a
-                                                    href={linkUrl}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="flex-shrink-0 p-2 -mr-2 -mt-2 text-slate-300 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-all"
-                                                    title={hasLink ? "Visit Resource" : "Search Topic"}
-                                                >
-                                                    <LinkIcon size={18} />
-                                                </a>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        ) : (
-                            <p className="text-slate-600 dark:text-slate-400 text-sm italic">
-                                Always exploring new technologies...
-                            </p>
-                        )}
-                    </div>
-                </div>
-            </div>
+            )}
         </div>
     );
 };
