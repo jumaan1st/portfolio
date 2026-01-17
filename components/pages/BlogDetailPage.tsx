@@ -2,10 +2,11 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Coffee, Tag, Edit } from "lucide-react";
+import { ChevronLeft, Coffee, Tag, Edit, Printer } from "lucide-react";
 import type { BlogPost } from "@/data/portfolioData";
 import { usePortfolio } from "@/components/PortfolioContext";
 import { useCodeBlockEnhancer } from "@/hooks/useCodeBlockEnhancer";
+import { useReactToPrint } from "react-to-print";
 import { BlogEditor } from "./BlogEditor";
 import { BlogPlaceholder } from "../BlogPlaceholder";
 
@@ -23,6 +24,11 @@ export const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ blog: initialBlo
     const contentRef = React.useRef<HTMLElement>(null);
 
     useCodeBlockEnhancer(contentRef, [blog.content, blog.excerpt]);
+
+    const handlePrint = useReactToPrint({
+        contentRef: contentRef,
+        documentTitle: blog.title || "Blog Post",
+    });
 
     // Sync local state with prop when it changes (e.g. after fetching full content)
     React.useEffect(() => {
@@ -69,7 +75,7 @@ export const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ blog: initialBlo
 
     return (
         <div className="max-w-3xl w-full mx-auto animate-in fade-in slide-in-from-right-8 duration-500 pb-12 overflow-x-hidden">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex justify-between items-center mb-6 print:hidden">
                 <button
                     onClick={() => router.push("/blogs")}
                     className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors group"
@@ -81,14 +87,25 @@ export const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ blog: initialBlo
                     Back to Blogs
                 </button>
 
-                {isAuthenticated && (
+                <div className="flex items-center gap-2">
                     <button
-                        onClick={() => setIsEditing(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 rounded-lg text-sm font-bold transition-all"
+                        onClick={() => handlePrint()}
+                        className="flex items-center gap-2 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg transition-all shadow-sm"
+                        title="Download as PDF"
                     >
-                        <Edit size={16} /> Edit Post
+                        <Printer size={20} />
+                        <span className="hidden sm:inline">PDF</span>
                     </button>
-                )}
+                    {isAuthenticated && (
+                        <button
+                            onClick={() => setIsEditing(true)}
+                            className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2 bg-slate-200 dark:bg-slate-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 rounded-lg text-sm font-bold transition-all"
+                            title="Edit Post"
+                        >
+                            <Edit size={20} className="sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Edit Post</span>
+                        </button>
+                    )}
+                </div>
             </div>
 
             <article ref={contentRef} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 md:p-10 shadow-2xl">

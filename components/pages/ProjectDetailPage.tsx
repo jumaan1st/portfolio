@@ -8,12 +8,14 @@ import {
     Sparkles,
     Zap,
     Edit,
-    Trash2
+    Trash2,
+    Printer
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Project } from "@/data/portfolioData";
 import ReactMarkdown from 'react-markdown';
+import { useReactToPrint } from "react-to-print";
 import { ProjectLink } from "../ProjectLink";
 import { usePortfolio } from "../PortfolioContext";
 import { useCodeBlockEnhancer } from "@/hooks/useCodeBlockEnhancer";
@@ -33,6 +35,11 @@ export const ProjectDetailPage: React.FC<Props> = ({ project: initialProject, on
     const router = useRouter();
     const contentRef = React.useRef<HTMLDivElement>(null);
     useCodeBlockEnhancer(contentRef, [project.longDescription, activeTab]);
+
+    const handlePrint = useReactToPrint({
+        contentRef: contentRef,
+        documentTitle: project.title || "Project Details",
+    });
 
     React.useEffect(() => {
         localStorage.setItem("visited_project_id", String(project.id));
@@ -111,7 +118,7 @@ export const ProjectDetailPage: React.FC<Props> = ({ project: initialProject, on
 
     return (
         <div className="animate-in fade-in slide-in-from-right-8 duration-500 max-w-5xl mx-auto pb-12">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+            <div className="flex justify-between items-center mb-8 gap-4 print:hidden">
                 <button
                     onClick={handleBack}
                     className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors group"
@@ -123,25 +130,36 @@ export const ProjectDetailPage: React.FC<Props> = ({ project: initialProject, on
                     Back to Projects
                 </button>
 
-                {isAuthenticated && (
-                    <div className="flex w-full sm:w-auto gap-2">
-                        <Link
-                            href={`/projects/${project.id}/edit`}
-                            className="flex-1 sm:flex-none justify-center items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white px-4 py-2 rounded-lg font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex"
-                        >
-                            <Edit size={16} /> Edit
-                        </Link>
-                        <button
-                            onClick={handleDelete}
-                            className="flex-1 sm:flex-none justify-center items-center gap-2 bg-red-50 text-red-600 dark:bg-red-900/20 px-4 py-2 rounded-lg font-bold hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors flex"
-                        >
-                            <Trash2 size={16} /> Delete
-                        </button>
-                    </div>
-                )}
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => handlePrint()}
+                        className="flex-none justify-center items-center gap-2 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-3 py-2 sm:px-4 sm:py-2 rounded-lg font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex border border-slate-200 dark:border-slate-700 shadow-sm"
+                        title="Download as PDF"
+                    >
+                        <Printer size={20} className="sm:w-4 sm:h-4" /> <span className="hidden sm:inline">PDF</span>
+                    </button>
+                    {isAuthenticated && (
+                        <>
+                            <Link
+                                href={`/projects/${project.id}/edit`}
+                                className="flex-none justify-center items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex"
+                                title="Edit Project"
+                            >
+                                <Edit size={20} className="sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Edit</span>
+                            </Link>
+                            <button
+                                onClick={handleDelete}
+                                className="flex-none justify-center items-center gap-2 bg-red-50 text-red-600 dark:bg-red-900/20 px-3 py-2 sm:px-4 sm:py-2 rounded-lg font-bold hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors flex"
+                                title="Delete Project"
+                            >
+                                <Trash2 size={20} className="sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Delete</span>
+                            </button>
+                        </>
+                    )}
+                </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-2xl mb-12">
+            <div ref={contentRef} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-2xl mb-12">
                 <div
                     className={`h-48 md:h-64 relative flex items-center justify-center overflow-hidden ${project.image && project.image.startsWith("http")
                         ? ""
@@ -169,7 +187,7 @@ export const ProjectDetailPage: React.FC<Props> = ({ project: initialProject, on
                 <div className="p-6 md:p-10">
                     <div className="flex flex-col md:flex-row gap-12">
                         {/* Left nav */}
-                        <div className="md:w-1/4 space-y-2">
+                        <div className="md:w-1/4 space-y-2 print:hidden">
                             {[
                                 { key: "overview", label: "Overview" },
                                 { key: "case-study", label: "Case Study" },
@@ -202,7 +220,7 @@ export const ProjectDetailPage: React.FC<Props> = ({ project: initialProject, on
                         </div>
 
                         {/* Right content */}
-                        <div className="md:w-3/4 min-h-[300px]" ref={contentRef}>
+                        <div className="md:w-3/4 min-h-[300px] print:w-full">
                             {activeTab === "overview" && (
                                 <div className="space-y-8 animate-in fade-in duration-300">
                                     <div>

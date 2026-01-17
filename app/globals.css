@@ -542,3 +542,86 @@
 .ql-code-block *::selection {
     background-color: rgba(56, 189, 248, 0.2) !important;
 }
+
+/* ========================================
+   PRINT STYLES
+   ======================================== */
+@media print {
+
+    /* Reset background and text colors for print */
+    body {
+        background-color: white !important;
+        color: black !important;
+    }
+
+    /* Hide Navigation, Footer, and other non-content elements */
+    nav,
+    footer,
+    header,
+    .no-print,
+    .print\:hidden {
+        display: none !important;
+    }
+
+    /* Ensure specific elements take full width */
+    .print\:w-full {
+        width: 100% !important;
+        max-width: none !important;
+        flex: 1 1 100% !important;
+    }
+
+    /* Remove shadows and borders that might look bad in print */
+    .shadow-2xl,
+    .shadow-xl,
+    .shadow-lg,
+    .shadow-md,
+    .shadow-sm,
+    .shadow {
+        box-shadow: none !important;
+    }
+
+    /* Print-specific layout adjustments */
+    .blog-content,
+    article {
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+    }
+
+    /* Title separation */
+    h1 {
+        padding-bottom: 1rem !important;
+        border-bottom: 2px solid #e2e8f0 !important;
+        margin-bottom: 2rem !important;
+    }
+
+    /* Excerpt/Summary separation */
+    .italic.border-l-4 {
+        border-left: none !important;
+        /* Remove the web-style left border */
+        border-bottom: 1px solid #e2e8f0 !important;
+        padding-bottom: 1.5rem !important;
+        margin-bottom: 2rem !important;
+        font-style: italic !important;
+        background-color: #f8fafc !important;
+        /* Light background for semantic separation */
+        padding: 1rem !important;
+        border-radius: 0.5rem !important;
+    }
+
+    /* Ensure background graphics are printed if necessary (though browsers limit this) */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Hide scrollbars */
+    ::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    /* Set Margins for the page */
+    @page {
+        margin: 2cm;
+    }
+}
