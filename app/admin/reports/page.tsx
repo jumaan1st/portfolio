@@ -10,7 +10,6 @@ interface AuditLog {
     id: string;
     request_id: string;
     created_at: string;
-    request_timestamp: string;
     session_id: string; // ip
     http_method: string;
     request_uri: string;

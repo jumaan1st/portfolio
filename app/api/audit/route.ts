@@ -54,10 +54,9 @@ export async function POST(req: Request) {
                     user_name,
                     user_email,
                     user_phone,
-                    request_timestamp,
                     created_at
                 ) VALUES (
-                    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, NOW(), NOW()
+                    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, NOW()
                 )
             `;
 
