@@ -1,101 +1,101 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
-import nodemailer from 'nodemailer';
-import { jsPDF } from 'jspdf';
+import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-
-// Extend jsPDF type to include autoTable (typings fix)
-interface jsPDFWithAutoTable extends jsPDF {
-    lastAutoTable: { finalY: number };
-}
+import nodemailer from 'nodemailer';
 
 export async function POST(req: Request) {
     try {
         const { filters } = await req.json();
-        const { startDate, endDate, ip, type } = filters || {};
 
-        // 1. Fetch Data (Reusing specific logic or simple query)
-        let whereClause = 'WHERE 1=1';
+        // Build Query logic for Sessions
         const values: any[] = [];
-        let paramIndex = 1;
+        const conditions: string[] = [];
 
-        if (startDate) {
-            whereClause += ` AND created_at >= $${paramIndex}`;
-            values.push(startDate);
-            paramIndex++;
+        if (filters?.ip) {
+            conditions.push(`ip_address ILIKE $${values.length + 1}`);
+            values.push(`%${filters.ip}%`);
         }
-        if (endDate) {
-            whereClause += ` AND created_at <= $${paramIndex}::date + interval '1 day'`;
-            values.push(endDate);
-            paramIndex++;
+        if (filters?.startDate) {
+            conditions.push(`started_at >= $${values.length + 1}`);
+            values.push(filters.startDate);
         }
-        if (ip) {
-            whereClause += ` AND session_id LIKE $${paramIndex}`;
-            values.push(`%${ip}%`);
-            paramIndex++;
+        if (filters?.endDate) {
+            conditions.push(`started_at <= $${values.length + 1}`);
+            values.push(filters.endDate);
         }
-        if (type) {
-            if (type === 'home') whereClause += ` AND request_uri = '/'`;
-            else if (type === 'blog') whereClause += ` AND request_uri LIKE '/blogs/%'`;
-            else if (type === 'project') whereClause += ` AND request_uri LIKE '/projects/%'`;
-        }
+
+        const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
         const query = `
             SELECT 
-                created_at,
-                session_id as ip_address,
-                country_name,
-                city_name,
-                request_uri,
-                device_type,
-                user_name,
-                user_email
-            FROM request_audit.request_context_log
+                session_id,
+                ip_address,
+                user_identity,
+                geo_info,
+                started_at,
+                last_active_at,
+                visit_history
+            FROM request_audit.sessions
             ${whereClause}
-            ORDER BY created_at DESC
-            LIMIT 1000 -- Limit report size for email safety
+            ORDER BY started_at DESC
+            LIMIT 500
         `;
 
         const res = await pool.query(query, values);
         const logs = res.rows;
 
         if (logs.length === 0) {
-            return NextResponse.json({ success: false, message: 'No logs found for filters' });
+            return NextResponse.json({ success: false, message: 'No logs match criteria' });
         }
 
-        // 2. Generate PDF
-        const doc = new jsPDF() as unknown as jsPDFWithAutoTable;
+        // Generate PDF
+        const doc = new jsPDF();
 
         doc.setFontSize(18);
-        doc.text("Audit Log Report", 14, 22);
+        doc.text("Audit Report - Session Streams", 14, 20);
 
-        doc.setFontSize(11);
-        doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 30);
-        if (startDate || endDate) doc.text(`Range: ${startDate || 'Start'} to ${endDate || 'Now'}`, 14, 36);
-        if (ip) doc.text(`Filter IP: ${ip}`, 14, 42);
+        doc.setFontSize(10);
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 28);
+        if (filters) {
+            doc.text(`Filters: ${JSON.stringify(filters)}`, 14, 34);
+        }
 
-        const tableBody = logs.map(log => [
-            new Date(log.created_at).toLocaleString(),
-            log.ip_address || '-',
-            `${log.city_name || '-'}, ${log.country_name || '-'}`,
-            log.device_type || '-',
-            log.user_name ? `${log.user_name} (${log.user_email || ''})` : '-',
-            log.request_uri
-        ]);
+        const tableData = logs.map(log => {
+            const userIdentity = log.user_identity || {};
+            const userStr = userIdentity.name ? `${userIdentity.name}\n${userIdentity.email || ''}` : 'Guest';
 
-        autoTable(doc, {
-            head: [['Time', 'IP', 'Location', 'Device', 'User', 'Path']],
-            body: tableBody,
-            startY: 50,
-            styles: { fontSize: 8 },
-            headStyles: { fillColor: [22, 160, 133] },
+            const geo = log.geo_info || {};
+            const locStr = `${geo.city || '-'}, ${geo.country || '-'}`;
+
+            const pages = (log.visit_history || []).length;
+            const duration = Math.round((new Date(log.last_active_at).getTime() - new Date(log.started_at).getTime()) / 60000) + ' min';
+
+            return [
+                new Date(log.started_at).toLocaleString(),
+                userStr,
+                log.ip_address,
+                locStr,
+                `${pages} Pages`,
+                duration
+            ];
         });
 
-        // Convert to Buffer
-        const pdfOutput = doc.output('arraybuffer');
-        const pdfBuffer = Buffer.from(pdfOutput);
+        autoTable(doc, {
+            startY: 40,
+            head: [['Started', 'User', 'IP', 'Location', 'Activity', 'Duration']],
+            body: tableData,
+            styles: { fontSize: 8 },
+            columnStyles: {
+                0: { cellWidth: 35 },
+                1: { cellWidth: 40 },
+                2: { cellWidth: 25 },
+            }
+        });
 
-        // 3. Email
+        const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+
+        // Send Email
         const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
@@ -104,35 +104,22 @@ export async function POST(req: Request) {
             },
         });
 
-        const mailOptions = {
+        await transporter.sendMail({
             from: process.env.EMAIL_USER,
-            to: process.env.EMAIL_USER, // Send to Admin (Self)
-            subject: `Audit Log Report - ${new Date().toLocaleDateString()}`,
-            html: `
-                <h3>Audit Log Report</h3>
-                <p>Attached is the requested audit log report.</p>
-                <p><strong>Filters:</strong><br>
-                Date: ${startDate || 'Any'} - ${endDate || 'Any'}<br>
-                Type: ${type || 'All'}<br>
-                IP: ${ip || 'All'}
-                </p>
-                <p><strong>Total Records:</strong> ${logs.length}</p>
-            `,
+            to: process.env.EMAIL_USER, // Send to self/admin
+            subject: `Portfolio Audit Report (${logs.length} sessions)`,
+            text: `Please find attached the audit report for ${logs.length} sessions matching your filters.`,
             attachments: [
                 {
-                    filename: `audit_report_${Date.now()}.pdf`,
+                    filename: `audit-report-${Date.now()}.pdf`,
                     content: pdfBuffer,
-                    contentType: 'application/pdf'
-                }
-            ]
-        };
+                },
+            ],
+        });
 
-        await transporter.sendMail(mailOptions);
-
-        return NextResponse.json({ success: true, count: logs.length });
-
+        return NextResponse.json({ success: true });
     } catch (error) {
-        console.error("Report Gen Error:", error);
+        console.error('Report Error:', error);
         return NextResponse.json({ success: false, error: 'Failed to generate report' }, { status: 500 });
     }
 }

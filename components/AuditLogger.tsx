@@ -2,99 +2,127 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
+import { v4 as uuidv4 } from "uuid";
 
-export function AuditLogger() {
+const BATCH_INTERVAL = 5000; // 5 seconds
+const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+
+interface LogEvent {
+    path: string;
+    timestamp: string;
+}
+
+export default function AuditLogger() {
     const pathname = usePathname();
-    const lastLoggedPath = useRef<string | null>(null);
+    // Removed useSearchParams to avoid Static Generation de-opt/Suspense requirements
 
-    useEffect(() => {
-        if (!pathname) return;
-        if (pathname.startsWith("/api") || pathname.startsWith("/_next") || pathname.startsWith("/admin")) return;
-        if (pathname === lastLoggedPath.current) return;
+    const queueRef = useRef<LogEvent[]>([]);
+    const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-        const logVisit = (type: string, resourceId: string | null = null) => {
-            // Get User Identity from LocalStorage
-            let identity = { name: null, email: null, phone: null };
-            try {
-                const stored = localStorage.getItem("portfolio_user_identity");
-                if (stored) {
-                    const parsed = JSON.parse(stored);
-                    identity.name = parsed.name || null;
-                    identity.email = parsed.email || null;
-                    // Check if phone is stored separately or in object
-                    // Layout.tsx only stores {name, email}, but let's try to be safe
-                    // If phone isn't there, it remains null.
-                    // We could check if there's a specific key for phone? 
-                    // Looking at Layout.tsx, it sets: localStorage.setItem("portfolio_user_identity", JSON.stringify({ name: reviewForm.name, email: reviewForm.email }));
-                    // It does NOT store phone. 
-                    // However, the USER asked to store phone if available. 
-                    // I will assume if I update Layout.tsx later to store phone, it would be here.
-                    // For now, I'll attempt to read it from identity object if present.
-                    // @ts-ignore
-                    identity.phone = parsed.phone || null;
-                }
-            } catch (e) {
-                // ignore
+    // Helper: Get or Create Session ID
+    const getSessionId = () => {
+        if (typeof window === "undefined") return null;
+
+        let sessionId = localStorage.getItem("portfolio_session_id");
+        const lastActive = parseInt(localStorage.getItem("portfolio_last_active") || "0");
+        const now = Date.now();
+
+        // Expire session if inactive for too long
+        if (!sessionId || (now - lastActive > SESSION_TIMEOUT)) {
+            sessionId = uuidv4();
+            localStorage.setItem("portfolio_session_id", sessionId);
+        }
+
+        localStorage.setItem("portfolio_last_active", now.toString());
+        return sessionId;
+    };
+
+    // Helper: Send Batch
+    const flushQueue = async () => {
+        if (queueRef.current.length === 0) return;
+
+        const eventsToSend = [...queueRef.current];
+        queueRef.current = []; // Clear queue locally immediately
+
+        const sessionId = getSessionId();
+        const identityString = localStorage.getItem("portfolio_user_identity");
+        const identity = identityString ? JSON.parse(identityString) : {};
+
+        const payload = {
+            sessionId,
+            events: eventsToSend,
+            identity,
+            deviceInfo: {
+                userAgent: navigator.userAgent,
+                screen: `${window.screen.width}x${window.screen.height}`,
+                language: navigator.language
             }
-
-            fetch("/api/audit", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    path: pathname,
-                    type,
-                    resourceId,
-                    browser: {
-                        userAgent: navigator.userAgent,
-                        width: window.innerWidth,
-                        height: window.innerHeight,
-                        language: navigator.language,
-                        // @ts-ignore
-                        connectionType: navigator.connection?.effectiveType || null,
-                    },
-                    referrer: document.referrer || null,
-                    userName: identity.name,
-                    userEmail: identity.email,
-                    userPhone: identity.phone
-                }),
-            }).catch((err) => console.error("Audit log failed", err));
         };
 
-        // 1. Global "Website Visit" (Once per session)
-        const hasVisitedWebsite = sessionStorage.getItem("audit_seen_website_visit");
-        if (!hasVisitedWebsite) {
-            logVisit("website_visit");
-            sessionStorage.setItem("audit_seen_website_visit", "true");
+        try {
+            // Use keepalive for reliability
+            await fetch("/api/audit/session", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+                keepalive: true
+            });
+        } catch (e) {
+            console.error("Audit flush failed", e);
+        }
+    };
+
+    const lastVisitedPath = useRef<string | null>(null);
+
+    // 1. Track Path Changes
+    useEffect(() => {
+        // Use window.location.search to get query params without using the hook
+        // This avoids Next.js de-opting static pages to client-side rendering or requiring Suspense
+        const search = window.location.search;
+        const fullPath = pathname + (search ? search : "");
+
+        // Deduplicate: Don't log if it's the exact same path as the last one we saw in this session context
+        if (lastVisitedPath.current === fullPath) {
+            return;
         }
 
-        // 2. Resource Specific Logging (Once per resource per session)
-        if (pathname.startsWith("/blogs/")) {
-            const parts = pathname.split("/");
-            if (parts.length > 2) {
-                const blogSlug = parts[2];
-                const key = `audit_seen_blog_${blogSlug}`;
-                if (!sessionStorage.getItem(key)) {
-                    logVisit("blog", blogSlug);
-                    sessionStorage.setItem(key, "true");
-                }
-            }
-        } else if (pathname.startsWith("/projects/")) {
-            const parts = pathname.split("/");
-            if (parts.length > 2) {
-                const projectId = parts[2];
-                const key = `audit_seen_project_${projectId}`;
-                // filter out 'new' or non-id routes if necessary, but /projects/new is admin only usually?
-                // If it is 'new', we probably skip or log as page?
-                // But user said "Projects they visit".
-                if (projectId !== 'new' && !sessionStorage.getItem(key)) {
-                    logVisit("project", projectId);
-                    sessionStorage.setItem(key, "true");
-                }
-            }
+        lastVisitedPath.current = fullPath;
+
+        // Add to queue
+        queueRef.current.push({
+            path: fullPath,
+            timestamp: new Date().toISOString()
+        });
+
+        // Update last active
+        if (typeof window !== "undefined") {
+            localStorage.setItem("portfolio_last_active", Date.now().toString());
         }
 
-        lastLoggedPath.current = pathname;
     }, [pathname]);
+
+    // 2. Setup Flush Timer & Unload Listeners
+    useEffect(() => {
+        // flush every interval
+        timerRef.current = setInterval(flushQueue, BATCH_INTERVAL);
+
+        // flush on visibility hidden (switching tabs/minimizing)
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'hidden') {
+                flushQueue();
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('beforeunload', flushQueue);
+
+        return () => {
+            if (timerRef.current) clearInterval(timerRef.current);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('beforeunload', flushQueue);
+            flushQueue(); // Final flush on unmount
+        };
+    }, []);
 
     return null;
 }

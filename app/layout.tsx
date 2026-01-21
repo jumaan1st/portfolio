@@ -1,7 +1,7 @@
 "use client";
 
 import "./globals.css";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { PortfolioProvider, usePortfolio } from "@/components/PortfolioContext";
 import { Navbar } from "@/components/Navbar";
 import { AIChatWidget } from "@/components/AIChatWidget";
@@ -10,7 +10,7 @@ import { Terminal, Star } from "lucide-react";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { usePathname } from "next/navigation";
 import { ToastProvider } from "@/components/ui/Toast";
-import { AuditLogger } from "@/components/AuditLogger";
+import AuditLogger from "@/components/AuditLogger";
 
 function Shell({ children }: { children: React.ReactNode }) {
     const { data, isLoading } = usePortfolio();
@@ -271,7 +271,9 @@ export default function RootLayout({
                     <PortfolioProvider>
                         <ToastProvider>
                             <Shell>
-                                <AuditLogger />
+                                <Suspense fallback={null}>
+                                    <AuditLogger />
+                                </Suspense>
                                 {children}
                             </Shell>
                         </ToastProvider>
