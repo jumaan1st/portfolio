@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Edit3, Home, Layout, Mail, User, Lock, Sun, Moon, Github, Linkedin, BookOpen } from "lucide-react";
+import { Edit3, Home, Layout, Mail, User, Lock, Sun, Moon, Github, Linkedin, BookOpen, FileText } from "lucide-react";
 import { usePortfolio } from "./PortfolioContext";
 import { useTheme } from "next-themes";
 
@@ -107,8 +107,8 @@ export const Navbar: React.FC = () => {
                             <button
                                 onClick={toggleTheme}
                                 className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${showThemeTutorial
-                                        ? "bg-blue-100 text-blue-600 ring-2 ring-blue-500 ring-offset-2 animate-pulse dark:ring-offset-slate-900"
-                                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800"
+                                    ? "bg-blue-100 text-blue-600 ring-2 ring-blue-500 ring-offset-2 animate-pulse dark:ring-offset-slate-900"
+                                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800"
                                     }`}
                             >
                                 {mounted && (theme === "dark" ? <Sun size={18} /> : <Moon size={18} />)}
@@ -130,6 +130,17 @@ export const Navbar: React.FC = () => {
                                 {isAuthenticated ? "Dashboard" : "Admin"}
                             </span>
                         </Link>
+
+                        {isAuthenticated && (
+                            <Link
+                                href="/admin/reports"
+                                className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800"
+                                title="View Audit Reports"
+                            >
+                                <FileText size={18} />
+                                <span className="hidden md:block font-medium">Reports</span>
+                            </Link>
+                        )}
                     </div>
                 </div>
 
@@ -148,8 +159,8 @@ export const Navbar: React.FC = () => {
                                 <button
                                     onClick={toggleTheme}
                                     className={`p-2 rounded-lg ${showThemeTutorial
-                                            ? "bg-blue-100 text-blue-600 ring-2 ring-blue-500 ring-offset-2 animate-pulse"
-                                            : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                                        ? "bg-blue-100 text-blue-600 ring-2 ring-blue-500 ring-offset-2 animate-pulse"
+                                        : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
                                         }`}
                                 >
                                     {mounted && (theme === "dark" ? <Sun size={18} /> : <Moon size={18} />)}
@@ -201,6 +212,17 @@ export const Navbar: React.FC = () => {
                                 <Edit3 size={20} />
                                 <span className="font-medium">{isAuthenticated ? "Dashboard" : "Admin"}</span>
                             </Link>
+
+                            {isAuthenticated && (
+                                <Link
+                                    href="/admin/reports"
+                                    onClick={() => setIsMenuOpen(false)}
+                                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800 active:scale-95 transition-all"
+                                >
+                                    <FileText size={20} />
+                                    <span className="font-medium">Reports</span>
+                                </Link>
+                            )}
 
                             <div className="h-px bg-slate-200 dark:bg-slate-700 mx-4 my-1" />
 

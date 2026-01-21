@@ -10,6 +10,7 @@ import { Terminal, Star } from "lucide-react";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { usePathname } from "next/navigation";
 import { ToastProvider } from "@/components/ui/Toast";
+import { AuditLogger } from "@/components/AuditLogger";
 
 function Shell({ children }: { children: React.ReactNode }) {
     const { data, isLoading } = usePortfolio();
@@ -269,7 +270,10 @@ export default function RootLayout({
                 <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
                     <PortfolioProvider>
                         <ToastProvider>
-                            <Shell>{children}</Shell>
+                            <Shell>
+                                <AuditLogger />
+                                {children}
+                            </Shell>
                         </ToastProvider>
                     </PortfolioProvider>
                 </ThemeProvider>
