@@ -14,16 +14,26 @@ export function ProjectClientRoute() {
     const [loading, setLoading] = React.useState(!project);
 
     React.useEffect(() => {
-        if (project) return;
+        // If we have the project but are missing details (like longDescription), we MUST fetch.
+        // If we don't have the project at all, we MUST fetch.
+        const needsFetch = !project || (!project.longDescription && !project.features);
+
+        if (!needsFetch) {
+            setLoading(false);
+            return;
+        }
 
         async function fetchProject() {
+            setLoading(true);
             try {
                 const res = await fetch(`/api/projects?id=${id}`);
                 if (res.ok) {
                     const p = await res.json();
                     setProject(p);
                 } else {
-                    setProject(undefined);
+                    // If fetch fails but we had partial data, maybe keep it? 
+                    // Or set undefined if we really need full data.
+                    if (!project) setProject(undefined);
                 }
             } catch (e) {
                 console.error("Failed to fetch project", e);
@@ -32,7 +42,7 @@ export function ProjectClientRoute() {
             }
         }
         fetchProject();
-    }, [id, project]);
+    }, [id]); // Removed 'project' from dependency array to prevent loops, relying on explicit checks
 
     if (loading) return <div className="p-12 text-center text-slate-500">Loading project details...</div>;
 

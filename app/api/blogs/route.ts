@@ -9,26 +9,17 @@ const mapRow = (row: any) => ({
   // Ensure we consistently provide readTime (camelCase)
 });
 
-export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
+import { unstable_cache, revalidateTag } from 'next/cache';
+
+const getCachedBlogs = unstable_cache(
+  async (params: any) => {
+    const { id, limit, offset, search, tag, summaryMode, includeHidden } = params;
 
     // Handle Single Fetch
     if (id) {
       const { rows } = await pool.query('SELECT * FROM portfolio.blogs WHERE id = $1', [id]);
-      if (rows.length === 0) return NextResponse.json({ error: 'Blog not found' }, { status: 404 });
-      return NextResponse.json(mapRow(rows[0]));
+      return rows.length > 0 ? mapRow(rows[0]) : null;
     }
-
-    const limit = parseInt(searchParams.get('limit') || '100');
-    const page = parseInt(searchParams.get('page') || '1');
-    const search = searchParams.get('search') || '';
-    const tag = searchParams.get('tag') || '';
-    const offset = (page - 1) * limit;
-
-    const includeHidden = searchParams.get('include_hidden') === 'true';
-    const summaryMode = searchParams.get('summary') === 'true';
 
     // If summary mode, select only necessary fields (exclude content strings to reduce payload)
     let query = summaryMode
@@ -40,37 +31,63 @@ export async function GET(request: Request) {
     if (!includeHidden) {
       query += ' AND is_hidden = FALSE';
     }
-    const params: any[] = [];
+    const queryParams: any[] = [];
 
     if (search) {
-      params.push(`%${search}%`);
-      query += ` AND (title ILIKE $${params.length} OR content ILIKE $${params.length})`;
+      queryParams.push(`%${search}%`);
+      query += ` AND (title ILIKE $${queryParams.length} OR content ILIKE $${queryParams.length})`;
     }
 
     if (tag) {
-      params.push(`%${tag}%`);
-      query += ` AND tags::text ILIKE $${params.length}`; // Simple text check for JSON array
+      queryParams.push(`%${tag}%`);
+      query += ` AND tags::text ILIKE $${queryParams.length}`; // Simple text check for JSON array
     }
 
     // Count Total
-    const countRes = await pool.query(`SELECT COUNT(*) FROM (${query}) as sub`, params);
+    const countRes = await pool.query(`SELECT COUNT(*) FROM (${query}) as sub`, queryParams);
     const total = parseInt(countRes.rows[0].count);
 
     // Fetch Data
-    query += ` ORDER BY sort_order DESC, id DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-    params.push(limit, offset);
+    query += ` ORDER BY sort_order DESC, id DESC LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`;
+    queryParams.push(limit, offset);
 
-    const { rows } = await pool.query(query, params);
+    const { rows } = await pool.query(query, queryParams);
 
-    return NextResponse.json({
+    return {
       data: rows.map(mapRow),
       meta: {
         total,
-        page,
+        page: Math.floor(offset / limit) + 1,
         limit,
         totalPages: Math.ceil(total / limit)
       }
-    });
+    };
+  },
+  ['blogs-list'],
+  { tags: ['blogs'], revalidate: 3600 }
+);
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    const limit = parseInt(searchParams.get('limit') || '100');
+    const page = parseInt(searchParams.get('page') || '1');
+    const search = searchParams.get('search') || '';
+    const tag = searchParams.get('tag') || '';
+    const offset = (page - 1) * limit;
+
+    const includeHidden = searchParams.get('include_hidden') === 'true';
+    const summaryMode = searchParams.get('summary') === 'true';
+
+    const result = await getCachedBlogs({ id, limit, offset, search, tag, summaryMode, includeHidden });
+
+    if (id && !result) {
+      return NextResponse.json({ error: 'Blog not found' }, { status: 404 });
+    }
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error('Error fetching blogs:', error);
     return NextResponse.json({ error: 'Failed' }, { status: 500 });
@@ -97,6 +114,8 @@ export async function POST(request: Request) {
   } catch (error: any) {
     if (error.code === '42501') return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
     return NextResponse.json({ error: 'Failed: ' + error.message }, { status: 500 });
+  } finally {
+    revalidateTag('blogs', { expire: 0 });
   }
 }
 
@@ -124,6 +143,8 @@ export async function PUT(request: Request) {
   } catch (error: any) {
     if (error.code === '42501') return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
     return NextResponse.json({ error: 'Failed' }, { status: 500 });
+  } finally {
+    revalidateTag('blogs', { expire: 0 });
   }
 }
 
@@ -136,5 +157,7 @@ export async function DELETE(request: Request) {
   } catch (error: any) {
     if (error.code === '42501') return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
     return NextResponse.json({ error: 'Failed' }, { status: 500 });
+  } finally {
+    revalidateTag('blogs', { expire: 0 });
   }
 }

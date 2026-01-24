@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
     ArrowRight,
     Coffee,
@@ -13,6 +14,7 @@ import {
     ChevronLeft,
     ChevronRight,
     Download,
+    Github,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
@@ -210,12 +212,38 @@ export const HomePage: React.FC = () => {
                                         </span>
                                     ))}
                                 </div>
-                                <button
-                                    onClick={() => router.push(`/projects/${project.id}`)}
-                                    className="self-start flex items-center gap-2 text-slate-900 dark:text-white font-bold border-b-2 border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors pb-1"
-                                >
-                                    View Case Study <ExternalLink size={16} />
-                                </button>
+                                <div className="flex items-center gap-4 mt-6">
+                                    <Link
+                                        href={`/projects/${project.id}`}
+                                        className="flex items-center gap-2 text-slate-900 dark:text-white font-bold border-b-2 border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors pb-1"
+                                    >
+                                        View Case Study <ArrowRight size={16} />
+                                    </Link>
+
+                                    {project.link && (
+                                        <a
+                                            href={project.link}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-slate-400 hover:text-blue-500 transition-colors"
+                                            title="Live Demo"
+                                        >
+                                            <ExternalLink size={20} />
+                                        </a>
+                                    )}
+
+                                    {project.githubLink && (
+                                        <a
+                                            href={project.githubLink}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                                            title="View Source Code"
+                                        >
+                                            <Github size={20} />
+                                        </a>
+                                    )}
+                                </div>
                             </div>
 
                             <div

@@ -1,6 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
+import { revalidateTag } from 'next/cache';
 
 export async function GET() {
     try {
@@ -22,6 +23,8 @@ export async function POST(request: Request) {
     } catch (error: any) {
         if (error.code === '42501') return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
         return NextResponse.json({ error: 'Failed' }, { status: 500 });
+    } finally {
+        revalidateTag('certifications', { expire: 0 });
     }
 }
 
@@ -39,6 +42,8 @@ export async function PUT(request: Request) {
     } catch (error: any) {
         if (error.code === '42501') return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
         return NextResponse.json({ error: 'Failed' }, { status: 500 });
+    } finally {
+        revalidateTag('certifications', { expire: 0 });
     }
 }
 
@@ -51,5 +56,7 @@ export async function DELETE(request: Request) {
     } catch (error: any) {
         if (error.code === '42501') return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
         return NextResponse.json({ error: 'Failed' }, { status: 500 });
+    } finally {
+        revalidateTag('certifications', { expire: 0 });
     }
 }

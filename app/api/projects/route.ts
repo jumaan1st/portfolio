@@ -4,10 +4,11 @@ import pool from '@/lib/db';
 import { revalidateTag } from 'next/cache';
 
 
-export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
+import { unstable_cache } from 'next/cache';
+
+const getCachedProjects = unstable_cache(
+  async (params: any) => {
+    const { id, limit, offset, search, category, summaryMode } = params;
 
     // Handle Single Fetch
     if (id) {
@@ -19,17 +20,8 @@ export async function GET(request: Request) {
             FROM portfolio.projects
             WHERE id = $1
         `, [id]);
-
-      if (rows.length === 0) return NextResponse.json({ error: 'Project not found' }, { status: 404 });
-      return NextResponse.json(rows[0]);
+      return rows.length > 0 ? rows[0] : null;
     }
-
-    const limit = parseInt(searchParams.get('limit') || '100');
-    const page = parseInt(searchParams.get('page') || '1');
-    const search = searchParams.get('search') || '';
-    const category = searchParams.get('category') || '';
-    const summaryMode = searchParams.get('summary') === 'true';
-    const offset = (page - 1) * limit;
 
     let query = summaryMode
       ? `
@@ -48,27 +40,27 @@ export async function GET(request: Request) {
         WHERE 1=1
       `;
 
-    const params: any[] = [];
+    const queryParams: any[] = [];
 
     if (search) {
-      params.push(`%${search}%`);
-      query += ` AND (title ILIKE $${params.length} OR description ILIKE $${params.length})`;
+      queryParams.push(`%${search}%`);
+      query += ` AND (title ILIKE $${queryParams.length} OR description ILIKE $${queryParams.length})`;
     }
 
     if (category) {
-      params.push(category);
-      query += ` AND category = $${params.length}`;
+      queryParams.push(category);
+      query += ` AND category = $${queryParams.length}`;
     }
 
-    const countRes = await pool.query(`SELECT COUNT(*) FROM (${query}) as sub`, params);
+    const countRes = await pool.query(`SELECT COUNT(*) FROM (${query}) as sub`, queryParams);
     const total = parseInt(countRes.rows[0].count);
 
-    query += ` ORDER BY sort_order DESC, id DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-    params.push(limit, offset);
+    query += ` ORDER BY sort_order DESC, id DESC LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`;
+    queryParams.push(limit, offset);
 
-    const { rows } = await pool.query(query, params);
+    const { rows } = await pool.query(query, queryParams);
 
-    return NextResponse.json({
+    return {
       data: rows,
       meta: {
         total,
@@ -76,7 +68,31 @@ export async function GET(request: Request) {
         limit,
         totalPages: Math.ceil(total / limit)
       }
-    });
+    };
+  },
+  ['projects-list'],
+  { tags: ['projects'], revalidate: 3600 }
+);
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    const limit = parseInt(searchParams.get('limit') || '100');
+    const page = parseInt(searchParams.get('page') || '1');
+    const search = searchParams.get('search') || '';
+    const category = searchParams.get('category') || '';
+    const summaryMode = searchParams.get('summary') === 'true';
+    const offset = (page - 1) * limit;
+
+    const result = await getCachedProjects({ id, limit, offset, search, category, summaryMode });
+
+    if (id && !result) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    return NextResponse.json(result);
 
   } catch (error) {
     console.error('Error fetching projects:', error);
