@@ -6,6 +6,7 @@ import {
     LayoutDashboard, User, FolderOpen, PenTool, BookOpen, Briefcase, GraduationCap,
     LogOut, Menu, ChevronRight, Search, Upload, ExternalLink, RefreshCw, CheckCircle, Award
 } from "lucide-react";
+import Link from "next/link";
 import { usePortfolio } from "@/components/PortfolioContext";
 import { Project } from "@/data/portfolioData";
 import { useToast } from "@/components/ui/Toast";
@@ -100,7 +101,7 @@ const AdminContent: React.FC = () => {
                 setIsLoadingData(true);
                 lastFetchedPage.current = currentPage;
                 // Fetch Admin Data (skip projects as they are managed in /projects now)
-                await fetchAdminData(true, false, currentPage, projectsPerPage);
+                await fetchAdminData();
                 setIsLoadingData(false);
             };
             load();
@@ -383,16 +384,16 @@ const AdminContent: React.FC = () => {
 
                 <div className="p-4 space-y-2 overflow-y-auto h-[calc(100vh-140px)]">
                     <SidebarItem icon={User} label="Profile" active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
-                    <a href="/projects" className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <Link href="/projects" className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
                         <FolderOpen size={20} />
                         <span>Manage Projects</span>
                         <ExternalLink size={16} className="ml-auto opacity-50" />
-                    </a>
-                    <a href="/blogs" className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                    </Link>
+                    <Link href="/blogs" className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
                         <BookOpen size={20} />
                         <span>Manage Blogs</span>
                         <ExternalLink size={16} className="ml-auto opacity-50" />
-                    </a>
+                    </Link>
                     <SidebarItem icon={PenTool} label="Skills" active={activeTab === 'skills'} onClick={() => setActiveTab('skills')} />
                     <SidebarItem icon={Award} label="Certifications" active={activeTab === 'certifications'} onClick={() => setActiveTab('certifications')} />
                     <SidebarItem icon={Briefcase} label="Experience" active={activeTab === 'experience'} onClick={() => setActiveTab('experience')} />

@@ -33,7 +33,7 @@ export const ProjectsPage: React.FC = () => {
         try {
             const query = new URLSearchParams({
                 page: p.toString(),
-                limit: "9",
+                limit: "24",
                 search: s,
                 category: c,
                 summary: "true"

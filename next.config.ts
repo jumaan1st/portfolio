@@ -8,12 +8,30 @@ const nextConfig: NextConfig = {
         source: "/api/:path*",
         headers: [
           { key: "Access-Control-Allow-Credentials", value: "true" },
-          { key: "Access-Control-Allow-Origin", value: "*" }, // replace this your actual origin
+          { key: "Access-Control-Allow-Origin", value: "*" }, // replace this with your actual origin
           { key: "Access-Control-Allow-Methods", value: "GET,OPTIONS" },
           { key: "Access-Control-Allow-Headers", value: "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version" },
         ]
       }
     ]
+  },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
+  },
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'date-fns'],
+  },
+  webpack: (config) => {
+    config.resolve.alias.canvas = false;
+    return config;
+  },
+  turbopack: {
+    // Empty config to support Turbopack while keeping webpack custom logic potential
   }
 };
 

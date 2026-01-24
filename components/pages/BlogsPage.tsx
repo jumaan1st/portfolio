@@ -59,7 +59,7 @@ export const BlogsPage: React.FC = () => {
         try {
             const query = new URLSearchParams({
                 page: p.toString(),
-                limit: "9",
+                limit: "24",
                 search: s,
                 tag: t,
                 summary: "true"

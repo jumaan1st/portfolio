@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import {
     ArrowRight,
     Coffee,
@@ -46,37 +47,14 @@ const ProfileAvatar = ({ photoLight, photoDark, name, theme }: { photoLight?: st
 };
 
 export const HomePage: React.FC = () => {
-    const { data: globalData, isAuthenticated, updateProfile } = usePortfolio();
+    const { data: globalData, isAuthenticated, updateProfile, isLoading } = usePortfolio(); // Use global loading state
     const { theme } = useTheme();
     const [currentProjectIndex, setCurrentProjectIndex] = useState(0);
     const router = useRouter();
 
-    // Local state for optimized fetching
-    const [blogs, setBlogs] = useState<any[]>([]);
-    const [projects, setProjects] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchHomeData = async () => {
-            try {
-                const [blogsRes, projectsRes] = await Promise.all([
-                    fetch('/api/blogs?limit=3'),
-                    fetch('/api/projects?limit=5&summary=true') // Fetch a few for carousel, summary only
-                ]);
-
-                const blogsData = await blogsRes.json();
-                const projectsData = await projectsRes.json();
-
-                setBlogs(blogsData.data || []);
-                setProjects(projectsData.data || []);
-            } catch (e) {
-                console.error("Home data load failed", e);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchHomeData();
-    }, []);
+    // Use global data populated by bootstrap
+    const projects = globalData.projects || [];
+    const blogs = globalData.blogs || [];
 
     const nextProject = () => {
         if (projects.length === 0) return;
@@ -248,12 +226,17 @@ export const HomePage: React.FC = () => {
                             >
                                 {project.image && project.image.startsWith("http") ? (
                                     <>
-                                        <img
-                                            src={project.image}
-                                            alt={project.title}
-                                            className="absolute inset-0 w-full h-full object-cover"
-                                        />
-                                        <div className="absolute inset-0 bg-black/20" />
+                                        <div className="absolute inset-0">
+                                            <Image
+                                                src={project.image}
+                                                alt={project.title}
+                                                fill
+                                                className="object-cover"
+                                                sizes="(max-width: 768px) 100vw, 50vw"
+                                                priority
+                                            />
+                                            <div className="absolute inset-0 bg-black/20" />
+                                        </div>
                                     </>
                                 ) : (
                                     <div className="text-white/20 transform scale-150 rotate-12">

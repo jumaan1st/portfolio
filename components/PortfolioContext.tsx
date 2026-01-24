@@ -40,7 +40,7 @@ type PortfolioContextType = {
     updateCertification: (id: number, c: any) => Promise<void>;
     deleteCertification: (id: number) => Promise<void>;
 
-    fetchAdminData: (skipEssentials?: boolean, includeProjects?: boolean, page?: number, limit?: number) => Promise<void>;
+    fetchAdminData: () => Promise<void>;
     refreshData: () => Promise<void>;
 };
 
@@ -63,128 +63,63 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
         }
     }
 
-    // Fetches ONLY essential data for public pages (faster load)
-    const fetchEssentials = React.useCallback(async () => {
+    // Unified Bootstrap Fetch
+    const fetchBootstrap = React.useCallback(async (mode: 'public' | 'admin' = 'public') => {
         try {
-            const [configRes, uiRes, profileRes, skillsRes, blogsRes, certRes] = await Promise.all([
-                fetch('/api/config'),
-                fetch('/api/ui-config'),
-                fetch('/api/profile'),
-                fetch('/api/skills'),
-                fetch('/api/blogs?limit=50&summary=true'), // Blogs are still global for now (HomePage etc)
-                fetch('/api/certifications')
-            ]);
+            const res = await fetch(`/api/bootstrap?mode=${mode}`);
+            if (!res.ok) throw new Error("Bootstrap failed");
 
-            const config = await parseOrNull(configRes, initialEmptyData.config);
-            const ui = await parseOrNull(uiRes, initialEmptyData.ui);
-            const profileData = await parseOrNull(profileRes, initialEmptyData.profile);
-            const profile = { ...profileData, currentlyLearning: Array.isArray(profileData.currentlyLearning) ? profileData.currentlyLearning : [] };
-            const skillsData = await parseOrNull(skillsRes, []);
-            const skills = Array.isArray(skillsData) ? skillsData : [];
-            const certData = await parseOrNull(certRes, []);
-            const certifications = Array.isArray(certData) ? certData : [];
+            const bootstrapData = await res.json();
 
-            const blogsJson = await parseOrNull(blogsRes, { data: [] });
-            const blogs = Array.isArray(blogsJson) ? blogsJson : (blogsJson.data || []);
+            // Transform/Validate if necessary (Bootstrap API already does most heavy lifting)
+            const config = bootstrapData.config || initialEmptyData.config;
+            const ui = bootstrapData.ui || initialEmptyData.ui;
+            const profile = bootstrapData.profile || initialEmptyData.profile;
+            // Ensure array safety
+            profile.currentlyLearning = Array.isArray(profile.currentlyLearning) ? profile.currentlyLearning : [];
 
-            // Note: Projects are no longer fetched globally. Pages fetch them on demand.
-            setData(prev => ({ ...prev, config, ui, profile, skills, blogs, certifications }));
+            const skills = Array.isArray(bootstrapData.skills) ? bootstrapData.skills : [];
+            const certifications = Array.isArray(bootstrapData.certifications) ? bootstrapData.certifications : [];
+            const projects = Array.isArray(bootstrapData.projects) ? bootstrapData.projects : [];
+            const blogs = Array.isArray(bootstrapData.blogs) ? bootstrapData.blogs : [];
+
+            // Admin only data
+            const experience = Array.isArray(bootstrapData.experience) ? bootstrapData.experience : [];
+            const education = Array.isArray(bootstrapData.education) ? bootstrapData.education : [];
+
+            setData(prev => ({
+                ...prev,
+                config, ui, profile, skills, certifications,
+                projects, blogs, experience, education
+            }));
         } catch (e) {
-            console.error("Essential data fetch failed", e);
+            console.error("Bootstrap fetch failed", e);
         } finally {
             setIsLoading(false);
         }
     }, []);
 
-    // Fetches EVERYTHING (for Admin Dashboard) EXCEPT Blogs (handled separately/publicly)
-    const fetchAdminData = React.useCallback(async (skipEssentials = false, includeProjects = false, page = 1, limit = 10) => {
-        // Do not set global isLoading here, as it unmounts the entire app in layout.tsx!
-        // AdminPage handles its own loading state.
-        try {
-            const promises: Promise<Response>[] = [
-                // 0: experience
-                fetch('/api/experience'),
-                // 1: education
-                fetch('/api/education'),
-            ];
-
-            // If we want projects
-            if (includeProjects) {
-                promises.push(fetch(`/api/projects?limit=${limit}&page=${page}`)); // Index will be variable
-            }
-
-            // If NOT skipping essentials, fetch them too
-            if (!skipEssentials) {
-                promises.push(fetch('/api/config'));
-                promises.push(fetch('/api/ui-config'));
-                promises.push(fetch('/api/profile'));
-                promises.push(fetch('/api/skills'));
-                promises.push(fetch('/api/certifications'));
-            }
-
-            const results = await Promise.all(promises);
-
-            // Fixed indices are tricky now. Let's shift.
-            const expRes = results[0];
-            const eduRes = results[1];
-
-            let projJson: any = { data: [] };
-            let currentIdx = 2;
-
-            if (includeProjects) {
-                const projectRes = results[currentIdx];
-                projJson = await parseOrNull(projectRes, { data: [] });
-                if (projJson.meta) setProjectsMeta(projJson.meta);
-                currentIdx++;
-            }
-
-            const experience = await parseOrNull(expRes, []);
-            const education = await parseOrNull(eduRes, []);
-
-            let config: any, ui: any, profile: any, skills: any, certifications: any;
-
-            if (!skipEssentials) {
-                const configRes = results[currentIdx];
-                const uiRes = results[currentIdx + 1];
-                const profileRes = results[currentIdx + 2];
-                const skillsRes = results[currentIdx + 3];
-                const certRes = results[currentIdx + 4];
-
-                config = await parseOrNull(configRes, initialEmptyData.config);
-                ui = await parseOrNull(uiRes, initialEmptyData.ui);
-                const profileData = await parseOrNull(profileRes, initialEmptyData.profile);
-                profile = { ...profileData, currentlyLearning: Array.isArray(profileData.currentlyLearning) ? profileData.currentlyLearning : [] };
-                skills = await parseOrNull(skillsRes, []);
-                certifications = await parseOrNull(certRes, []);
-            }
-
-            // Update state
-            setData(prev => ({
-                ...prev,
-                experience, education,
-                ...(includeProjects ? { projects: Array.isArray(projJson) ? projJson : (projJson.data || []) } : {}),
-                ...(skipEssentials ? {} : { config, ui, profile, skills, certifications })
-            }));
-        } catch (e) { console.error(e); }
-    }, []);
-
-    // Alias for compatibility, but points to full fetch
     // Alias for compatibility
-    const refreshData = async () => {
-        await fetchAdminData();
-    };
+    const fetchAdminData = React.useCallback(async () => await fetchBootstrap('admin'), [fetchBootstrap]);
+    const refreshData = React.useCallback(async () => await fetchBootstrap('admin'), [fetchBootstrap]); // Refresh usually implies full reload
 
-    // Initial Load: Essentials Only + Auth Check
+    // Initial Load: Public Bootstrap + Auth Check
     useEffect(() => {
         const init = async () => {
-            await fetchEssentials();
+            // Start both in parallel to save time
+            const authPromise = fetch('/api/auth/check');
+            const dataPromise = fetchBootstrap('public');
+
+            await dataPromise;
             try {
-                const res = await fetch('/api/auth/check');
+                const res = await authPromise;
                 if (res.ok) setIsAuthenticated(true);
             } catch (e) { console.error("Auth check failed", e); }
         };
         init();
-    }, [fetchEssentials]);
+    }, [fetchBootstrap]);
+
+
 
     const updateProfile = async (newProfile: Partial<PortfolioData['profile']>) => {
         try {
@@ -365,7 +300,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
         deleteCertification,
         fetchAdminData,
         refreshData
-    }), [data, isAuthenticated, isLoading, fetchAdminData, fetchEssentials, refreshData]);
+    }), [data, isAuthenticated, isLoading, fetchAdminData, refreshData]);
 
     return (
         <PortfolioContext.Provider value={contextValue}>
