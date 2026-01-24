@@ -6,37 +6,19 @@ import { usePortfolio } from "@/components/PortfolioContext";
 import { IconRenderer } from "@/components/IconRenderer";
 import { formatDateRange, formatDate } from "@/lib/utils";
 
-export const AboutPage: React.FC = () => {
+interface AboutPageProps {
+    initialExperience?: any[];
+    initialEducation?: any[];
+}
+
+export const AboutPage: React.FC<AboutPageProps> = ({ initialExperience = [], initialEducation = [] }) => {
     const { data: globalData, isLoading: globalLoading } = usePortfolio();
-    const [experience, setExperience] = React.useState<any[]>([]);
-    const [education, setEducation] = React.useState<any[]>([]);
-    const [isLoading, setIsLoading] = React.useState(true);
+    // Use initial props directly, no need for state if we don't modify it clientside
+    const experience = initialExperience;
+    const education = initialEducation;
 
-    React.useEffect(() => {
-        const fetchAboutData = async () => {
-            try {
-                const [expRes, eduRes] = await Promise.all([
-                    fetch('/api/experience'),
-                    fetch('/api/education')
-                ]);
-
-                const expData = expRes.ok ? await expRes.json() : [];
-                const eduData = eduRes.ok ? await eduRes.json() : [];
-
-                setExperience(Array.isArray(expData) ? expData : []);
-                setEducation(Array.isArray(eduData) ? eduData : []);
-            } catch (e) {
-                console.error("Failed to fetch about data", e);
-                setExperience([]);
-                setEducation([]);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchAboutData();
-    }, []);
-
-    const showLoading = globalLoading || isLoading;
+    // We only wait for globalData (profile/skills), exp/edu are passed in
+    const showLoading = globalLoading;
 
     // Loading Skeleton Component
     const LoadingSkeleton = () => (
