@@ -59,10 +59,10 @@ export async function GET() {
         if (R2_ACCOUNT_ID) {
             try {
                 let isTruncated = true;
-                let continuationToken = undefined;
+                let continuationToken: string | undefined = undefined;
 
                 while (isTruncated) {
-                    const command = new ListObjectsV2Command({
+                    const command: ListObjectsV2Command = new ListObjectsV2Command({
                         Bucket: R2_BUCKET_NAME,
                         ContinuationToken: continuationToken,
                         MaxKeys: 1000
