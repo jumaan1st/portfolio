@@ -113,6 +113,18 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ blog, onSave, onCancel, 
                     finalBlog.image = extracted;
                 }
             }
+
+            // Check Payload Size (Approximate)
+            const payload = JSON.stringify(finalBlog);
+            // 4.5MB limit (safe buffer for 4.5MB serverless limit)
+            const sizeInBytes = new Blob([payload]).size;
+
+            if (sizeInBytes > 4.2 * 1024 * 1024) {
+                alert(`Blog post is too large (${(sizeInBytes / 1024 / 1024).toFixed(2)}MB)! Server limit is ~4.5MB.\n\nPlease check for large pasted images. Use the image upload feature instead.`);
+                setSaving(false);
+                return;
+            }
+
             await onSave(finalBlog as BlogPost);
         } catch (e) {
             console.error(e);
@@ -122,24 +134,59 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ blog, onSave, onCancel, 
         }
     };
 
+    const [blogSize, setBlogSize] = useState(0);
+
+    // Calculate Blog Size
+    React.useEffect(() => {
+        const payload = JSON.stringify(editingBlog);
+        const size = new Blob([payload]).size;
+        setBlogSize(size);
+    }, [editingBlog]);
+
+    // Format bytes to MB/KB
+    const formatSize = (bytes: number) => {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
+
+    const isSizeWarning = blogSize > 3.5 * 1024 * 1024; // > 3.5MB
+    const isSizeCritical = blogSize > 4.2 * 1024 * 1024; // > 4.2MB
+
     return (
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 sm:p-6 md:p-10 shadow-2xl animate-in fade-in zoom-in-95 duration-300">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                     {isCreating ? "New Article" : "Edit Article"}
                 </h2>
-                <div className="flex gap-2 w-full sm:w-auto">
-                    <button onClick={onCancel} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                        <X size={20} className="text-slate-500" />
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        disabled={saving}
-                        className="flex-1 sm:flex-none justify-center flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-all disabled:opacity-50"
-                    >
-                        <Save size={18} />
-                        {saving ? 'Saving...' : 'Save Changes'}
-                    </button>
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto items-end sm:items-center">
+
+                    {/* Size Indicator */}
+                    <div className={`text-xs font-mono px-3 py-1 rounded-full border ${isSizeCritical ? "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-900" :
+                            isSizeWarning ? "bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-900" :
+                                "bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
+                        }`}>
+                        {formatSize(blogSize)} / 4.5 MB
+                    </div>
+
+                    <div className="flex gap-2">
+                        <button onClick={onCancel} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                            <X size={20} className="text-slate-500" />
+                        </button>
+                        <button
+                            onClick={handleSave}
+                            disabled={saving || isSizeCritical}
+                            className={`flex-1 sm:flex-none justify-center flex items-center gap-2 px-6 py-2 rounded-lg font-bold transition-all disabled:opacity-50 ${isSizeCritical
+                                    ? "bg-red-600 text-white cursor-not-allowed"
+                                    : "bg-blue-600 hover:bg-blue-700 text-white"
+                                }`}
+                        >
+                            <Save size={18} />
+                            {saving ? 'Saving...' : 'Save Changes'}
+                        </button>
+                    </div>
                 </div>
             </div>
 
