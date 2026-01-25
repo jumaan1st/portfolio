@@ -19,6 +19,7 @@ import { useReactToPrint } from "react-to-print";
 import { ProjectLink } from "../ProjectLink";
 import { usePortfolio } from "../PortfolioContext";
 import { useCodeBlockEnhancer } from "@/hooks/useCodeBlockEnhancer";
+import { ImageLightbox } from "@/components/ui/ImageLightbox";
 
 interface Props {
     project: Project;
@@ -32,6 +33,7 @@ export const ProjectDetailPage: React.FC<Props> = ({ project: initialProject, on
     const [activeTab, setActiveTab] = useState<"overview" | "case-study" | "tech" | "outcome" | "ai">("overview");
     const [aiInsight, setAiInsight] = useState<string | null>(null);
     const [loadingAi, setLoadingAi] = useState(false);
+    const [lightboxOpen, setLightboxOpen] = useState(false);
     const router = useRouter();
     const contentRef = React.useRef<HTMLDivElement>(null);
     useCodeBlockEnhancer(contentRef, [project.longDescription, activeTab]);
@@ -170,7 +172,8 @@ export const ProjectDetailPage: React.FC<Props> = ({ project: initialProject, on
                         <img
                             src={project.image}
                             alt={project.title}
-                            className="absolute inset-0 w-full h-full object-cover"
+                            className="absolute inset-0 w-full h-full object-cover cursor-zoom-in hover:scale-105 transition-transform duration-700"
+                            onClick={() => setLightboxOpen(true)}
                         />
                     )}
                     <div className="absolute inset-0 bg-black/50" />
@@ -382,6 +385,15 @@ export const ProjectDetailPage: React.FC<Props> = ({ project: initialProject, on
                     </div>
                 </div>
             </div>
+            {/* Lightbox for Hero Image */}
+            {project.image && (
+                <ImageLightbox
+                    isOpen={lightboxOpen}
+                    close={() => setLightboxOpen(false)}
+                    src={project.image}
+                    alt={project.title}
+                />
+            )}
         </div>
     );
 };

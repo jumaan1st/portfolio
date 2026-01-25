@@ -1,0 +1,255 @@
+"use client";
+
+import React, { useEffect, useState, Suspense } from "react";
+import { PortfolioProvider, usePortfolio } from "@/components/PortfolioContext";
+import { Navbar } from "@/components/Navbar";
+import { AIChatWidget } from "@/components/AIChatWidget";
+import { Modal } from "@/components/Modal";
+import { Terminal, Star } from "lucide-react";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { usePathname } from "next/navigation";
+import { ToastProvider } from "@/components/ui/Toast";
+import AuditLogger from "@/components/AuditLogger";
+import { Analytics } from "@vercel/analytics/react";
+
+function Shell({ children }: { children: React.ReactNode }) {
+    const { data, isLoading } = usePortfolio();
+    const pathname = usePathname();
+    const [showWelcome, setShowWelcome] = useState(false);
+    const [showReview, setShowReview] = useState(false);
+
+    // Sync welcome modal when data is loaded
+    useEffect(() => {
+        // User requested to remove the welcome popup
+        // if (!isLoading && data.config.showWelcomeModal) {
+        //    setShowWelcome(true);
+        // }
+    }, [isLoading, data?.config?.showWelcomeModal]);
+
+    const [reviewForm, setReviewForm] = useState({
+        name: "",
+        email: "",
+        phone: "",
+        review: "",
+        rating: 5,
+    });
+    const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+    // Check if user is returning from a project
+    useEffect(() => {
+        const visitedProjectId = localStorage.getItem("visited_project_id");
+        if (visitedProjectId && !pathname.includes("/projects/")) {
+            setShowReview(true);
+            localStorage.removeItem("visited_project_id");
+        }
+    }, [pathname]);
+
+    // Auto-fill identity for review
+    useEffect(() => {
+        if (showReview) {
+            const stored = localStorage.getItem("portfolio_user_identity");
+            if (stored) {
+                try {
+                    const { name, email } = JSON.parse(stored);
+                    setReviewForm(prev => ({ ...prev, name: name || "", email: email || "" }));
+                } catch (e) {
+                    // ignore
+                }
+            }
+        }
+    }, [showReview]);
+
+    const renderStars = (rating: number) =>
+        [...Array(5)].map((_, i) => (
+            <Star
+                key={i}
+                size={24}
+                className={`${i < rating
+                    ? "fill-yellow-400 text-yellow-400"
+                    : "text-slate-600"
+                    } cursor-pointer transition-colors hover:scale-110`}
+                onClick={() =>
+                    setReviewForm((prev) => ({ ...prev, rating: i + 1 }))
+                }
+            />
+        ));
+
+    const handleReviewSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmittingReview(true);
+        localStorage.setItem("portfolio_user_identity", JSON.stringify({ name: reviewForm.name, email: reviewForm.email }));
+
+        try {
+            const res = await fetch('/api/contact', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: reviewForm.name,
+                    email: reviewForm.email,
+                    message: reviewForm.review,
+                    type: "Project Review"
+                })
+            });
+
+            if (res.ok) {
+                setShowReview(false);
+                setReviewForm({
+                    name: "",
+                    email: "",
+                    phone: "",
+                    review: "",
+                    rating: 5,
+                });
+            } else {
+                console.error("Failed to submit review.");
+            }
+        } catch (error) {
+            console.error("Error submitting review:", error);
+        } finally {
+            setIsSubmittingReview(false);
+        }
+    };
+
+    return (
+        <div className="min-h-screen font-sans flex flex-col overflow-x-hidden">
+            <Navbar />
+            <main className="flex-grow max-w-6xl w-full mx-auto px-4 py-8 md:py-12 relative overflow-hidden">
+                <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[100px] -z-10 pointer-events-none max-w-full" />
+                {children}
+            </main>
+
+            <AIChatWidget />
+
+            <footer className="border-t border-slate-200 dark:border-slate-900 bg-white dark:bg-slate-950 py-8 text-center transition-colors duration-300">
+                <p className="text-slate-500 dark:text-slate-600 text-sm">
+                    &copy; {new Date().getFullYear()} {data?.profile?.name || 'Mohammed Jumaan'}. Built with
+                    Next.js & React.
+                </p>
+            </footer>
+
+            <Modal
+                isOpen={showWelcome}
+                onClose={() => setShowWelcome(false)}
+                title="Welcome"
+            >
+                <div className="text-center space-y-6 py-2">
+                    <div className="mx-auto w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-400 mb-4 animate-pulse">
+                        <Terminal size={32} />
+                    </div>
+                    <div>
+                        <h3 className="text-xl font-bold text-white">
+                            {data?.profile?.name}
+                        </h3>
+                        <p className="text-blue-400 text-sm font-mono mt-1">
+                            {data?.profile?.currentRole} @ {data?.profile?.currentCompany}
+                        </p>
+                    </div>
+                    <p className="text-slate-400 text-sm leading-relaxed">
+                        You&apos;ve landed on my personal portfolio. I build robust backend
+                        systems and scalable web applications.
+                    </p>
+                    <button
+                        onClick={() => setShowWelcome(false)}
+                        className="w-full bg-white hover:bg-slate-200 text-slate-900 font-bold py-3 rounded-lg transition-colors"
+                    >
+                        Enter Portfolio
+                    </button>
+                </div>
+            </Modal>
+
+            <Modal
+                isOpen={showReview}
+                onClose={() => setShowReview(false)}
+                title="Project Feedback"
+            >
+                <div className="space-y-4">
+                    <div className="bg-blue-500/10 p-3 rounded-lg border border-blue-500/20 mb-4">
+                        <p className="text-blue-300 text-sm text-center">
+                            Welcome back! I noticed you checked out one of my projects.
+                            Thoughts?
+                        </p>
+                    </div>
+                    <form onSubmit={handleReviewSubmit} className="space-y-4">
+                        <div className="text-center mb-4">
+                            <div className="flex justify-center gap-2">
+                                {renderStars(reviewForm.rating)}
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <input
+                                required
+                                placeholder="Your Name"
+                                className="bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-sm text-slate-900 dark:text-white w-full focus:border-blue-500 outline-none transition-colors"
+                                value={reviewForm.name}
+                                onChange={(e) =>
+                                    setReviewForm((p) => ({ ...p, name: e.target.value }))
+                                }
+                            />
+                            <input
+                                required
+                                type="email"
+                                placeholder="Email"
+                                className="bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-sm text-slate-900 dark:text-white w-full focus:border-blue-500 outline-none transition-colors"
+                                value={reviewForm.email}
+                                onChange={(e) =>
+                                    setReviewForm((p) => ({ ...p, email: e.target.value }))
+                                }
+                            />
+                            <input
+                                type="tel"
+                                placeholder="Phone (Optional)"
+                                className="col-span-2 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-sm text-slate-900 dark:text-white w-full focus:border-blue-500 outline-none transition-colors"
+                                value={reviewForm.phone}
+                                onChange={(e) =>
+                                    setReviewForm((p) => ({ ...p, phone: e.target.value }))
+                                }
+                            />
+                        </div>
+                        <textarea
+                            required
+                            placeholder="Your feedback..."
+                            rows={3}
+                            className="bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-sm text-slate-900 dark:text-white w-full focus:border-blue-500 outline-none transition-colors"
+                            value={reviewForm.review}
+                            onChange={(e) =>
+                                setReviewForm((p) => ({ ...p, review: e.target.value }))
+                            }
+                        />
+                        <button
+                            type="submit"
+                            disabled={isSubmittingReview}
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg hover:shadow-blue-600/20 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                            {isSubmittingReview ? (
+                                <>
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    <span>Submitting...</span>
+                                </>
+                            ) : (
+                                "Submit Review"
+                            )}
+                        </button>
+                    </form>
+                </div>
+            </Modal>
+        </div>
+    );
+}
+
+export function ClientLayout({ children }: { children: React.ReactNode }) {
+    return (
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+            <PortfolioProvider>
+                <ToastProvider>
+                    <Shell>
+                        <Suspense fallback={null}>
+                            <AuditLogger />
+                        </Suspense>
+                        {children}
+                        <Analytics />
+                    </Shell>
+                </ToastProvider>
+            </PortfolioProvider>
+        </ThemeProvider>
+    );
+}
