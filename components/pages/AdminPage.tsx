@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import {
     Trash2, Plus, Save, X, Edit2, Loader2, SaveAll, Sparkles,
     LayoutDashboard, User, FolderOpen, PenTool, BookOpen, Briefcase, GraduationCap,
-    LogOut, Menu, ChevronRight, Search, Upload, ExternalLink, RefreshCw, CheckCircle, Award
+    LogOut, Menu, ChevronRight, Search, Upload, ExternalLink, RefreshCw, CheckCircle, Award, ShieldAlert
 } from "lucide-react";
 import Link from "next/link";
 import { usePortfolio } from "@/components/PortfolioContext";
@@ -398,6 +398,11 @@ const AdminContent: React.FC = () => {
                     <SidebarItem icon={Award} label="Certifications" active={activeTab === 'certifications'} onClick={() => setActiveTab('certifications')} />
                     <SidebarItem icon={Briefcase} label="Experience" active={activeTab === 'experience'} onClick={() => setActiveTab('experience')} />
                     <SidebarItem icon={GraduationCap} label="Education" active={activeTab === 'education'} onClick={() => setActiveTab('education')} />
+                    <Link href="/admin/reports" className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <ShieldAlert size={20} />
+                        <span>System Reports</span>
+                        <ExternalLink size={16} className="ml-auto opacity-50" />
+                    </Link>
                 </div>
 
                 <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">

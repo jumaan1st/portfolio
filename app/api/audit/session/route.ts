@@ -69,9 +69,43 @@ export async function POST(req: Request) {
 
         const client = await pool.connect();
         try {
-            // Single Query CTE: Upsert Session + Delete Old Sessions (Retention Policy)
-            // We use a CTE to perform the UPSERT, and then a DELETE statement that removes 
-            // the oldest sessions (offset 1000) while explicitly protecting the current session ($1).
+            await client.query('BEGIN');
+
+            console.log(`[Audit] Processing session ${sessionId} - Events: ${events.length}`);
+
+            // 1. Fetch existing history to ensure uniqueness
+            // We lock the row to avoid race conditions during the read-modify-write cycle
+            const existingRes = await client.query(
+                `SELECT visit_history FROM request_audit.sessions WHERE session_id = $1 FOR UPDATE`,
+                [sessionId]
+            );
+
+            let finalHistory: LogEvent[] = events;
+
+            if (existingRes.rows.length > 0) {
+                const currentHistory: LogEvent[] = existingRes.rows[0].visit_history || [];
+                const existingPaths = new Set(currentHistory.map(e => e.path));
+
+                // Filter new events: Only add if path hasn't been visited in this session
+                const uniqueNewEvents = events.filter(e => !existingPaths.has(e.path));
+
+                if (uniqueNewEvents.length > 0) {
+                    finalHistory = [...currentHistory, ...uniqueNewEvents];
+                } else {
+                    finalHistory = currentHistory; // No new unique pages
+                }
+            } else {
+                // New session: Ensure uniqueness within the batch itself
+                const seen = new Set<string>();
+                finalHistory = events.filter(e => {
+                    if (seen.has(e.path)) return false;
+                    seen.add(e.path);
+                    return true;
+                });
+            }
+
+            // 2. Upsert Session with FINAL history
+            // We use EXCLUDED.visit_history to set the new computed full history
             const query = `
                 WITH upsert AS (
                     INSERT INTO request_audit.sessions (
@@ -94,7 +128,7 @@ export async function POST(req: Request) {
                     VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7, $8, $9, $10, $11, $12, $13, $14)
                     ON CONFLICT (session_id) 
                     DO UPDATE SET 
-                        visit_history = request_audit.sessions.visit_history || EXCLUDED.visit_history,
+                        visit_history = EXCLUDED.visit_history, -- REPLACE with our pre-calculated unique list
                         last_active_at = NOW(),
                         user_identity = COALESCE(EXCLUDED.user_identity, request_audit.sessions.user_identity),
                         ip_address = EXCLUDED.ip_address,
@@ -124,7 +158,7 @@ export async function POST(req: Request) {
                 sessionId,
                 ip,
                 JSON.stringify(identity || {}),
-                JSON.stringify(events),
+                JSON.stringify(finalHistory), // Pass the DUPLICATE-FREE list
                 JSON.stringify(deviceInfo || {}),
                 JSON.stringify(geoInfo),
                 browserName,
@@ -137,6 +171,11 @@ export async function POST(req: Request) {
                 userPhone
             ]);
 
+            await client.query('COMMIT');
+        } catch (e) {
+            await client.query('ROLLBACK');
+            console.error("Transaction Error", e);
+            throw e;
         } finally {
             client.release();
         }
