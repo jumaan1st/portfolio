@@ -45,14 +45,6 @@ export const metadata: Metadata = {
         title: 'Mohammed Jumaan | Backend Developer',
         description: 'Scalable systems, modern web apps, and cloud architecture by Mohammed Jumaan.',
         siteName: 'Mohammed Jumaan Portfolio',
-        images: [
-            {
-                url: '/og-image.jpg', // You should ideally add an OG image to /public
-                width: 1200,
-                height: 630,
-                alt: 'Mohammed Jumaan Portfolio',
-            },
-        ],
     },
     robots: {
         index: true,
