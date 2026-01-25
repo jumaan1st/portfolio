@@ -8,22 +8,29 @@ type Props = {
     params: Promise<{ id: string }>
 }
 
-async function getBlog(id: string) {
-    try {
-        const res = await pool.query('SELECT * FROM portfolio.blogs WHERE id = $1', [id]);
-        if (res.rows.length > 0) {
-            const row = res.rows[0];
-            return {
-                ...row,
-                readTime: row.read_time, // Map snake_case to camelCase
-            };
+import { unstable_cache } from 'next/cache';
+
+// Cache the blog fetch for 1 hour, revalidate on 'blogs' tag update
+const getBlog = unstable_cache(
+    async (id: string) => {
+        try {
+            const res = await pool.query('SELECT * FROM portfolio.blogs WHERE id = $1', [id]);
+            if (res.rows.length > 0) {
+                const row = res.rows[0];
+                return {
+                    ...row,
+                    readTime: row.read_time, // Map snake_case to camelCase
+                };
+            }
+            return null;
+        } catch (error) {
+            console.error("SSR Blog Fetch Error", error);
+            return null;
         }
-        return null;
-    } catch (error) {
-        console.error("SSR Blog Fetch Error", error);
-        return null;
-    }
-}
+    },
+    ['blog-details'], // cache key prefix
+    { tags: ['blogs'], revalidate: 3600 }
+);
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { id } = await params;

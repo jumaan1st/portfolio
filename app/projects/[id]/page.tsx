@@ -30,22 +30,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
 }
 
-async function getProject(id: string) {
-    try {
-        const res = await pool.query(`
-            SELECT 
-                id, title, category, tech, description, 
-                long_description AS "longDescription", 
-                features, challenges, link, github_link AS "githubLink", color, image
-            FROM portfolio.projects
-            WHERE id = $1
-        `, [id]);
-        return res.rows.length > 0 ? res.rows[0] : null;
-    } catch (error) {
-        console.error("SSR Project Fetch Error", error);
-        return null;
-    }
-}
+import { unstable_cache } from 'next/cache';
+
+// Cache the project fetch for 1 hour, revalidate on 'projects' tag update
+const getProject = unstable_cache(
+    async (id: string) => {
+        try {
+            const res = await pool.query(`
+                SELECT 
+                    id, title, category, tech, description, 
+                    long_description AS "longDescription", 
+                    features, challenges, link, github_link AS "githubLink", color, image
+                FROM portfolio.projects
+                WHERE id = $1
+            `, [id]);
+            return res.rows.length > 0 ? res.rows[0] : null;
+        } catch (error) {
+            console.error("SSR Project Fetch Error", error);
+            return null;
+        }
+    },
+    ['project-details'], // cache key prefix
+    { tags: ['projects'], revalidate: 3600 } // revalidate every hour or when 'projects' tag is invalidated
+);
 
 export default async function Page({ params }: Props) {
     const { id } = await params;
