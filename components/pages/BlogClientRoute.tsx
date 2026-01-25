@@ -5,27 +5,39 @@ import { useRouter, useParams } from "next/navigation";
 import { usePortfolio } from "@/components/PortfolioContext";
 import { BlogDetailPage } from "@/components/pages/BlogDetailPage";
 
-export function BlogClientRoute() {
+import { BlogPost } from "@/data/portfolioData";
+
+interface Props {
+    initialBlog?: BlogPost;
+}
+
+export function BlogClientRoute({ initialBlog }: Props) {
     const router = useRouter();
     const params = useParams();
     const id = Number(params.id);
     const { data } = usePortfolio();
 
-    // Check if we have the blog in global state first
-    const [blog, setBlog] = React.useState(data.blogs.find((b) => b.id === id));
-    const [loading, setLoading] = React.useState(!blog || !blog.content);
+    // Priority: initialBlog (SSR) -> Context (Client Cache) -> undefined
+    const [blog, setBlog] = React.useState<BlogPost | undefined>(
+        initialBlog || data.blogs.find((b) => b.id === id)
+    );
+
+    // If we have full content, we are good.
+    const hasContent = blog && blog.content;
+    const [loading, setLoading] = React.useState(!hasContent);
 
     React.useEffect(() => {
-        // If we have the blog AND it has content (not just a summary), stop loading
-        if ((blog && blog.content) || isNaN(id)) {
+        const currentId = Number(params.id);
+        // If we switched IDs or have valid data, skip or stop loading
+        if (blog && blog.id === currentId && hasContent) {
             setLoading(false);
             return;
         }
 
         async function fetchBlog() {
+            setLoading(true);
             try {
-                // Assuming your API supports ?id=X for single blog fetch
-                const res = await fetch(`/api/blogs?id=${id}`);
+                const res = await fetch(`/api/blogs?id=${currentId}`);
                 if (res.ok) {
                     const b = await res.json();
                     setBlog(b);
@@ -39,7 +51,7 @@ export function BlogClientRoute() {
             }
         }
         fetchBlog();
-    }, [id, blog]);
+    }, [params.id, blog, hasContent]);
 
     if (loading) return (
         <div className="flex justify-center items-center min-h-[50vh]">

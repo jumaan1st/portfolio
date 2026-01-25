@@ -5,20 +5,31 @@ import { useRouter, useParams } from "next/navigation";
 import { usePortfolio } from "@/components/PortfolioContext";
 import { ProjectDetailPage } from "@/components/pages/ProjectDetailPage";
 
-export function ProjectClientRoute() {
+import { Project } from "@/data/portfolioData";
+
+interface Props {
+    initialProject?: Project;
+}
+
+export function ProjectClientRoute({ initialProject }: Props) {
     const router = useRouter();
     const params = useParams();
     const id = Number(params.id);
     const { data } = usePortfolio();
-    const [project, setProject] = React.useState(data.projects.find((p) => p.id === id));
-    const [loading, setLoading] = React.useState(!project);
+
+    // Priority: initialProject (SSR) -> Context (Client Cache) -> undefined
+    const [project, setProject] = React.useState<Project | undefined>(
+        initialProject || data.projects.find((p) => p.id === id)
+    );
+
+    // If we have full details (longDescription) in initialProject, we are good.
+    const hasFullDetails = project && (project.longDescription || project.features);
+    const [loading, setLoading] = React.useState(!hasFullDetails);
 
     React.useEffect(() => {
-        // If we have the project but are missing details (like longDescription), we MUST fetch.
-        // If we don't have the project at all, we MUST fetch.
-        const needsFetch = !project || (!project.longDescription && !project.features);
-
-        if (!needsFetch) {
+        // If we switched project IDs via client routing or missing details
+        const currentId = Number(params.id);
+        if (project && project.id === currentId && hasFullDetails) {
             setLoading(false);
             return;
         }
@@ -26,14 +37,12 @@ export function ProjectClientRoute() {
         async function fetchProject() {
             setLoading(true);
             try {
-                const res = await fetch(`/api/projects?id=${id}`);
+                const res = await fetch(`/api/projects?id=${currentId}`);
                 if (res.ok) {
                     const p = await res.json();
                     setProject(p);
                 } else {
-                    // If fetch fails but we had partial data, maybe keep it? 
-                    // Or set undefined if we really need full data.
-                    if (!project) setProject(undefined);
+                    setProject(undefined);
                 }
             } catch (e) {
                 console.error("Failed to fetch project", e);
@@ -42,7 +51,7 @@ export function ProjectClientRoute() {
             }
         }
         fetchProject();
-    }, [id]); // Removed 'project' from dependency array to prevent loops, relying on explicit checks
+    }, [params.id, project, hasFullDetails]); // Depends on params.id to detect route changes
 
     if (loading) return <div className="p-12 text-center text-slate-500">Loading project details...</div>;
 

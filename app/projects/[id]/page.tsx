@@ -30,7 +30,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
 }
 
-export default function Page() {
-    return <ProjectClientRoute />;
+async function getProject(id: string) {
+    try {
+        const res = await pool.query(`
+            SELECT 
+                id, title, category, tech, description, 
+                long_description AS "longDescription", 
+                features, challenges, link, github_link AS "githubLink", color, image
+            FROM portfolio.projects
+            WHERE id = $1
+        `, [id]);
+        return res.rows.length > 0 ? res.rows[0] : null;
+    } catch (error) {
+        console.error("SSR Project Fetch Error", error);
+        return null;
+    }
+}
+
+export default async function Page({ params }: Props) {
+    const { id } = await params;
+    const project = await getProject(id);
+
+    return <ProjectClientRoute initialProject={project} />;
 }
 
