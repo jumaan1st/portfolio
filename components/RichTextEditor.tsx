@@ -199,7 +199,37 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeh
     // Use the hook to enhance code blocks in the editor
     useCodeBlockEnhancer(editorContentRef, [value, isCodeView]);
 
+    // Handle Image Upload for Paste/Drop events
+    const handleImageUpload = useCallback(async (file: File) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('folder', 'blog-content');
+
+        try {
+            // Show loading state placeholder?
+            // For now, simple alert or toast from context would be better, but we don't have toast context here.
+            // We'll rely on the fact that it's usually fast or we could just insert a placeholder.
+
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                return data.url;
+            } else {
+                console.error("Upload failed", data.error);
+                return null;
+            }
+        } catch (e) {
+            console.error("Error uploading file", e);
+            return null;
+        }
+    }, []);
+
     // Attach the ref to the .ql-editor element once it exists and trigger enhancement
+    // AND Attach Paste/Drop listeners
     React.useEffect(() => {
         if (containerRef.current) {
             const editor = containerRef.current.querySelector('.ql-editor');
@@ -210,13 +240,52 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeh
                 // Force a re-scan after a short delay to allow Quill to render
                 setTimeout(() => {
                     if (editorContentRef.current) {
-                        // We can trigger a mutation by toggling a data attribute or class
                         editorContentRef.current.dataset.enhanced = Date.now().toString();
                     }
                 }, 100);
+
+                // PASTE LISTENER
+                const handlePaste = async (e: ClipboardEvent) => {
+                    if (e.clipboardData && e.clipboardData.files && e.clipboardData.files.length) {
+                        e.preventDefault();
+                        const file = e.clipboardData.files[0];
+                        if (file.type.startsWith('image/')) {
+                            const url = await handleImageUpload(file);
+                            if (url && quillRef.current) {
+                                const quill = quillRef.current.getEditor();
+                                const range = quill.getSelection(true) || { index: quill.getLength() };
+                                quill.insertEmbed(range.index, 'image', url);
+                            }
+                        }
+                    }
+                };
+
+                // DROP LISTENER
+                const handleDrop = async (e: DragEvent) => {
+                    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+                        e.preventDefault();
+                        const file = e.dataTransfer.files[0];
+                        if (file.type.startsWith('image/')) {
+                            const url = await handleImageUpload(file);
+                            if (url && quillRef.current) {
+                                const quill = quillRef.current.getEditor();
+                                const range = quill.getSelection(true) || { index: quill.getLength() };
+                                quill.insertEmbed(range.index, 'image', url);
+                            }
+                        }
+                    }
+                };
+
+                editor.addEventListener('paste', handlePaste as any);
+                editor.addEventListener('drop', handleDrop as any);
+
+                return () => {
+                    editor.removeEventListener('paste', handlePaste as any);
+                    editor.removeEventListener('drop', handleDrop as any);
+                };
             }
         }
-    }, [value, isCodeView]);
+    }, [value, isCodeView, handleImageUpload]);
 
 
     return (
@@ -233,10 +302,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeh
                     {isCodeView ? <Eye size={18} /> : <Code size={18} />}
                 </button>
             </div >
-
-            {/* AI Magic Popover */}
-
-
             {
                 isCodeView ? (
                     <textarea
