@@ -163,7 +163,7 @@ export const BlogsPage: React.FC = () => {
                             return (
                                 <article
                                     key={blog.id}
-                                    onClick={() => router.push(`/blogs/${blog.id}`)}
+                                    onClick={() => router.push(`/blogs/${blog.slug || blog.id}`)}
                                     className={`bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 hover:bg-slate-50 dark:hover:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-600 transition-all cursor-pointer group shadow-sm flex flex-col w-full relative ${blog.is_hidden ? 'opacity-75' : ''}`}
                                 >
                                     {isAuthenticated && blog.is_hidden && (

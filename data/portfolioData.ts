@@ -27,6 +27,7 @@ export interface Certification {
 
 export interface Project {
     id: number;
+    slug?: string;
     title: string;
     category: string;
     tech: string[];
@@ -42,6 +43,7 @@ export interface Project {
 
 export interface BlogPost {
     id: number;
+    slug?: string;
     title: string;
     excerpt: string;
     date: string;

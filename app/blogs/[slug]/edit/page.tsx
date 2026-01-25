@@ -14,7 +14,7 @@ export default function EditBlogPage() {
     const [blog, setBlog] = useState<BlogPost | null>(null);
     const [loading, setLoading] = useState(true);
 
-    const id = params.id as string;
+    const slug = params.slug as string;
 
     // Protect Route
     useEffect(() => {
@@ -29,7 +29,7 @@ export default function EditBlogPage() {
 
         const fetchBlog = async () => {
             try {
-                const res = await fetch(`/api/blogs?id=${id}`);
+                const res = await fetch(`/api/blogs?slug=${slug}`);
                 if (res.ok) {
                     const data = await res.json();
                     setBlog(data);
@@ -45,11 +45,12 @@ export default function EditBlogPage() {
         };
 
         fetchBlog();
-    }, [id, isAuthenticated, router]);
+    }, [slug, isAuthenticated, router]);
 
     const handleSave = async (updatedBlog: BlogPost) => {
+        if (!blog) return;
         try {
-            const res = await fetch(`/api/blogs?id=${id}`, {
+            const res = await fetch(`/api/blogs?id=${blog.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updatedBlog)

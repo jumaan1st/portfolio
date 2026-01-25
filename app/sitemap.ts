@@ -5,8 +5,8 @@ import { unstable_cache } from 'next/cache';
 const getSiteData = unstable_cache(
     async () => {
         const [projects, blogs] = await Promise.all([
-            pool.query('SELECT id FROM portfolio.projects'),
-            pool.query('SELECT id, date FROM portfolio.blogs WHERE is_hidden = FALSE')
+            pool.query('SELECT id, slug FROM portfolio.projects'),
+            pool.query('SELECT id, slug, date FROM portfolio.blogs WHERE is_hidden = FALSE')
         ]);
         return {
             projects: projects.rows,
@@ -35,14 +35,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }));
 
     const projectRoutes = projects.map((project: any) => ({
-        url: `${baseUrl}/projects/${project.id}`,
+        url: `${baseUrl}/projects/${project.slug || project.id}`, // Fallback to ID if slug missing (shouldn't happen)
         lastModified: new Date(),
         changeFrequency: 'weekly' as const,
         priority: 0.8,
     }));
 
     const blogRoutes = blogs.map((blog: any) => ({
-        url: `${baseUrl}/blogs/${blog.id}`,
+        url: `${baseUrl}/blogs/${blog.slug || blog.id}`,
         lastModified: blog.date ? new Date(blog.date) : new Date(),
         changeFrequency: 'weekly' as const,
         priority: 0.8,

@@ -6,21 +6,20 @@ import { usePortfolio } from "@/components/PortfolioContext";
 import { useRouter } from "next/navigation";
 import type { Project } from "@/data/portfolioData";
 
-export default function EditProjectPage({ params }: { params: Promise<{ id: string }> }) {
+export default function EditProjectPage({ params }: { params: Promise<{ slug: string }> }) {
     const { data, updateProject, isAuthenticated, isLoading: contextLoading } = usePortfolio();
     const router = useRouter();
 
     // Unwrap params using React.use()
-    const { id } = React.use(params);
-    const projectId = parseInt(id);
+    const { slug } = React.use(params);
 
     const [project, setProject] = useState<Project | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const loadProject = async () => {
-            // 1. Try finding in Context
-            const found = data.projects.find(p => p.id === projectId);
+            // 1. Try finding in Context by slug
+            const found = data.projects.find(p => p.slug === slug || String(p.id) === slug);
             if (found) {
                 setProject(found);
                 setLoading(false);
@@ -30,7 +29,7 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
             // 2. Fallback: Fetch from API
             if (!contextLoading) {
                 try {
-                    const res = await fetch(`/api/projects?id=${projectId}`);
+                    const res = await fetch(`/api/projects?slug=${slug}`);
                     if (res.ok) {
                         const json = await res.json();
                         // Correctly handle direct object response (from new API) or wrapper
@@ -49,7 +48,7 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
         };
 
         loadProject();
-    }, [data.projects, projectId, contextLoading]);
+    }, [data.projects, slug, contextLoading]);
 
     useEffect(() => {
         if (!contextLoading && !isAuthenticated) {
@@ -62,7 +61,9 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
     if (!project) return <div className="p-8 text-center text-red-500">Project not found</div>;
 
     const handleUpdate = async (updatedData: any) => {
-        await updateProject(projectId, updatedData);
+        if (project) {
+            await updateProject(project.id, updatedData);
+        }
     };
 
     return (

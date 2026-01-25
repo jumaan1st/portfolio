@@ -8,32 +8,46 @@ import { unstable_cache } from 'next/cache';
 
 const getCachedProjects = unstable_cache(
   async (params: any) => {
-    const { id, limit, offset, search, category, summaryMode } = params;
 
-    // Handle Single Fetch
+    const { id, slug, limit, offset, search, category, summaryMode } = params;
+
+    // Handle Single Fetch by ID
     if (id) {
       const { rows } = await pool.query(`
             SELECT 
                 id, title, category, tech, description, 
                 long_description AS "longDescription", 
-                features, challenges, link, github_link AS "githubLink", color, image
+                features, challenges, link, github_link AS "githubLink", color, image, slug
             FROM portfolio.projects
             WHERE id = $1
         `, [id]);
       return rows.length > 0 ? rows[0] : null;
     }
 
+    // Handle Single Fetch by Slug
+    if (slug) {
+      const { rows } = await pool.query(`
+            SELECT 
+                id, title, category, tech, description, 
+                long_description AS "longDescription", 
+                features, challenges, link, github_link AS "githubLink", color, image, slug
+            FROM portfolio.projects
+            WHERE slug = $1
+        `, [slug]);
+      return rows.length > 0 ? rows[0] : null;
+    }
+
     let query = summaryMode
       ? `
         SELECT 
-          id, title, category, tech, description, 
+          id, slug, title, category, tech, description, 
           link, github_link AS "githubLink", color, image
         FROM portfolio.projects
         WHERE 1=1
       `
       : `
         SELECT 
-          id, title, category, tech, description, 
+          id, slug, title, category, tech, description, 
           long_description AS "longDescription", 
           features, challenges, link, github_link AS "githubLink", color, image
         FROM portfolio.projects
@@ -78,6 +92,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
+    const slug = searchParams.get('slug');
 
     const limit = parseInt(searchParams.get('limit') || '100');
     const page = parseInt(searchParams.get('page') || '1');
@@ -86,9 +101,9 @@ export async function GET(request: Request) {
     const summaryMode = searchParams.get('summary') === 'true';
     const offset = (page - 1) * limit;
 
-    const result = await getCachedProjects({ id, limit, offset, search, category, summaryMode });
+    const result = await getCachedProjects({ id, slug, limit, offset, search, category, summaryMode });
 
-    if (id && !result) {
+    if ((id || slug) && !result) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
@@ -99,6 +114,16 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Failed to fetch projects' }, { status: 500 });
   }
 }
+
+// Slug Helper
+const toSlug = (text: string) => {
+  return text.toString().toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
+};
 
 export async function POST(request: Request) {
   try {
@@ -121,18 +146,28 @@ export async function POST(request: Request) {
     const idRes = await pool.query('SELECT COALESCE(MAX(id), 0) + 1 as new_id FROM portfolio.projects');
     const newId = idRes.rows[0].new_id;
 
+    // Generate Slug
+    let slug = body.slug ? toSlug(body.slug) : toSlug(title);
+    if (!slug) slug = `project-${newId}`;
+
+    // Ensure uniqueness
+    const slugCheck = await pool.query('SELECT 1 FROM portfolio.projects WHERE slug = $1', [slug]);
+    if (slugCheck.rows.length > 0) {
+      slug = `${slug}-${newId}`;
+    }
+
     // Get Max Sort Order to put new project at top
     const sortRes = await pool.query('SELECT COALESCE(MAX(sort_order), 0) + 1 as new_sort FROM portfolio.projects');
     const newSortOrder = sortRes.rows[0].new_sort;
 
     const { rows } = await pool.query(`
             INSERT INTO portfolio.projects (
-                id, title, category, tech, description, long_description,
+                id, slug, title, category, tech, description, long_description,
                 features, challenges, link, github_link, color, image, sort_order
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
             RETURNING *, long_description as "longDescription", github_link as "githubLink"
         `, [
-      newId, title, category, JSON.stringify(tech), description, longDescription,
+      newId, slug, title, category, JSON.stringify(tech), description, longDescription,
       JSON.stringify(features), challenges, link, githubLink, color, image, newSortOrder
     ]);
 
@@ -169,7 +204,8 @@ export async function PUT(request: Request) {
       link,
       githubLink,
       color,
-      image
+      image,
+      slug: requestedSlug
     } = body;
 
     const { rows } = await pool.query(`
@@ -185,13 +221,14 @@ export async function PUT(request: Request) {
                 link = COALESCE($8, link),
                 github_link = COALESCE($9, github_link),
                 color = COALESCE($10, color),
-                image = COALESCE($11, image)
+                image = COALESCE($11, image),
+                slug = COALESCE($13, slug)
             WHERE id = $12
             RETURNING *, long_description as "longDescription", github_link as "githubLink"
         `, [
       title, category, JSON.stringify(tech), description, longDescription,
       JSON.stringify(features), challenges, link, githubLink, color, image,
-      id
+      id, requestedSlug
     ]);
 
     if (rows.length === 0) {

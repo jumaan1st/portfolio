@@ -186,7 +186,7 @@ export const ProjectsPage: React.FC = () => {
                                     </div>
                                     <div className="p-6 flex flex-col flex-grow">
                                         <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-                                            <Link href={`/projects/${project.id}`} className="focus:outline-none">
+                                            <Link href={`/projects/${project.slug || project.id}`} className="focus:outline-none">
                                                 <span aria-hidden="true" className="absolute inset-0" />
                                                 {project.title}
                                             </Link>
@@ -207,7 +207,7 @@ export const ProjectsPage: React.FC = () => {
                                                 </ProjectLink>
                                             </div>
                                             <Link
-                                                href={`/projects/${project.id}`}
+                                                href={`/projects/${project.slug || project.id}`}
                                                 className="text-xs font-bold text-purple-600 dark:text-purple-400 flex items-center gap-1 group-hover:translate-x-1 transition-transform relative z-10"
                                             >
                                                 View Details <ArrowRight size={14} />

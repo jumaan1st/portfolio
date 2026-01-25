@@ -214,7 +214,7 @@ export const HomePage: React.FC = () => {
                                 </div>
                                 <div className="flex items-center gap-4 mt-6">
                                     <Link
-                                        href={`/projects/${project.id}`}
+                                        href={`/projects/${project.slug || project.id}`}
                                         className="flex items-center gap-2 text-slate-900 dark:text-white font-bold border-b-2 border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors pb-1"
                                     >
                                         View Case Study <ArrowRight size={16} />
@@ -319,7 +319,7 @@ export const HomePage: React.FC = () => {
                         return (
                             <article
                                 key={blog.id}
-                                onClick={() => router.push(`/blogs/${blog.id}`)}
+                                onClick={() => router.push(`/blogs/${blog.slug || blog.id}`)}
                                 className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl p-6 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group cursor-pointer shadow-sm flex flex-col w-full"
                             >
                                 <div className="relative h-48 mb-4 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">

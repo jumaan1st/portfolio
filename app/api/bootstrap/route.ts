@@ -21,11 +21,11 @@ const getBootstrapData = unstable_cache(
 
         const projectsQuery = isFull
             ? `(SELECT json_agg(p) FROM (SELECT * FROM portfolio.projects ORDER BY sort_order DESC, id DESC) p)`
-            : `(SELECT json_agg(p) FROM (SELECT id, title, category, tech, description, link, github_link AS "githubLink", color, image FROM portfolio.projects ORDER BY sort_order DESC, id DESC LIMIT 3) p)`;
+            : `(SELECT json_agg(p) FROM (SELECT id, slug, title, category, tech, description, link, github_link AS "githubLink", color, image FROM portfolio.projects ORDER BY sort_order DESC, id DESC LIMIT 3) p)`;
 
         const blogsQuery = isFull
             ? `(SELECT json_agg(b) FROM (SELECT * FROM portfolio.blogs ORDER BY sort_order DESC, id DESC) b)`
-            : `(SELECT json_agg(b) FROM (SELECT id, title, excerpt, tags, date, read_time, image, is_hidden FROM portfolio.blogs WHERE is_hidden = FALSE ORDER BY sort_order DESC, id DESC LIMIT 3) b)`;
+            : `(SELECT json_agg(b) FROM (SELECT id, slug, title, excerpt, tags, date, read_time, image, is_hidden FROM portfolio.blogs WHERE is_hidden = FALSE ORDER BY sort_order DESC, id DESC LIMIT 3) b)`;
 
         // Additional tables for full mode
         const experienceQuery = isFull

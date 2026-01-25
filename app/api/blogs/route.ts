@@ -13,17 +13,23 @@ import { unstable_cache, revalidateTag } from 'next/cache';
 
 const getCachedBlogs = unstable_cache(
   async (params: any) => {
-    const { id, limit, offset, search, tag, summaryMode, includeHidden } = params;
+    const { id, slug, limit, offset, search, tag, summaryMode, includeHidden } = params;
 
-    // Handle Single Fetch
+    // Handle Single Fetch by ID
     if (id) {
       const { rows } = await pool.query('SELECT * FROM portfolio.blogs WHERE id = $1', [id]);
       return rows.length > 0 ? mapRow(rows[0]) : null;
     }
 
+    // Handle Single Fetch by Slug
+    if (slug) {
+      const { rows } = await pool.query('SELECT * FROM portfolio.blogs WHERE slug = $1', [slug]);
+      return rows.length > 0 ? mapRow(rows[0]) : null;
+    }
+
     // If summary mode, select only necessary fields (exclude content strings to reduce payload)
     let query = summaryMode
-      ? 'SELECT id, title, excerpt, tags, date, read_time, image, is_hidden FROM portfolio.blogs WHERE 1=1'
+      ? 'SELECT id, slug, title, excerpt, tags, date, read_time, image, is_hidden FROM portfolio.blogs WHERE 1=1'
       : 'SELECT * FROM portfolio.blogs WHERE 1=1';
 
     // By default, exclude hidden blogs unless specifically requested (Admin) 
@@ -71,6 +77,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
+    const slug = searchParams.get('slug');
 
     const limit = parseInt(searchParams.get('limit') || '100');
     const page = parseInt(searchParams.get('page') || '1');
@@ -81,9 +88,11 @@ export async function GET(request: Request) {
     const includeHidden = searchParams.get('include_hidden') === 'true';
     const summaryMode = searchParams.get('summary') === 'true';
 
-    const result = await getCachedBlogs({ id, limit, offset, search, tag, summaryMode, includeHidden });
+    // Update cache call to accept slug
+    // We need to update getCachedBlogs signature too, but let's pass it anyway as it accepts 'params' any
+    const result = await getCachedBlogs({ id, slug, limit, offset, search, tag, summaryMode, includeHidden });
 
-    if (id && !result) {
+    if ((id || slug) && !result) {
       return NextResponse.json({ error: 'Blog not found' }, { status: 404 });
     }
 
@@ -94,6 +103,16 @@ export async function GET(request: Request) {
   }
 }
 
+// Slug Helper
+const toSlug = (text: string) => {
+  return text.toString().toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
+};
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -102,13 +121,23 @@ export async function POST(request: Request) {
     const idRes = await pool.query('SELECT COALESCE(MAX(id), 0) + 1 as new_id FROM portfolio.blogs');
     const newId = idRes.rows[0].new_id;
 
+    // Generate Slug
+    let slug = body.slug ? toSlug(body.slug) : toSlug(title);
+    if (!slug) slug = `post-${newId}`;
+
+    // Ensure uniqueness
+    const slugCheck = await pool.query('SELECT 1 FROM portfolio.blogs WHERE slug = $1', [slug]);
+    if (slugCheck.rows.length > 0) {
+      slug = `${slug}-${newId}`;
+    }
+
     // Get Max Sort Order to put new blog at top
     const sortRes = await pool.query('SELECT COALESCE(MAX(sort_order), 0) + 1 as new_sort FROM portfolio.blogs');
     const newSortOrder = sortRes.rows[0].new_sort;
 
     const { rows } = await pool.query(
-      'INSERT INTO portfolio.blogs (id, title, excerpt, content, tags, date, read_time, image, is_hidden, sort_order) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
-      [newId, title, excerpt, content, JSON.stringify(tags), date, readTime, image, is_hidden || false, newSortOrder]
+      'INSERT INTO portfolio.blogs (id, slug, title, excerpt, content, tags, date, read_time, image, is_hidden, sort_order) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *',
+      [newId, slug, title, excerpt, content, JSON.stringify(tags), date, readTime, image, is_hidden || false, newSortOrder]
     );
     return NextResponse.json(mapRow(rows[0]));
   } catch (error: any) {
@@ -124,7 +153,11 @@ export async function PUT(request: Request) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     const body = await request.json();
-    const { title, excerpt, content, tags, date, readTime, image, is_hidden } = body;
+    const { title, excerpt, content, tags, date, readTime, image, is_hidden, slug: requestedSlug } = body;
+
+    // Optional: Allow updating slug, but usually careful about breaking links
+    // For now let's only set it if provided explicity, else leave it. 
+    // If we want to auto-update slug on title change, that breaks SEO links. Let's ONLY update if requested directly.
 
     const { rows } = await pool.query(`
             UPDATE portfolio.blogs 
@@ -135,9 +168,10 @@ export async function PUT(request: Request) {
                 date = COALESCE($5, date),
                 read_time = COALESCE($6, read_time),
                 image = COALESCE($7, image),
-                is_hidden = COALESCE($8, is_hidden)
+                is_hidden = COALESCE($8, is_hidden),
+                slug = COALESCE($10, slug)
             WHERE id = $9 RETURNING *
-         `, [title, excerpt, content, JSON.stringify(tags), date, readTime, image, is_hidden, id]);
+         `, [title, excerpt, content, JSON.stringify(tags), date, readTime, image, is_hidden, id, requestedSlug]);
 
     return NextResponse.json(mapRow(rows[0]));
   } catch (error: any) {
