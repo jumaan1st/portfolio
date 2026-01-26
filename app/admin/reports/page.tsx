@@ -249,13 +249,22 @@ export default function ReportsPage() {
         }
     }, [isAuthenticated, authLoading, pagination.page, router, fetchSessions, activeTab]);
 
-    const handleExport = async () => {
+    const [showReportOptions, setShowReportOptions] = useState(false);
+
+    const handleExport = async (type: 'summary' | 'detailed' | 'ip' = 'detailed') => {
+        // If IP type selected but no IP filter, warn user
+        if (type === 'ip' && !filters.ip) {
+            addToast("Please enter an IP address in filters first", "error");
+            return;
+        }
+
         setGeneratingReport(true);
+        setShowReportOptions(false); // Close modal
         try {
             const res = await fetch('/api/admin/audit/report', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ filters })
+                body: JSON.stringify({ filters, type })
             });
             const data = await res.json();
             if (data.success) {
@@ -269,6 +278,58 @@ export default function ReportsPage() {
             setGeneratingReport(false);
         }
     };
+
+    // ... (rest of code)
+
+    // Modal Render Helper (Placed inside render)
+    const ReportOptionsModal = () => (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full border border-slate-200 dark:border-slate-800 p-6">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">Select Report Type</h3>
+                    <button onClick={() => setShowReportOptions(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full"><X size={20} /></button>
+                </div>
+
+                <div className="space-y-3">
+                    <button onClick={() => handleExport('summary')} className="w-full text-left p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all group">
+                        <div className="flex items-center gap-3">
+                            <div className="bg-blue-100 dark:bg-blue-900/50 p-2 rounded-lg text-blue-600 dark:text-blue-400">
+                                <FileText size={20} />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">Summary Report</h4>
+                                <p className="text-xs text-slate-500">Concise overview. Counts only, no full path lists.</p>
+                            </div>
+                        </div>
+                    </button>
+
+                    <button onClick={() => handleExport('detailed')} className="w-full text-left p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all group">
+                        <div className="flex items-center gap-3">
+                            <div className="bg-purple-100 dark:bg-purple-900/50 p-2 rounded-lg text-purple-600 dark:text-purple-400">
+                                <Database size={20} />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400">Detailed Report</h4>
+                                <p className="text-xs text-slate-500">Full audit trail. Includes every unique page visited.</p>
+                            </div>
+                        </div>
+                    </button>
+
+                    <button onClick={() => handleExport('ip')} className="w-full text-left p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-all group">
+                        <div className="flex items-center gap-3">
+                            <div className="bg-orange-100 dark:bg-orange-900/50 p-2 rounded-lg text-orange-600 dark:text-orange-400">
+                                <ShieldAlert size={20} />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-slate-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400">IP Deep Dive</h4>
+                                <p className="text-xs text-slate-500">Aggregated stats for the selected IP (Input required).</p>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
 
     // Calculate Duration
     const getDuration = (start: string, end: string) => {
@@ -326,7 +387,7 @@ export default function ReportsPage() {
                         {/* Header Actions */}
                         <div className="flex justify-end gap-2">
                             <button
-                                onClick={handleExport}
+                                onClick={() => setShowReportOptions(true)}
                                 disabled={generatingReport}
                                 className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-blue-500/25"
                             >
@@ -547,6 +608,7 @@ export default function ReportsPage() {
                     <UsageStatsTab />
                 )}
 
+                {showReportOptions && <ReportOptionsModal />}
             </div>
         </div>
     );
