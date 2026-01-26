@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 
 const BATCH_INTERVAL = 5000; // 5 seconds
@@ -14,7 +14,21 @@ interface LogEvent {
 
 export default function AuditLogger() {
     const pathname = usePathname();
-    // Removed useSearchParams to avoid Static Generation de-opt/Suspense requirements
+
+    // Capture Referral Source
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+
+        const params = new URLSearchParams(window.location.search);
+        const source = params.get("ref") || params.get("source") || params.get("utm_source");
+
+        if (source) {
+            // Only set if not already set for this session context (first touch attribution)
+            if (!localStorage.getItem("portfolio_traffic_source")) {
+                localStorage.setItem("portfolio_traffic_source", source);
+            }
+        }
+    }, []);
 
     const queueRef = useRef<LogEvent[]>([]);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -48,6 +62,9 @@ export default function AuditLogger() {
         const identityString = localStorage.getItem("portfolio_user_identity");
         const identity = identityString ? JSON.parse(identityString) : {};
 
+        // Get stored referral source
+        const trafficSource = localStorage.getItem("portfolio_traffic_source");
+
         const payload = {
             sessionId,
             events: eventsToSend,
@@ -55,7 +72,8 @@ export default function AuditLogger() {
             deviceInfo: {
                 userAgent: navigator.userAgent,
                 screen: `${window.screen.width}x${window.screen.height}`,
-                language: navigator.language
+                language: navigator.language,
+                trafficSource: trafficSource || undefined // Send if exists
             }
         };
 

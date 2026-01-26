@@ -18,7 +18,7 @@ interface SessionLog {
     ip_address: string;
     user_identity: { name?: string; email?: string; phone?: string };
     geo_info: { city?: string; country?: string; isp?: string };
-    device_info: { browser?: string; os?: string; device?: string; userAgent?: string; screen?: string };
+    device_info: { browser?: string; os?: string; device?: string; userAgent?: string; screen?: string; trafficSource?: string; };
     visit_history: VisitEvent[];
     started_at: string;
     last_active_at: string;
@@ -435,6 +435,7 @@ export default function ReportsPage() {
                                         <tr>
                                             <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">User / Identity</th>
                                             <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Location</th>
+                                            <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Source</th>
                                             <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Timing</th>
                                             <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Activity</th>
                                             <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300 w-10">Details</th>
@@ -468,6 +469,11 @@ export default function ReportsPage() {
                                                                 <span className="text-xs">{log.geo_info?.city}</span>
                                                                 <span className="text-xs text-slate-400">{log.geo_info?.isp}</span>
                                                             </div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${log.device_info?.trafficSource ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}>
+                                                                {log.device_info?.trafficSource || 'Direct'}
+                                                            </span>
                                                         </td>
                                                         <td className="px-6 py-4">
                                                             <div className="flex flex-col gap-1">

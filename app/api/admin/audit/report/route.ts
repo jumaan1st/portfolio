@@ -110,11 +110,15 @@ export async function POST(req: Request) {
             const sec = Math.floor((diffMs % 60000) / 1000);
             const duration = min > 0 ? `${min}m ${sec}s` : `${sec}s`;
 
+            // Extract Traffic Source
+            const source = (log.device_info as any)?.trafficSource || 'Direct';
+
             return [
                 new Date(log.started_at).toLocaleString(),
                 userStr,
                 log.ip_address,
                 locStr,
+                source,
                 pagesContent,
                 duration
             ];
@@ -122,16 +126,17 @@ export async function POST(req: Request) {
 
         autoTable(doc, {
             startY: filters?.ip ? 70 : 40,
-            head: [['Started', 'User', 'IP', 'Loc', 'Visited Pages', 'Time']],
+            head: [['Started', 'User', 'IP', 'Loc', 'Source', 'Visited Pages', 'Time']],
             body: tableData,
             styles: { fontSize: 8, overflow: 'linebreak' },
             columnStyles: {
                 0: { cellWidth: 30 },
-                1: { cellWidth: 30 },
+                1: { cellWidth: 25 },
                 2: { cellWidth: 25 },
                 3: { cellWidth: 20 },
-                4: { cellWidth: 'auto' }, // Allow pages to expand/wrap
-                5: { cellWidth: 15 }
+                4: { cellWidth: 20 }, // Source
+                5: { cellWidth: 'auto' }, // Pages
+                6: { cellWidth: 15 }
             }
         });
 
