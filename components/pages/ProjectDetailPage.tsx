@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import {
     ChevronLeft,
+    ArrowRight,
     ExternalLink,
     Loader2,
     Sparkles,
@@ -254,6 +255,14 @@ export const ProjectDetailPage: React.FC<Props> = ({ project: initialProject, on
                                                 </li>
                                             ))}
                                         </ul>
+                                    </div>
+                                    <div className="pt-2">
+                                        <button
+                                            onClick={() => setActiveTab("case-study")}
+                                            className="group inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                                        >
+                                            View More <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                        </button>
                                     </div>
                                 </div>
                             )}
