@@ -1,0 +1,29 @@
+
+> portfolio@0.1.0 build
+> next build
+
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+   Γû▓ Next.js 16.0.10 (Turbopack)
+   - Environments: .env.local, .env.production
+   - Experiments (use with caution):
+     ┬╖ optimizePackageImports
+
+   Creating an optimized production build ...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+
+> Build error occurred
+Error: Turbopack build failed with 1 errors:
+./app/api/projects/route.ts:3:10
+Ecmascript file had an error
+  1 |
+  2 | import { NextResponse } from 'next/server';
+> 3 | import { NextResponse } from 'next/server';
+    |          ^^^^^^^^^^^^
+  4 | import { db } from '@/lib/db';
+  5 | import { projects } from '@/lib/schema';
+  6 | import { eq, ilike, and, desc, sql, or, count } from 'drizzle-orm';
+
+the name `NextResponse` is defined multiple times
+
+
+    at <unknown> (./app/api/projects/route.ts:3:10)

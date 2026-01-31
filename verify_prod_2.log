@@ -1,0 +1,23 @@
+[dotenv@17.2.3] injecting env (17) from .env.local -- tip: ΓÜÖ∩╕Å  specify custom .env file path with { path: '/custom/path/.env' }
+Starting Production Readiness Verification...
+DB Host: localhost
+[FAIL] DB Connection (54.08ms) - Error: DrizzleQueryError: Failed query: SELECT 1 as connected
+params: 
+    at NodePgPreparedQuery.queryWithCache (C:\Users\moham\Desktop\portfolio-app\portfolio-app\node_modules\src\pg-core\session.ts:73:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async <anonymous> (C:\Users\moham\Desktop\portfolio-app\portfolio-app\scripts\test-drizzle-prod.ts:35:25)
+    at async measure (C:\Users\moham\Desktop\portfolio-app\portfolio-app\scripts\test-drizzle-prod.ts:17:21)
+    at async runTests (C:\Users\moham\Desktop\portfolio-app\portfolio-app\scripts\test-drizzle-prod.ts:34:9) {
+  query: 'SELECT 1 as connected',
+  params: [],
+  cause: Error: The server does not support SSL connections
+      at C:\Users\moham\Desktop\portfolio-app\portfolio-app\node_modules\pg-pool\index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async <anonymous> (C:\Users\moham\Desktop\portfolio-app\portfolio-app\node_modules\src\node-postgres\session.ts:149:14)
+      at async NodePgPreparedQuery.queryWithCache (C:\Users\moham\Desktop\portfolio-app\portfolio-app\node_modules\src\pg-core\session.ts:71:12)
+      at async <anonymous> (C:\Users\moham\Desktop\portfolio-app\portfolio-app\scripts\test-drizzle-prod.ts:35:25)
+      at async measure (C:\Users\moham\Desktop\portfolio-app\portfolio-app\scripts\test-drizzle-prod.ts:17:21)
+      at async runTests (C:\Users\moham\Desktop\portfolio-app\portfolio-app\scripts\test-drizzle-prod.ts:34:9)
+}
+
+Verification Failed!

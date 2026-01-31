@@ -42,6 +42,12 @@ type PortfolioContextType = {
 
     fetchAdminData: () => Promise<void>;
     refreshData: () => Promise<void>;
+    fetchAdminProjects: () => Promise<void>;
+    fetchAdminBlogs: () => Promise<void>;
+    fetchAdminExperience: () => Promise<void>;
+    fetchAdminEducation: () => Promise<void>;
+    fetchAdminSkills: () => Promise<void>;
+    fetchAdminCertifications: () => Promise<void>;
 };
 
 const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
@@ -66,7 +72,11 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
     // Unified Bootstrap Fetch
     const fetchBootstrap = React.useCallback(async (mode: 'public' | 'admin' = 'public') => {
         try {
-            const res = await fetch(`/api/bootstrap?mode=${mode}`);
+            // For admin, we use 'admin' mode which returns Profile + Skills + Exp + Edu
+            // Projects and Blogs remain lazy (fetched via tabs)
+            const effectiveMode = mode;
+
+            const res = await fetch(`/api/bootstrap?mode=${effectiveMode}`);
             if (!res.ok) throw new Error("Bootstrap failed");
 
             const bootstrapData = await res.json();
@@ -78,20 +88,24 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
             // Ensure array safety
             profile.currentlyLearning = Array.isArray(profile.currentlyLearning) ? profile.currentlyLearning : [];
 
+            // Only populate these if they come back (public mode has limit, admin might want full later)
             const skills = Array.isArray(bootstrapData.skills) ? bootstrapData.skills : [];
             const certifications = Array.isArray(bootstrapData.certifications) ? bootstrapData.certifications : [];
             const projects = Array.isArray(bootstrapData.projects) ? bootstrapData.projects : [];
             const blogs = Array.isArray(bootstrapData.blogs) ? bootstrapData.blogs : [];
 
-            // Admin only data
-            const experience = Array.isArray(bootstrapData.experience) ? bootstrapData.experience : [];
-            const education = Array.isArray(bootstrapData.education) ? bootstrapData.education : [];
-
             setData(prev => ({
                 ...prev,
                 config, ui, profile, skills, certifications,
-                projects, blogs, experience, education
+                projects, blogs
+                // Don't overwrite experience/education with empty if not present, but init usually happens once
             }));
+
+            if (mode === 'admin') {
+                // If admin, we might want to fetch Profile again to get sensitive fields if any? 
+                // Currently profile is same for public/admin.
+                // We will fetch other lists lazily.
+            }
         } catch (e) {
             console.error("Bootstrap fetch failed", e);
         } finally {
@@ -99,9 +113,80 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
         }
     }, []);
 
-    // Alias for compatibility
-    const fetchAdminData = React.useCallback(async () => await fetchBootstrap('admin'), [fetchBootstrap]);
-    const refreshData = React.useCallback(async () => await fetchBootstrap('admin'), [fetchBootstrap]); // Refresh usually implies full reload
+    // Granular Fetchers for Lazy Loading
+    const fetchAdminProjects = React.useCallback(async () => {
+        const res = await fetch('/api/projects?limit=1000&summary=false');
+        if (res.ok) {
+            const json = await res.json();
+            setData(prev => ({ ...prev, projects: json.data || [] }));
+        }
+    }, []);
+
+    const fetchAdminBlogs = React.useCallback(async () => {
+        const res = await fetch('/api/blogs?limit=1000&include_hidden=true&summary=false');
+        if (res.ok) {
+            const json = await res.json();
+            setData(prev => ({ ...prev, blogs: json.data || [] }));
+        }
+    }, []);
+
+    const fetchAdminExperience = React.useCallback(async () => {
+        const res = await fetch('/api/experience');
+        if (res.ok) {
+            const json = await res.json();
+            setData(prev => ({ ...prev, experience: json || [] }));
+        }
+    }, []);
+
+    const fetchAdminEducation = React.useCallback(async () => {
+        const res = await fetch('/api/education');
+        if (res.ok) {
+            const json = await res.json();
+            setData(prev => ({ ...prev, education: json || [] }));
+        }
+    }, []);
+
+    const fetchAdminSkills = React.useCallback(async () => {
+        const res = await fetch('/api/skills');
+        if (res.ok) {
+            const json = await res.json();
+            setData(prev => ({ ...prev, skills: json || [] }));
+        }
+    }, []);
+
+    const fetchAdminCertifications = React.useCallback(async () => {
+        const res = await fetch('/api/certifications');
+        if (res.ok) {
+            const json = await res.json();
+            setData(prev => ({ ...prev, certifications: json || [] }));
+        }
+    }, []);
+
+
+    // Alias for compatibility - removed legacy monolithic behavior
+    // Now it just ensures basic session/profile is loaded
+    const fetchAdminData = React.useCallback(async () => {
+        await fetchBootstrap('public');
+    }, [fetchBootstrap]);
+
+    // Refresh data - re-fetches everything? Or just current context?
+    // Let's make it fetch all for now to be safe, or we let components handle it
+    const refreshData = React.useCallback(async () => {
+        await fetchBootstrap('public');
+        // If we are in admin, components will trigger their own re-fetches via useEffect if we want, 
+        // but 'refreshData' is often called after mutation. 
+        // We should arguably re-fetch everything to be safe or rely on optimistic updates (which we have).
+        if (isAuthenticated) {
+            await Promise.all([
+                fetchAdminProjects(),
+                fetchAdminBlogs(),
+                fetchAdminExperience(),
+                fetchAdminEducation(),
+                fetchAdminSkills(),
+                fetchAdminCertifications()
+            ]);
+        }
+    }, [fetchBootstrap, isAuthenticated, fetchAdminProjects, fetchAdminBlogs, fetchAdminExperience, fetchAdminEducation, fetchAdminSkills, fetchAdminCertifications]);
 
     // Initial Load: Public Bootstrap + Auth Check
     useEffect(() => {
@@ -299,8 +384,14 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
         updateCertification,
         deleteCertification,
         fetchAdminData,
-        refreshData
-    }), [data, isAuthenticated, isLoading, fetchAdminData, refreshData]);
+        refreshData,
+        fetchAdminProjects,
+        fetchAdminBlogs,
+        fetchAdminExperience,
+        fetchAdminEducation,
+        fetchAdminSkills,
+        fetchAdminCertifications
+    }), [data, isAuthenticated, isLoading, fetchAdminData, refreshData, fetchAdminProjects, fetchAdminBlogs, fetchAdminExperience, fetchAdminEducation, fetchAdminSkills, fetchAdminCertifications]);
 
     return (
         <PortfolioContext.Provider value={contextValue}>

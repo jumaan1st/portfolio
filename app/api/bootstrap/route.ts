@@ -1,60 +1,132 @@
 
 import { NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import { db } from '@/lib/db';
+import {
+    config, uiConfig, profile, skills, certifications,
+    projects, blogs, experience, education
+} from '@/lib/schema';
+import { desc, asc, eq, and, sql } from 'drizzle-orm';
 import { unstable_cache } from 'next/cache';
 
 const getBootstrapData = unstable_cache(
     async (mode: string = 'public') => {
-        // PUBLIC MODE FETCHES:
-        // - Config (single)
-        // - UI Config (single)
-        // - Profile (single)
-        // - Skills (all)
-        // - Certifications (all)
-        // - Featured Projects (limit 5, summary only)
-        // - Latest Blogs (limit 3, summary only)
+        const includeDetails = mode === 'admin' || mode === 'full';
+        const includeHeavy = mode === 'full';
 
-        // ADMIN/FULL MODE FETCHES:
-        // - Everything above (but all projects/blogs) + Experience + Education
+        // Define queries
+        const configQuery = db.select({
+            adminEmail: config.admin_email,
+            showWelcomeModal: config.show_welcome_modal
+        }).from(config).limit(1);
 
-        const isFull = mode === 'admin' || mode === 'full';
+        const uiQuery = db.select({
+            heroTagline: uiConfig.hero_tagline,
+            statusLabel: uiConfig.status_label,
+            blogTitle: uiConfig.blog_title,
+            blogSubtitle: uiConfig.blog_subtitle,
+            projectTitle: uiConfig.project_title,
+            projectSubtitle: uiConfig.project_subtitle
+        }).from(uiConfig).limit(1);
 
-        const projectsQuery = isFull
-            ? `(SELECT json_agg(p) FROM (SELECT * FROM portfolio.projects ORDER BY sort_order DESC, id DESC) p)`
-            : `(SELECT json_agg(p) FROM (SELECT id, slug, title, category, tech, description, link, github_link AS "githubLink", color, image FROM portfolio.projects ORDER BY sort_order DESC, id DESC LIMIT 3) p)`;
+        const profileQuery = db.select({
+            name: profile.name,
+            roles: profile.roles,
+            currentRole: profile.role,
+            currentCompany: profile.current_company,
+            currentCompanyUrl: profile.current_company_url,
+            summary: profile.summary,
+            location: profile.location,
+            email: profile.email,
+            phone: profile.phone,
+            linkedin: profile.linkedin,
+            github: profile.github,
+            twitter: profile.twitter,
+            resumeUrl: profile.resume_url,
+            photoLightUrl: profile.photo_light_url,
+            photoDarkUrl: profile.photo_dark_url,
+            currentlyLearning: profile.currently_learning
+        }).from(profile).limit(1);
 
-        const blogsQuery = isFull
-            ? `(SELECT json_agg(b) FROM (SELECT * FROM portfolio.blogs ORDER BY sort_order DESC, id DESC) b)`
-            : `(SELECT json_agg(b) FROM (SELECT id, slug, title, excerpt, tags, date, read_time, image, is_hidden FROM portfolio.blogs WHERE is_hidden = FALSE ORDER BY sort_order DESC, id DESC LIMIT 3) b)`;
+        const skillsQuery = db.select().from(skills).orderBy(asc(skills.id));
 
-        // Additional tables for full mode
-        const experienceQuery = isFull
-            ? `(SELECT json_agg(e) FROM (SELECT * FROM portfolio.experience ORDER BY start_date DESC NULLS LAST, id DESC) e)`
-            : `'[]'::json`;
+        const certificationsQuery = db.select().from(certifications).orderBy(desc(certifications.id));
 
-        const educationQuery = isFull
-            ? `(SELECT json_agg(edu) FROM (SELECT * FROM portfolio.education ORDER BY start_date DESC NULLS LAST, id DESC) edu)`
-            : `'[]'::json`;
+        // Projects
+        let projectsQuery;
+        if (includeHeavy) {
+            projectsQuery = db.select().from(projects).orderBy(desc(projects.sort_order), desc(projects.id));
+        } else {
+            projectsQuery = db.select({
+                id: projects.id,
+                slug: projects.slug,
+                title: projects.title,
+                category: projects.category,
+                tech: projects.tech,
+                description: projects.description,
+                link: projects.link,
+                githubLink: projects.github_link,
+                color: projects.color,
+                image: projects.image
+            }).from(projects).orderBy(desc(projects.sort_order), desc(projects.id)).limit(3);
+        }
 
-        const query = `
-      SELECT json_build_object(
-        'config', (SELECT row_to_json(c) FROM (SELECT admin_email AS "adminEmail", show_welcome_modal AS "showWelcomeModal" FROM portfolio.config LIMIT 1) c),
-        'ui', (SELECT row_to_json(u) FROM (SELECT hero_tagline AS "heroTagline", status_label AS "statusLabel", blog_title AS "blogTitle", blog_subtitle AS "blogSubtitle", project_title AS "projectTitle", project_subtitle AS "projectSubtitle" FROM portfolio.ui_config LIMIT 1) u),
-        'profile', (SELECT row_to_json(pr) FROM (SELECT name, roles, role AS "currentRole", current_company AS "currentCompany", current_company_url AS "currentCompanyUrl", summary, location, email, phone, linkedin, github, twitter, resume_url AS "resumeUrl", photo_light_url AS "photoLightUrl", photo_dark_url AS "photoDarkUrl", currently_learning AS "currentlyLearning" FROM portfolio.profile LIMIT 1) pr),
-        'skills', COALESCE((SELECT json_agg(s) FROM (SELECT * FROM portfolio.skills ORDER BY id ASC) s), '[]'::json),
-        'certifications', COALESCE((SELECT json_agg(ce) FROM (SELECT * FROM portfolio.certifications ORDER BY id DESC) ce), '[]'::json),
-        'projects', COALESCE(${projectsQuery}, '[]'::json),
-        'blogs', COALESCE(${blogsQuery}, '[]'::json),
-        'experience', COALESCE(${experienceQuery}, '[]'::json),
-        'education', COALESCE(${educationQuery}, '[]'::json)
-      ) as bootstrap_data
-    `;
+        // Blogs
+        let blogsQuery;
+        if (includeHeavy) {
+            blogsQuery = db.select().from(blogs).orderBy(desc(blogs.sort_order), desc(blogs.id));
+        } else {
+            blogsQuery = db.select({
+                id: blogs.id,
+                slug: blogs.slug,
+                title: blogs.title,
+                excerpt: blogs.excerpt,
+                tags: blogs.tags,
+                date: blogs.date,
+                read_time: blogs.read_time,
+                image: blogs.image,
+                is_hidden: blogs.is_hidden
+            }).from(blogs)
+                .where(eq(blogs.is_hidden, false))
+                .orderBy(desc(blogs.sort_order), desc(blogs.id))
+                .limit(3);
+        }
 
-        const { rows } = await pool.query(query);
-        return rows[0]?.bootstrap_data || {};
+        // Experience & Education (Fetch in admin or full mode)
+        const experienceQuery = includeDetails
+            ? db.select().from(experience).orderBy(sql`${experience.start_date} DESC NULLS LAST`, desc(experience.id))
+            : Promise.resolve([]);
+
+        const educationQuery = includeDetails
+            ? db.select().from(education).orderBy(sql`${education.start_date} DESC NULLS LAST`, desc(education.id))
+            : Promise.resolve([]);
+
+        // Execute in parallel
+        const [
+            configRes, uiRes, profileRes,
+            skillsRes, certificationsRes,
+            projectsRes, blogsRes,
+            experienceRes, educationRes
+        ] = await Promise.all([
+            configQuery, uiQuery, profileQuery,
+            skillsQuery, certificationsQuery,
+            projectsQuery, blogsQuery,
+            experienceQuery, educationQuery
+        ]);
+
+        return {
+            config: configRes[0] || {},
+            ui: uiRes[0] || {},
+            profile: profileRes[0] || {},
+            skills: skillsRes,
+            certifications: certificationsRes,
+            projects: projectsRes,
+            blogs: blogsRes,
+            experience: experienceRes,
+            education: educationRes
+        };
     },
     ['bootstrap-data'],
-    { tags: ['profile', 'config', 'ui', 'skills', 'projects', 'blogs', 'experience', 'education'], revalidate: 3600 }
+    { tags: ['profile', 'config', 'ui', 'skills', 'projects', 'blogs', 'experience', 'education', 'certifications'], revalidate: 3600 }
 );
 
 export async function GET(request: Request) {
@@ -64,44 +136,26 @@ export async function GET(request: Request) {
 
         const data = await getBootstrapData(mode);
 
-        // Post-processing
-        if (data.profile) {
-            if (typeof data.profile.currentlyLearning === 'string') {
-                try { data.profile.currentlyLearning = JSON.parse(data.profile.currentlyLearning); } catch (e) { data.profile.currentlyLearning = []; }
-            }
-        }
+        // Ensure JSON parsing if necessary (Drizzle usually handles jsonb automatically, 
+        // but explicit checks prevent runtime errors if data was stored as string previously)
+        // Profile roles/learning
+        const p = data.profile as any;
+        if (typeof p.roles === 'string') try { p.roles = JSON.parse(p.roles) } catch { }
+        if (typeof p.currentlyLearning === 'string') try { p.currentlyLearning = JSON.parse(p.currentlyLearning) } catch { }
 
-        if (data.profile.roles && typeof data.profile.roles === 'string') {
-            // Just in case it comes back as string from some older logic, but usually Postgres json_agg handles it?
-            // Wait, 'roles' is text[] or jsonb? user provided code shows `roles` being selected directly.
-            // If it's a TEXT array in postgres, node-postgres might return it as array.
-            // If it's stored as JSON string, we need to parse.
-            // Looking at Profile route, it seems `roles` is fetched directly.
-        }
-
-        // Projects tech/features need parsing?
-        // In `api/projects/route.ts`, `tech` is stored as `JSON.stringify(tech)`.
-        // Wait, inserting is JSON.stringify, implying the column type is likely TEXT or JSON. 
-        // If it's JSON/JSONB column, pg returns object. If TEXT, it returns string.
-        // The profile `currently_learning` was manually parsed in `getProfile`.
-        // Let's assume we might need to parse JSON fields if they are strings.
-
-        // Helper to safely parse
-        const safeParse = (obj: any, keys: string[]) => {
-            if (!obj) return;
-            keys.forEach(key => {
-                if (typeof obj[key] === 'string') {
-                    try { obj[key] = JSON.parse(obj[key]); } catch { }
-                }
-            });
-        };
-
+        // Projects tech/features
         if (data.projects) {
-            data.projects.forEach((p: any) => safeParse(p, ['tech', 'features']));
+            data.projects.forEach((proj: any) => {
+                if (typeof proj.tech === 'string') try { proj.tech = JSON.parse(proj.tech) } catch { }
+                if (typeof proj.features === 'string') try { proj.features = JSON.parse(proj.features) } catch { }
+            });
         }
 
+        // Blogs tags
         if (data.blogs) {
-            data.blogs.forEach((b: any) => safeParse(b, ['tags']));
+            data.blogs.forEach((b: any) => {
+                if (typeof b.tags === 'string') try { b.tags = JSON.parse(b.tags) } catch { }
+            });
         }
 
         return NextResponse.json(data);

@@ -69,6 +69,7 @@ const AdminContent: React.FC = () => {
         updateProfile,
         createEducation, updateEducation, deleteEducation,
         createCertification, updateCertification, deleteCertification,
+        fetchAdminProjects, fetchAdminBlogs, fetchAdminCertifications
     } = usePortfolio();
 
     const { addToast } = useToast();
@@ -98,15 +99,37 @@ const AdminContent: React.FC = () => {
             if (lastFetchedPage.current === currentPage) return;
 
             const load = async () => {
-                setIsLoadingData(true);
+                // setIsLoadingData(true); // Don't block UI with global loading
                 lastFetchedPage.current = currentPage;
                 // Fetch Admin Data (skip projects as they are managed in /projects now)
                 await fetchAdminData();
-                setIsLoadingData(false);
+                // setIsLoadingData(false);
             };
             load();
         }
     }, [isAuthenticated, currentPage]); // Re-fetch when page changes
+
+    // Lazy Load Data based on Active Tab
+    useEffect(() => {
+        if (!isAuthenticated) return;
+
+        const loadTab = async () => {
+            switch (activeTab) {
+                case 'projects': await fetchAdminProjects(); break;
+                case 'blogs': await fetchAdminBlogs(); break;
+                // Skills, Experience, Education are now loaded in bootstrap 'admin' mode
+                case 'certifications': await fetchAdminCertifications(); break; // Check if we want these lazy too? User didn't specify certifications. Let's keep Certs lazy or add to bootstrap?
+                // Actually user only said "profile experiance educatio n and skilss". 
+                // Certifications is small too, let's assume we can lazily load it or add it. 
+                // The bootstrap ALREADY fetches certifications (line 51 in bootstrap/route.ts) unconditionally!
+                // So certifications are ALREADY in data. We just didn't realize it.
+                // Wait, let's check bootstrap again.
+                // "const certificationsQuery = db.select().from(certifications)..."
+                // Yes, certifications are ALWAYS fetched. So we don't need lazy loader for certifications either!
+            }
+        };
+        loadTab();
+    }, [activeTab, isAuthenticated]);
 
     // Forms State
     const [editingExperience, setEditingExperience] = useState<Partial<typeof data.experience[0]> | null>(null);

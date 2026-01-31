@@ -1,6 +1,7 @@
-
 import { NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import { db } from '@/lib/db';
+import { blogs } from '@/lib/schema';
+import { eq, ilike, and, desc, sql, or, count, not } from 'drizzle-orm';
 
 // Helper to map DB row to Frontend Interface
 const mapRow = (row: any) => ({
@@ -17,55 +18,60 @@ const getCachedBlogs = unstable_cache(
 
     // Handle Single Fetch by ID
     if (id) {
-      const { rows } = await pool.query('SELECT * FROM portfolio.blogs WHERE id = $1', [id]);
+      const rows = await db.select().from(blogs).where(eq(blogs.id, id));
       return rows.length > 0 ? mapRow(rows[0]) : null;
     }
 
     // Handle Single Fetch by Slug
     if (slug) {
-      const { rows } = await pool.query('SELECT * FROM portfolio.blogs WHERE slug = $1', [slug]);
+      const rows = await db.select().from(blogs).where(eq(blogs.slug, slug));
       return rows.length > 0 ? mapRow(rows[0]) : null;
     }
 
-    // If summary mode, select only necessary fields (exclude content strings to reduce payload)
-    let query = summaryMode
-      ? 'SELECT id, slug, title, excerpt, tags, date, read_time, image, is_hidden FROM portfolio.blogs WHERE 1=1'
-      : 'SELECT * FROM portfolio.blogs WHERE 1=1';
+    let conditions = [];
 
-    // By default, exclude hidden blogs unless specifically requested (Admin) 
-    // OR if we are fetching a specific ID (which is handled above individually).
+    // Hidden Logic: By default Exclude hidden, unless includeHidden is true.
     if (!includeHidden) {
-      query += ' AND is_hidden = FALSE';
+      conditions.push(eq(blogs.is_hidden, false));
     }
-    const queryParams: any[] = [];
 
     if (search) {
-      queryParams.push(`%${search}%`);
-      query += ` AND (title ILIKE $${queryParams.length} OR content ILIKE $${queryParams.length})`;
+      conditions.push(or(ilike(blogs.title, `%${search}%`), ilike(blogs.content, `%${search}%`)));
     }
 
     if (tag) {
-      queryParams.push(`%${tag}%`);
-      query += ` AND tags::text ILIKE $${queryParams.length}`; // Simple text check for JSON array
+      // JSONB array check: cast to text and ILIKE
+      conditions.push(sql`${blogs.tags}::text ILIKE ${`%${tag}%`}`);
     }
 
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
     // Count Total
-    const countRes = await pool.query(`SELECT COUNT(*) FROM (${query}) as sub`, queryParams);
-    const total = parseInt(countRes.rows[0].count);
+    const countRes = await db.select({ count: count() }).from(blogs).where(whereClause);
+    const total = countRes[0].count;
 
     // Fetch Data
-    query += ` ORDER BY sort_order DESC, id DESC LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`;
-    queryParams.push(limit, offset);
+    let query;
+    // We must reconstruct the chain for each branch because 'db.from' is not valid. Start with db.select(...)
 
-    const { rows } = await pool.query(query, queryParams);
+    if (summaryMode) {
+      query = db.select({
+        id: blogs.id, slug: blogs.slug, title: blogs.title, excerpt: blogs.excerpt,
+        tags: blogs.tags, date: blogs.date, read_time: blogs.read_time, image: blogs.image, is_hidden: blogs.is_hidden
+      }).from(blogs).where(whereClause).orderBy(desc(blogs.sort_order), desc(blogs.id)).limit(limit).offset(offset);
+    } else {
+      query = db.select().from(blogs).where(whereClause).orderBy(desc(blogs.sort_order), desc(blogs.id)).limit(limit).offset(offset);
+    }
+
+    const rows = await query;
 
     return {
       data: rows.map(mapRow),
       meta: {
-        total,
+        total: Number(total),
         page: Math.floor(offset / limit) + 1,
         limit,
-        totalPages: Math.ceil(total / limit)
+        totalPages: Math.ceil(Number(total) / limit)
       }
     };
   },
@@ -118,27 +124,36 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { title, excerpt, content, tags, date, readTime, image, is_hidden } = body;
 
-    const idRes = await pool.query('SELECT COALESCE(MAX(id), 0) + 1 as new_id FROM portfolio.blogs');
-    const newId = idRes.rows[0].new_id;
+    const idRes = await db.select({ new_id: sql<number>`COALESCE(MAX(${blogs.id}), 0) + 1` }).from(blogs);
+    const newId = idRes[0].new_id;
 
     // Generate Slug
     let slug = body.slug ? toSlug(body.slug) : toSlug(title);
     if (!slug) slug = `post-${newId}`;
 
     // Ensure uniqueness
-    const slugCheck = await pool.query('SELECT 1 FROM portfolio.blogs WHERE slug = $1', [slug]);
-    if (slugCheck.rows.length > 0) {
+    const slugCheck = await db.select({ id: blogs.id }).from(blogs).where(eq(blogs.slug, slug));
+    if (slugCheck.length > 0) {
       slug = `${slug}-${newId}`;
     }
 
     // Get Max Sort Order to put new blog at top
-    const sortRes = await pool.query('SELECT COALESCE(MAX(sort_order), 0) + 1 as new_sort FROM portfolio.blogs');
-    const newSortOrder = sortRes.rows[0].new_sort;
+    const sortRes = await db.select({ new_sort: sql<number>`COALESCE(MAX(${blogs.sort_order}), 0) + 1` }).from(blogs);
+    const newSortOrder = sortRes[0].new_sort;
 
-    const { rows } = await pool.query(
-      'INSERT INTO portfolio.blogs (id, slug, title, excerpt, content, tags, date, read_time, image, is_hidden, sort_order) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *',
-      [newId, slug, title, excerpt, content, JSON.stringify(tags), date, readTime, image, is_hidden || false, newSortOrder]
-    );
+    const rows = await db.insert(blogs).values({
+      id: newId,
+      slug: slug,
+      title: title,
+      excerpt: excerpt,
+      content: content,
+      tags: tags,
+      date: date,
+      read_time: readTime,
+      image: image,
+      is_hidden: is_hidden || false,
+      sort_order: newSortOrder
+    }).returning();
     return NextResponse.json(mapRow(rows[0]));
   } catch (error: any) {
     if (error.code === '42501') return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
@@ -159,19 +174,21 @@ export async function PUT(request: Request) {
     // For now let's only set it if provided explicity, else leave it. 
     // If we want to auto-update slug on title change, that breaks SEO links. Let's ONLY update if requested directly.
 
-    const { rows } = await pool.query(`
-            UPDATE portfolio.blogs 
-            SET title = COALESCE($1, title), 
-                excerpt = COALESCE($2, excerpt), 
-                content = COALESCE($3, content), 
-                tags = COALESCE($4, tags), 
-                date = COALESCE($5, date),
-                read_time = COALESCE($6, read_time),
-                image = COALESCE($7, image),
-                is_hidden = COALESCE($8, is_hidden),
-                slug = COALESCE($10, slug)
-            WHERE id = $9 RETURNING *
-         `, [title, excerpt, content, JSON.stringify(tags), date, readTime, image, is_hidden, id, requestedSlug]);
+    const updateData: any = {};
+    if (title !== undefined) updateData.title = title;
+    if (excerpt !== undefined) updateData.excerpt = excerpt;
+    if (content !== undefined) updateData.content = content;
+    if (tags !== undefined) updateData.tags = tags;
+    if (date !== undefined) updateData.date = date;
+    if (readTime !== undefined) updateData.read_time = readTime;
+    if (image !== undefined) updateData.image = image;
+    if (is_hidden !== undefined) updateData.is_hidden = is_hidden;
+    if (requestedSlug !== undefined) updateData.slug = requestedSlug;
+
+    const rows = await db.update(blogs)
+      .set(updateData)
+      .where(eq(blogs.id, parseInt(id!)))
+      .returning();
 
     return NextResponse.json(mapRow(rows[0]));
   } catch (error: any) {
@@ -186,7 +203,8 @@ export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    await pool.query('DELETE FROM portfolio.blogs WHERE id = $1', [id]);
+    if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
+    await db.delete(blogs).where(eq(blogs.id, parseInt(id)));
     return NextResponse.json({ success: true });
   } catch (error: any) {
     if (error.code === '42501') return NextResponse.json({ error: 'Permission denied' }, { status: 403 });

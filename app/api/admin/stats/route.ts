@@ -1,6 +1,7 @@
-
 import { NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import { db } from '@/lib/db';
+import { projects as projectsTable, blogs as blogsTable } from '@/lib/schema';
+import { sql, count } from 'drizzle-orm';
 import { S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3';
 
 // Re-use S3 config (Duplicate logic to avoid importing route handlers directly which can be tricky in Next.js app dir)
@@ -28,22 +29,23 @@ export async function GET() {
         // If this fails, we return generic stats.
         let dbSize = 0;
         try {
-            const sizeRes = await pool.query("SELECT pg_database_size(current_database()) as size");
-            dbSize = parseInt(sizeRes.rows[0].size);
+            const sizeRes: any = await db.execute(sql`SELECT pg_database_size(current_database()) as size`);
+            const rows = sizeRes.rows || sizeRes; // handle driver differences
+            dbSize = parseInt(rows[0].size as string);
         } catch (e) {
             console.warn("Could not fetch DB size:", e);
         }
 
         // Get Row Counts
-        const [blogsRes, projectsRes] = await Promise.all([
-            pool.query("SELECT COUNT(*) FROM portfolio.blogs"),
-            pool.query("SELECT COUNT(*) FROM portfolio.projects")
+        const [blogsCountRes, projectsCountRes] = await Promise.all([
+            db.select({ count: count() }).from(blogsTable),
+            db.select({ count: count() }).from(projectsTable)
         ]);
 
         const dbStats = {
             sizeBytes: dbSize,
-            blogsCount: parseInt(blogsRes.rows[0].count),
-            projectsCount: parseInt(projectsRes.rows[0].count)
+            blogsCount: parseInt(String(blogsCountRes[0].count)),
+            projectsCount: parseInt(String(projectsCountRes[0].count))
         };
 
 

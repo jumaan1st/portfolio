@@ -1,0 +1,20 @@
+[dotenv@17.2.3] injecting env (17) from .env.local -- tip: ≡ƒöä add secrets lifecycle management: https://dotenvx.com/ops
+DB_HOST: localhost
+Verifying Drizzle Connections...
+Fetching Profile...
+Verification Failed: DrizzleQueryError: Failed query: select "id", "name", "roles", "role", "current_company", "current_company_url", "summary", "location", "email", "phone", "linkedin", "github", "twitter", "resume_url", "photo_light_url", "photo_dark_url", "currently_learning" from "portfolio"."profile" limit $1
+params: 1
+    at NodePgPreparedQuery.queryWithCache (C:\Users\moham\Desktop\portfolio-app\portfolio-app\node_modules\src\pg-core\session.ts:73:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async <anonymous> (C:\Users\moham\Desktop\portfolio-app\portfolio-app\node_modules\src\node-postgres\session.ts:154:19)
+    at async verify (C:\Users\moham\Desktop\portfolio-app\portfolio-app\scripts\verify-drizzle.ts:14:19) {
+  query: 'select "id", "name", "roles", "role", "current_company", "current_company_url", "summary", "location", "email", "phone", "linkedin", "github", "twitter", "resume_url", "photo_light_url", "photo_dark_url", "currently_learning" from "portfolio"."profile" limit $1',
+  params: [ 1 ],
+  cause: Error: The server does not support SSL connections
+      at C:\Users\moham\Desktop\portfolio-app\portfolio-app\node_modules\pg-pool\index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async <anonymous> (C:\Users\moham\Desktop\portfolio-app\portfolio-app\node_modules\src\node-postgres\session.ts:161:13)
+      at async NodePgPreparedQuery.queryWithCache (C:\Users\moham\Desktop\portfolio-app\portfolio-app\node_modules\src\pg-core\session.ts:71:12)
+      at async <anonymous> (C:\Users\moham\Desktop\portfolio-app\portfolio-app\node_modules\src\node-postgres\session.ts:154:19)
+      at async verify (C:\Users\moham\Desktop\portfolio-app\portfolio-app\scripts\verify-drizzle.ts:14:19)
+}

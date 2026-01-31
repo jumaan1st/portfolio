@@ -1,6 +1,7 @@
-
 import { NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import { db } from '@/lib/db';
+import { review, profile, aiEmailUsage } from '@/lib/schema';
+import { eq, and, sql } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
 import { callAI } from '@/lib/ai-manager';
 
@@ -25,28 +26,38 @@ export async function POST(request: Request) {
         console.log(`[Contact API] Saving ${requestType} from ${cleanEmail}`);
 
         // Use portfolio.review table
-        await pool.query(
-            'INSERT INTO portfolio.review (name, email, feedback, stars) VALUES ($1, $2, $3, $4)',
-            [cleanName, cleanEmail, messageToStore, 5]
-        );
+        await db.insert(review).values({
+            name: cleanName,
+            email: cleanEmail,
+            feedback: messageToStore,
+            stars: 5,
+        });
         console.log(`[Contact API] Saved to portfolio.review.`);
 
         // 2. Background Task: AI Email (Fire-and-Forget)
         const sendEmailTask = async () => {
             try {
                 // Fetch Profile
-                const profileResult = await pool.query('SELECT name, current_company, role as current_role, linkedin, github FROM portfolio.profile LIMIT 1');
-                const profile = profileResult.rows[0];
+                const profileResult = await db.select({
+                    name: profile.name,
+                    current_company: profile.current_company,
+                    current_role: profile.role,
+                    linkedin: profile.linkedin,
+                    github: profile.github
+                }).from(profile).limit(1);
+
+                const profileData = profileResult[0]; // Renamed local var to avoid conflict
+
 
                 // AI Prompt Construction
                 let aiPrompt = "";
-                const baseContext = `You are ${profile.name}, a ${profile.current_role} at ${profile.current_company}.`;
+                const baseContext = `You are ${profileData.name}, a ${profileData.current_role} at ${profileData.current_company}.`;
                 const toneInstruction = "Analyze the sender's message tone. If casual, be friendly. If formal, be professional.";
 
                 // IMPORTANT: We ask AI to handle the full email body including greeting and signature.
                 // We provide the name explicitly to avoid placeholders.
                 // We use <br> tags in the prompt instruction because 'marked' often squashes newlines.
-                const structureInstruction = `Start with "Hi ${name}," and end with the signature exactly like this:\nBest regards,<br>${profile.name}<br>${profile.current_role}<br>${profile.current_company}`;
+                const structureInstruction = `Start with "Hi ${name}," and end with the signature exactly like this:\nBest regards,<br>${profileData.name}<br>${profileData.current_role}<br>${profileData.current_company}`;
 
                 if (requestType === "Project Review") {
                     aiPrompt = `
@@ -77,27 +88,35 @@ export async function POST(request: Request) {
 
                 try {
                     // Check usage (Strictly by Email + Date, ignoring Name for counting)
-                    const usageRes = await pool.query(
-                        'SELECT usage_id, email_count FROM portfolio.ai_email_usage WHERE email = $1 AND email_date = $2 LIMIT 1',
-                        [cleanEmail, today]
-                    );
+                    const usageRes = await db.select({
+                        usage_id: aiEmailUsage.usage_id,
+                        email_count: aiEmailUsage.email_count
+                    })
+                        .from(aiEmailUsage)
+                        .where(and(eq(aiEmailUsage.email, cleanEmail), eq(aiEmailUsage.email_date, today)))
+                        .limit(1);
 
-                    if (usageRes.rows.length > 0) {
-                        const { usage_id, email_count } = usageRes.rows[0];
+                    if (usageRes.length > 0) {
+                        const { usage_id, email_count } = usageRes[0];
 
-                        if (email_count >= 5) {
+                        // Drizzle returns number or possibly string for counts, assuming number from schema definition
+                        if ((email_count || 0) >= 5) {
                             allowAI = false;
                             console.warn(`[Contact API] Rate limit exceeded for ${cleanEmail}. Sending generic email.`);
                         } else {
-                            // Increment Usage on the existing record found for this email
-                            await pool.query('UPDATE portfolio.ai_email_usage SET email_count = email_count + 1 WHERE usage_id = $1', [usage_id]);
+                            // Increment Usage
+                            await db.update(aiEmailUsage)
+                                .set({ email_count: sql`${aiEmailUsage.email_count} + 1` })
+                                .where(eq(aiEmailUsage.usage_id, usage_id));
                         }
                     } else {
-                        // Insert New Record for Day (Name is still required by DB, so we use the provided one)
-                        await pool.query(
-                            'INSERT INTO portfolio.ai_email_usage (email, name, email_date, email_count) VALUES ($1, $2, $3, 1)',
-                            [cleanEmail, cleanName, today]
-                        );
+                        // Insert New Record
+                        await db.insert(aiEmailUsage).values({
+                            email: cleanEmail,
+                            name: cleanName,
+                            email_date: today,
+                            email_count: 1
+                        });
                     }
                 } catch (dbError) {
                     console.error("Rate Limit DB Error:", dbError);
@@ -112,9 +131,9 @@ export async function POST(request: Request) {
                         Thank you for reaching out! I have received your message and will get back to you as soon as possible.<br><br>
                         (Auto-Reply: Daily AI limit reached, but your message is safe!)<br><br>
                         Best regards,<br>
-                        ${profile.name}<br>
-                        ${profile.current_role}<br>
-                        ${profile.current_company}
+                        ${profileData.name}<br>
+                        ${profileData.current_role}<br>
+                        ${profileData.current_company}
                     `;
                 } else {
                     // Call AI
@@ -132,9 +151,9 @@ export async function POST(request: Request) {
                             Thank you for reaching out! I have received your message and will get back to you as soon as possible.<br><br>
                             I usually respond within 24-48 hours.<br><br>
                             Best regards,<br>
-                            ${profile.name}<br>
-                            ${profile.current_role}<br>
-                            ${profile.current_company}
+                            ${profileData.name}<br>
+                            ${profileData.current_role}<br>
+                            ${profileData.current_company}
                         `;
                     }
                 }
@@ -168,7 +187,7 @@ export async function POST(request: Request) {
                     from: process.env.EMAIL_USER,
                     to: email,
                     cc: process.env.EMAIL_USER,
-                    subject: requestType === "Project Review" ? `Re: Your review on my portfolio` : `Re: Your message to ${profile.name}`,
+                    subject: requestType === "Project Review" ? `Re: Your review on my portfolio` : `Re: Your message to ${profileData.name}`,
                     html: htmlTemplate,
                 });
 

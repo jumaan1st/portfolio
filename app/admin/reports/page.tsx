@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { usePortfolio } from "@/components/PortfolioContext";
 import { useRouter } from "next/navigation";
-import { Database, HardDrive, FileText, FolderOpen, CheckCircle, AlertTriangle, RefreshCw, ShieldAlert, Eye, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Database, HardDrive, FileText, FolderOpen, CheckCircle, AlertTriangle, RefreshCw, ShieldAlert, Eye, X, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 
 // --- INTERFACES ---
@@ -505,12 +505,37 @@ export default function ReportsPage() {
                                                             </div>
                                                         </td>
                                                         <td className="px-6 py-4">
-                                                            <button
-                                                                onClick={() => setSelectedSession(log)}
-                                                                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-blue-600"
-                                                            >
-                                                                <Eye size={18} />
-                                                            </button>
+                                                            <div className="flex items-center gap-1">
+                                                                <button
+                                                                    onClick={() => setSelectedSession(log)}
+                                                                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-blue-600"
+                                                                    title="View Details"
+                                                                >
+                                                                    <Eye size={18} />
+                                                                </button>
+                                                                <button
+                                                                    onClick={async (e) => {
+                                                                        e.stopPropagation();
+                                                                        if (!window.confirm("Delete this session log?")) return;
+
+                                                                        try {
+                                                                            const res = await fetch(`/api/admin/audit/logs?id=${log.session_id}`, { method: 'DELETE' });
+                                                                            if (res.ok) {
+                                                                                addToast("Log deleted", "success");
+                                                                                setSessions(prev => prev.filter(s => s.session_id !== log.session_id));
+                                                                            } else {
+                                                                                addToast("Failed to delete", "error");
+                                                                            }
+                                                                        } catch (err) {
+                                                                            addToast("Error deleting", "error");
+                                                                        }
+                                                                    }}
+                                                                    className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors text-red-500"
+                                                                    title="Delete Log"
+                                                                >
+                                                                    <Trash2 size={18} />
+                                                                </button>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 );

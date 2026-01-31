@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import { db } from '@/lib/db';
+import { sessions } from '@/lib/schema';
+import { eq, desc, sql } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { UAParser } from 'ua-parser-js';
 
@@ -32,8 +34,10 @@ export async function POST(req: Request) {
         const body: SessionPayload = await req.json();
         const { sessionId, events, identity, deviceInfo } = body;
 
-        if (!sessionId || !events || !Array.isArray(events)) {
-            return NextResponse.json({ success: false, error: 'Invalid payload' }, { status: 400 });
+        // Basic validation including UUID format check
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!sessionId || !uuidRegex.test(sessionId) || !events || !Array.isArray(events)) {
+            return NextResponse.json({ success: false, error: 'Invalid payload or UUID' }, { status: 400 });
         }
 
         const headersList = await headers();
@@ -59,7 +63,6 @@ export async function POST(req: Request) {
 
         const browserName = result.browser.name || null;
         const osName = result.os.name || null;
-        // Map device type: console, mobile, tablet, smarttv, wearable, embedded. Default to 'desktop' if undefined.
         const deviceType = result.device.type || 'desktop';
 
         // User Identity Extraction
@@ -67,83 +70,66 @@ export async function POST(req: Request) {
         const userEmail = identity?.email || null;
         const userPhone = identity?.phone || null;
 
-        const client = await pool.connect();
-        try {
-            await client.query('BEGIN');
-
+        // Drizzle Transaction
+        await db.transaction(async (tx) => {
             console.log(`[Audit] Processing session ${sessionId} - Events: ${events.length}`);
 
-            // 1. Fetch existing history to ensure uniqueness
-            // We lock the row to avoid race conditions during the read-modify-write cycle
-            const existingRes = await client.query(
-                `SELECT visit_history FROM request_audit.sessions WHERE session_id = $1 FOR UPDATE`,
-                [sessionId]
-            );
+            // 1. Fetch existing session
+            // Note: Explicitly assuming sessionId is valid UUID
+            const existing = await tx.select().from(sessions).where(eq(sessions.session_id, sessionId));
 
-            let finalHistory: LogEvent[] = events;
+            let currentHistory: LogEvent[] = [];
+            let isNewSession = true; // Default to new if not found
 
-            if (existingRes.rows.length > 0) {
-                const currentHistory: LogEvent[] = existingRes.rows[0].visit_history || [];
-                const existingPaths = new Set(currentHistory.map(e => e.path));
-
-                // Filter new events: Only add if path hasn't been visited in this session
-                const uniqueNewEvents = events.filter(e => !existingPaths.has(e.path));
-
-                if (uniqueNewEvents.length > 0) {
-                    finalHistory = [...currentHistory, ...uniqueNewEvents];
-                } else {
-                    finalHistory = currentHistory; // No new unique pages
-                }
-            } else {
-                // New session: Ensure uniqueness within the batch itself
-                const seen = new Set<string>();
-                finalHistory = events.filter(e => {
-                    if (seen.has(e.path)) return false;
-                    seen.add(e.path);
-                    return true;
-                });
+            if (existing.length > 0) {
+                isNewSession = false;
+                const row = existing[0];
+                currentHistory = (row.visit_history as LogEvent[]) || [];
             }
 
-            // 2. Upsert Session with FINAL history
-            // We use EXCLUDED.visit_history to set the new computed full history
-            const query = `
-                WITH upsert AS (
-                    INSERT INTO request_audit.sessions (
-                        session_id, 
-                        ip_address, 
-                        user_identity, 
-                        visit_history, 
-                        device_info, 
-                        geo_info, 
-                        last_active_at,
-                        browser_name,
-                        operating_system,
-                        device_type,
-                        country_name,
-                        city_name,
-                        user_name,
-                        user_email,
-                        user_phone
-                    ) 
-                    VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7, $8, $9, $10, $11, $12, $13, $14)
-                    ON CONFLICT (session_id) 
-                    DO UPDATE SET 
-                        visit_history = EXCLUDED.visit_history, -- REPLACE with our pre-calculated unique list
-                        last_active_at = NOW(),
-                        user_identity = COALESCE(EXCLUDED.user_identity, request_audit.sessions.user_identity),
-                        ip_address = EXCLUDED.ip_address,
-                        device_info = COALESCE(EXCLUDED.device_info, request_audit.sessions.device_info),
-                        geo_info = COALESCE(EXCLUDED.geo_info, request_audit.sessions.geo_info),
-                        browser_name = COALESCE(EXCLUDED.browser_name, request_audit.sessions.browser_name),
-                        operating_system = COALESCE(EXCLUDED.operating_system, request_audit.sessions.operating_system),
-                        device_type = COALESCE(EXCLUDED.device_type, request_audit.sessions.device_type),
-                        country_name = COALESCE(EXCLUDED.country_name, request_audit.sessions.country_name),
-                        city_name = COALESCE(EXCLUDED.city_name, request_audit.sessions.city_name),
-                        user_name = COALESCE(EXCLUDED.user_name, request_audit.sessions.user_name),
-                        user_email = COALESCE(EXCLUDED.user_email, request_audit.sessions.user_email),
-                        user_phone = COALESCE(EXCLUDED.user_phone, request_audit.sessions.user_phone)
-                    RETURNING session_id
-                )
+            // Note: We removed the "stale session" suffixing logic because session_id is a UUID PK.
+            // We cannot change the ID of an existing row, nor insert a new row with the same ID.
+            // We will simply update the existing session with new events.
+
+            // Calculate History
+            const existingPaths = new Set(currentHistory.map(e => e.path));
+            const uniqueNewEvents = events.filter(e => !existingPaths.has(e.path));
+            const finalHistory = uniqueNewEvents.length > 0 ? [...currentHistory, ...uniqueNewEvents] : currentHistory;
+            const nowTime = new Date();
+
+            if (isNewSession) {
+                await tx.insert(sessions).values({
+                    session_id: sessionId,
+                    ip_address: ip,
+                    user_identity: identity || {},
+                    visit_history: finalHistory,
+                    device_info: deviceInfo || {},
+                    geo_info: geoInfo,
+                    last_active_at: nowTime,
+                    browser_name: browserName,
+                    operating_system: osName,
+                    device_type: deviceType,
+                    country_name: countryName,
+                    city_name: cityName,
+                    user_name: userName,
+                    user_email: userEmail,
+                    user_phone: userPhone,
+                    started_at: nowTime
+                });
+            } else {
+                await tx.update(sessions).set({
+                    visit_history: finalHistory,
+                    last_active_at: nowTime,
+                    user_identity: identity ? identity : undefined,
+                    ip_address: ip,
+                    device_info: deviceInfo ? deviceInfo : undefined,
+                    geo_info: geoInfo,
+                }).where(eq(sessions.session_id, sessionId));
+            }
+
+            // Retention cleanup
+            // Using raw SQL for complex deletion logic, ensuring UUID type safety
+            await tx.execute(sql`
                 DELETE FROM request_audit.sessions
                 WHERE session_id IN (
                     SELECT session_id 
@@ -151,34 +137,10 @@ export async function POST(req: Request) {
                     ORDER BY last_active_at DESC 
                     OFFSET 1000
                 )
-                AND session_id != $1;
-            `;
+                AND session_id <> ${sessionId}::uuid
+            `);
 
-            await client.query(query, [
-                sessionId,
-                ip,
-                JSON.stringify(identity || {}),
-                JSON.stringify(finalHistory), // Pass the DUPLICATE-FREE list
-                JSON.stringify(deviceInfo || {}),
-                JSON.stringify(geoInfo),
-                browserName,
-                osName,
-                deviceType,
-                countryName,
-                cityName,
-                userName,
-                userEmail,
-                userPhone
-            ]);
-
-            await client.query('COMMIT');
-        } catch (e) {
-            await client.query('ROLLBACK');
-            console.error("Transaction Error", e);
-            throw e;
-        } finally {
-            client.release();
-        }
+        });
 
         return NextResponse.json({ success: true });
     } catch (error) {

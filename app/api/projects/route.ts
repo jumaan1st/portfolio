@@ -1,6 +1,7 @@
-
 import { NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import { db } from '@/lib/db';
+import { projects } from '@/lib/schema';
+import { eq, ilike, and, desc, sql, or, count } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 
 
@@ -13,74 +14,91 @@ const getCachedProjects = unstable_cache(
 
     // Handle Single Fetch by ID
     if (id) {
-      const { rows } = await pool.query(`
-            SELECT 
-                id, title, category, tech, description, 
-                long_description AS "longDescription", 
-                features, challenges, link, github_link AS "githubLink", color, image, slug
-            FROM portfolio.projects
-            WHERE id = $1
-        `, [id]);
+      const rows = await db.select({
+        id: projects.id,
+        title: projects.title,
+        category: projects.category,
+        tech: projects.tech,
+        description: projects.description,
+        longDescription: projects.long_description,
+        features: projects.features,
+        challenges: projects.challenges,
+        link: projects.link,
+        githubLink: projects.github_link,
+        color: projects.color,
+        image: projects.image,
+        slug: projects.slug
+      }).from(projects).where(eq(projects.id, id));
+
       return rows.length > 0 ? rows[0] : null;
     }
 
     // Handle Single Fetch by Slug
     if (slug) {
-      const { rows } = await pool.query(`
-            SELECT 
-                id, title, category, tech, description, 
-                long_description AS "longDescription", 
-                features, challenges, link, github_link AS "githubLink", color, image, slug
-            FROM portfolio.projects
-            WHERE slug = $1
-        `, [slug]);
+      const rows = await db.select({
+        id: projects.id,
+        title: projects.title,
+        category: projects.category,
+        tech: projects.tech,
+        description: projects.description,
+        longDescription: projects.long_description,
+        features: projects.features,
+        challenges: projects.challenges,
+        link: projects.link,
+        githubLink: projects.github_link,
+        color: projects.color,
+        image: projects.image,
+        slug: projects.slug
+      }).from(projects).where(eq(projects.slug, slug));
       return rows.length > 0 ? rows[0] : null;
     }
 
-    let query = summaryMode
-      ? `
-        SELECT 
-          id, slug, title, category, tech, description, 
-          link, github_link AS "githubLink", color, image
-        FROM portfolio.projects
-        WHERE 1=1
-      `
-      : `
-        SELECT 
-          id, slug, title, category, tech, description, 
-          long_description AS "longDescription", 
-          features, challenges, link, github_link AS "githubLink", color, image
-        FROM portfolio.projects
-        WHERE 1=1
-      `;
-
-    const queryParams: any[] = [];
-
+    // List Query
+    let conditions = [];
     if (search) {
-      queryParams.push(`%${search}%`);
-      query += ` AND (title ILIKE $${queryParams.length} OR description ILIKE $${queryParams.length})`;
+      conditions.push(or(ilike(projects.title, `%${search}%`), ilike(projects.description, `%${search}%`)));
     }
-
     if (category) {
-      queryParams.push(category);
-      query += ` AND category = $${queryParams.length}`;
+      conditions.push(eq(projects.category, category));
     }
 
-    const countRes = await pool.query(`SELECT COUNT(*) FROM (${query}) as sub`, queryParams);
-    const total = parseInt(countRes.rows[0].count);
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-    query += ` ORDER BY sort_order DESC, id DESC LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`;
-    queryParams.push(limit, offset);
+    // Count
+    const countRes = await db.select({ count: count() }).from(projects).where(whereClause);
+    const total = countRes[0].count; // count() returns number or string depending on driver, but usually safe to parse or use. Drizzle auto-maps? node-postgres returns string for count.
 
-    const { rows } = await pool.query(query, queryParams);
+    // Data
+    const rows = await db.select({
+      id: projects.id,
+      slug: projects.slug,
+      title: projects.title,
+      category: projects.category,
+      tech: projects.tech,
+      description: projects.description,
+      link: projects.link,
+      githubLink: projects.github_link,
+      color: projects.color,
+      image: projects.image,
+      ...(summaryMode ? {} : {
+        longDescription: projects.long_description,
+        features: projects.features,
+        challenges: projects.challenges,
+      })
+    })
+      .from(projects)
+      .where(whereClause)
+      .orderBy(desc(projects.sort_order), desc(projects.id))
+      .limit(limit)
+      .offset(offset);
 
     return {
       data: rows,
       meta: {
-        total,
+        total: Number(total), // Ensure number
         page: Math.floor(offset / limit) + 1,
         limit,
-        totalPages: Math.ceil(total / limit)
+        totalPages: Math.ceil(Number(total) / limit)
       }
     };
   },
@@ -142,34 +160,55 @@ export async function POST(request: Request) {
       image
     } = body;
 
-    // Generate ID since column is not SERIAL
-    const idRes = await pool.query('SELECT COALESCE(MAX(id), 0) + 1 as new_id FROM portfolio.projects');
-    const newId = idRes.rows[0].new_id;
+    // Generate ID
+    const idRes = await db.select({ new_id: sql<number>`COALESCE(MAX(${projects.id}), 0) + 1` }).from(projects);
+    const newId = idRes[0].new_id;
 
     // Generate Slug
     let slug = body.slug ? toSlug(body.slug) : toSlug(title);
     if (!slug) slug = `project-${newId}`;
 
     // Ensure uniqueness
-    const slugCheck = await pool.query('SELECT 1 FROM portfolio.projects WHERE slug = $1', [slug]);
-    if (slugCheck.rows.length > 0) {
+    const slugCheck = await db.select({ id: projects.id }).from(projects).where(eq(projects.slug, slug));
+    if (slugCheck.length > 0) {
       slug = `${slug}-${newId}`;
     }
 
-    // Get Max Sort Order to put new project at top
-    const sortRes = await pool.query('SELECT COALESCE(MAX(sort_order), 0) + 1 as new_sort FROM portfolio.projects');
-    const newSortOrder = sortRes.rows[0].new_sort;
+    // Get Max Sort Order
+    const sortRes = await db.select({ new_sort: sql<number>`COALESCE(MAX(${projects.sort_order}), 0) + 1` }).from(projects);
+    const newSortOrder = sortRes[0].new_sort;
 
-    const { rows } = await pool.query(`
-            INSERT INTO portfolio.projects (
-                id, slug, title, category, tech, description, long_description,
-                features, challenges, link, github_link, color, image, sort_order
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-            RETURNING *, long_description as "longDescription", github_link as "githubLink"
-        `, [
-      newId, slug, title, category, JSON.stringify(tech), description, longDescription,
-      JSON.stringify(features), challenges, link, githubLink, color, image, newSortOrder
-    ]);
+    const rows = await db.insert(projects).values({
+      id: newId,
+      slug: slug,
+      title: title,
+      category: category,
+      tech: tech, // Drizzle handles array<string> for jsonb
+      description: description,
+      long_description: longDescription,
+      features: features,
+      challenges: challenges,
+      link: link,
+      github_link: githubLink,
+      color: color,
+      image: image,
+      sort_order: newSortOrder
+    }).returning({
+      id: projects.id,
+      slug: projects.slug,
+      title: projects.title,
+      category: projects.category,
+      tech: projects.tech,
+      description: projects.description,
+      longDescription: projects.long_description,
+      features: projects.features,
+      challenges: projects.challenges,
+      link: projects.link,
+      githubLink: projects.github_link,
+      color: projects.color,
+      image: projects.image,
+      sort_order: projects.sort_order
+    });
 
     return NextResponse.json(rows[0]);
   } catch (error: any) {
@@ -208,28 +247,39 @@ export async function PUT(request: Request) {
       slug: requestedSlug
     } = body;
 
-    const { rows } = await pool.query(`
-            UPDATE portfolio.projects
-            SET
-                title = COALESCE($1, title),
-                category = COALESCE($2, category),
-                tech = COALESCE($3, tech),
-                description = COALESCE($4, description),
-                long_description = COALESCE($5, long_description),
-                features = COALESCE($6, features),
-                challenges = COALESCE($7, challenges),
-                link = COALESCE($8, link),
-                github_link = COALESCE($9, github_link),
-                color = COALESCE($10, color),
-                image = COALESCE($11, image),
-                slug = COALESCE($13, slug)
-            WHERE id = $12
-            RETURNING *, long_description as "longDescription", github_link as "githubLink"
-        `, [
-      title, category, JSON.stringify(tech), description, longDescription,
-      JSON.stringify(features), challenges, link, githubLink, color, image,
-      id, requestedSlug
-    ]);
+    const updateData: any = {};
+    if (title !== undefined) updateData.title = title;
+    if (category !== undefined) updateData.category = category;
+    if (tech !== undefined) updateData.tech = tech;
+    if (description !== undefined) updateData.description = description;
+    if (longDescription !== undefined) updateData.long_description = longDescription;
+    if (features !== undefined) updateData.features = features;
+    if (challenges !== undefined) updateData.challenges = challenges;
+    if (link !== undefined) updateData.link = link;
+    if (githubLink !== undefined) updateData.github_link = githubLink;
+    if (color !== undefined) updateData.color = color;
+    if (image !== undefined) updateData.image = image;
+    if (requestedSlug !== undefined) updateData.slug = requestedSlug;
+
+    const rows = await db.update(projects)
+      .set(updateData)
+      .where(eq(projects.id, parseInt(id)))
+      .returning({
+        id: projects.id,
+        slug: projects.slug,
+        title: projects.title,
+        category: projects.category,
+        tech: projects.tech,
+        description: projects.description,
+        longDescription: projects.long_description,
+        features: projects.features,
+        challenges: projects.challenges,
+        link: projects.link,
+        githubLink: projects.github_link,
+        color: projects.color,
+        image: projects.image,
+        sort_order: projects.sort_order
+      });
 
     if (rows.length === 0) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
@@ -256,9 +306,10 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
     }
 
-    const { rowCount } = await pool.query('DELETE FROM portfolio.projects WHERE id = $1', [id]);
+    const res = await db.delete(projects).where(eq(projects.id, parseInt(id)));
+    const deletedCount = res.rowCount;
 
-    if (rowCount === 0) {
+    if (deletedCount === 0) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 

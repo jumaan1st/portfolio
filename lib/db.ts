@@ -8,7 +8,7 @@ const poolConfig = {
     host: process.env.DB_HOST,
     port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 5432,
     database: process.env.DB_NAME,
-    ssl: isLocal ? undefined : {
+    ssl: isLocal ? false : {
         rejectUnauthorized: false
     }
 };
@@ -23,4 +23,8 @@ if (process.env.NODE_ENV !== 'production') {
     global.postgresPool = pool;
 }
 
+import { drizzle } from 'drizzle-orm/node-postgres';
+import * as schema from './schema';
+
+export const db = drizzle(pool, { schema });
 export default pool;

@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import { db } from '@/lib/db';
+import { sessions } from '@/lib/schema';
+import { desc, count, ilike, and, gte, lte, eq } from 'drizzle-orm';
 
 export async function GET(req: Request) {
     try {
@@ -12,57 +14,27 @@ export async function GET(req: Request) {
         const startDate = searchParams.get('startDate');
         const endDate = searchParams.get('endDate');
 
-        const values: any[] = [];
-        const conditions: string[] = [];
+        const conditions = [];
 
-        if (ip) {
-            conditions.push(`ip_address ILIKE $${values.length + 1}`);
-            values.push(`%${ip}%`);
-        }
-        if (startDate) {
-            conditions.push(`started_at >= $${values.length + 1}`);
-            values.push(startDate);
-        }
-        if (endDate) {
-            conditions.push(`started_at <= $${values.length + 1}`);
-            values.push(endDate);
-        }
+        if (ip) conditions.push(ilike(sessions.ip_address, `%${ip}%`));
+        if (startDate) conditions.push(gte(sessions.started_at, new Date(startDate)));
+        if (endDate) conditions.push(lte(sessions.started_at, new Date(endDate)));
 
-        const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+        const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-        // Count total sessions
-        const countQuery = `SELECT COUNT(*) FROM request_audit.sessions ${whereClause}`;
-        const countRes = await pool.query(countQuery, values);
-        const total = parseInt(countRes.rows[0].count);
+        // Count
+        const countRes = await db.select({ count: count() }).from(sessions).where(whereClause);
+        const total = countRes[0].count;
 
-        // Fetch paginated sessions
-        const dataQuery = `
-            SELECT 
-                session_id,
-                ip_address,
-                user_identity,
-                geo_info,
-                device_info,
-                visit_history,
-                started_at,
-                last_active_at,
-                browser_name,
-                operating_system,
-                device_type,
-                country_name,
-                city_name,
-                user_name,
-                user_email
-            FROM request_audit.sessions
-            ${whereClause}
-            ORDER BY last_active_at DESC
-            LIMIT $${values.length + 1} OFFSET $${values.length + 2}
-        `;
-
-        const dataRes = await pool.query(dataQuery, [...values, limit, offset]);
+        // Data
+        const logs = await db.select().from(sessions)
+            .where(whereClause)
+            .orderBy(desc(sessions.last_active_at))
+            .limit(limit)
+            .offset(offset);
 
         return NextResponse.json({
-            logs: dataRes.rows,
+            logs: logs,
             pagination: {
                 total,
                 page,
@@ -72,6 +44,24 @@ export async function GET(req: Request) {
         });
     } catch (error) {
         console.error('Audit Logs Fetch Error:', error);
+        return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });
+    }
+}
+
+export async function DELETE(req: Request) {
+    try {
+        const { searchParams } = new URL(req.url);
+        const id = searchParams.get('id');
+
+        if (!id) {
+            return NextResponse.json({ error: 'Log ID required' }, { status: 400 });
+        }
+
+        await db.delete(sessions).where(eq(sessions.session_id, id));
+
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        console.error('Audit Log Delete Error:', error);
         return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });
     }
 }

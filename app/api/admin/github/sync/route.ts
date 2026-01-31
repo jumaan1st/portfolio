@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import { db } from '@/lib/db';
+import { profile as profileTable, projects as projectsTable, blogs as blogsTable } from '@/lib/schema';
+import { desc, eq } from 'drizzle-orm';
 
 export async function POST(request: Request) {
     try {
@@ -15,16 +17,30 @@ export async function POST(request: Request) {
         }
 
         // 2. Fetch Data from DB
-        const profileRes = await pool.query('SELECT * FROM portfolio.profile LIMIT 1');
-        const profile = profileRes.rows[0];
+        const profileRes = await db.select().from(profileTable).limit(1);
+        const profile = profileRes[0];
 
         // Fetch Projects
-        const projectsRes = await pool.query('SELECT title, description, tech, link FROM portfolio.projects ORDER BY id DESC LIMIT 4');
-        const projects = projectsRes.rows;
+        const projects = await db.select({
+            title: projectsTable.title,
+            description: projectsTable.description,
+            tech: projectsTable.tech,
+            link: projectsTable.link
+        })
+            .from(projectsTable)
+            .orderBy(desc(projectsTable.id))
+            .limit(4);
 
         // Fetch Blogs
-        const blogsRes = await pool.query('SELECT id, title, excerpt FROM portfolio.blogs WHERE is_hidden = false ORDER BY date DESC LIMIT 4');
-        const blogs = blogsRes.rows;
+        const blogs = await db.select({
+            id: blogsTable.id,
+            title: blogsTable.title,
+            excerpt: blogsTable.excerpt
+        })
+            .from(blogsTable)
+            .where(eq(blogsTable.is_hidden, false))
+            .orderBy(desc(blogsTable.date))
+            .limit(4);
 
         // 3. Generate Markdown Content
         // Use safe defaults if fields are missing

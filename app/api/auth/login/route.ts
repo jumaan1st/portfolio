@@ -1,6 +1,7 @@
 
 import { NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import { db } from '@/lib/db';
+import { config as configTable } from '@/lib/schema';
 import bcrypt from 'bcrypt';
 import { SignJWT } from 'jose';
 
@@ -16,11 +17,10 @@ export async function POST(request: Request) {
         }
 
         // Fetch admin credentials from DB
-        const { rows } = await pool.query(`
-            SELECT admin_email, admin_pass 
-            FROM portfolio.config 
-            LIMIT 1
-        `);
+        const rows = await db.select({
+            admin_email: configTable.admin_email,
+            admin_pass: configTable.admin_pass
+        }).from(configTable).limit(1);
 
         if (rows.length === 0) {
             return NextResponse.json({ error: 'Configuration not found' }, { status: 404 });
