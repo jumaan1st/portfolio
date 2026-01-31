@@ -207,6 +207,10 @@ export default function ReportsPage() {
         ip: ""
     });
 
+    const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean, sessionId: string | null }>({
+        show: false, sessionId: null
+    });
+
     const [pagination, setPagination] = useState({
         page: 1, limit: 20, total: 0, totalPages: 1
     });
@@ -326,6 +330,55 @@ export default function ReportsPage() {
                             </div>
                         </div>
                     </button>
+                </div>
+            </div>
+        </div>
+    );
+
+    const DeleteConfirmationModal = () => (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-sm w-full border border-slate-200 dark:border-slate-800 p-6 transform transition-all scale-100">
+                <div className="flex flex-col items-center text-center gap-4">
+                    <div className="bg-red-100 dark:bg-red-900/30 p-3 rounded-full text-red-600 dark:text-red-500">
+                        <AlertTriangle size={32} />
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Delete Session Log?</h3>
+                        <p className="text-sm text-slate-500 mt-1">
+                            This action cannot be undone. The session history will be permanently removed.
+                        </p>
+                    </div>
+                    <div className="flex gap-3 w-full mt-2">
+                        <button
+                            onClick={() => setDeleteConfirm({ show: false, sessionId: null })}
+                            className="flex-1 py-2.5 px-4 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={async () => {
+                                if (!deleteConfirm.sessionId) return;
+                                const sid = deleteConfirm.sessionId;
+                                // Optimistic close
+                                setDeleteConfirm({ show: false, sessionId: null });
+
+                                try {
+                                    const res = await fetch(`/api/admin/audit/logs?id=${sid}`, { method: 'DELETE' });
+                                    if (res.ok) {
+                                        addToast("Log deleted", "success");
+                                        setSessions(prev => prev.filter(s => s.session_id !== sid));
+                                    } else {
+                                        addToast("Failed to delete", "error");
+                                    }
+                                } catch (err) {
+                                    addToast("Error deleting", "error");
+                                }
+                            }}
+                            className="flex-1 py-2.5 px-4 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 shadow-lg shadow-red-500/25 transition-colors"
+                        >
+                            Delete
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -516,19 +569,7 @@ export default function ReportsPage() {
                                                                 <button
                                                                     onClick={async (e) => {
                                                                         e.stopPropagation();
-                                                                        if (!window.confirm("Delete this session log?")) return;
-
-                                                                        try {
-                                                                            const res = await fetch(`/api/admin/audit/logs?id=${log.session_id}`, { method: 'DELETE' });
-                                                                            if (res.ok) {
-                                                                                addToast("Log deleted", "success");
-                                                                                setSessions(prev => prev.filter(s => s.session_id !== log.session_id));
-                                                                            } else {
-                                                                                addToast("Failed to delete", "error");
-                                                                            }
-                                                                        } catch (err) {
-                                                                            addToast("Error deleting", "error");
-                                                                        }
+                                                                        setDeleteConfirm({ show: true, sessionId: log.session_id });
                                                                     }}
                                                                     className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors text-red-500"
                                                                     title="Delete Log"
@@ -640,6 +681,7 @@ export default function ReportsPage() {
                 )}
 
                 {showReportOptions && <ReportOptionsModal />}
+                {deleteConfirm.show && <DeleteConfirmationModal />}
             </div>
         </div>
     );

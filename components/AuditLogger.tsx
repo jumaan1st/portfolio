@@ -79,12 +79,22 @@ export default function AuditLogger() {
 
         try {
             // Use keepalive for reliability
-            await fetch("/api/audit/session", {
+            // Use keepalive for reliability
+            const res = await fetch("/api/audit/session", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
                 keepalive: true
             });
+
+            if (res.ok) {
+                const data = await res.json();
+                // SERVER-SIDE ROTATION HANDLER
+                if (data.newSessionId) {
+                    localStorage.setItem("portfolio_session_id", data.newSessionId);
+                    console.debug("Session rotated by server:", data.newSessionId);
+                }
+            }
         } catch (e) {
             console.error("Audit flush failed", e);
         }
