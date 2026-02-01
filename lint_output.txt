@@ -1,0 +1,389 @@
+
+> portfolio@0.1.0 lint
+> eslint
+
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\admin\outreach\page.tsx
+    6:33  warning  'Mail' is defined but never used                                 @typescript-eslint/no-unused-vars
+    6:44  warning  'Trash2' is defined but never used                               @typescript-eslint/no-unused-vars
+    6:52  warning  'CheckCircle' is defined but never used                          @typescript-eslint/no-unused-vars
+    6:65  warning  'Clock' is defined but never used                                @typescript-eslint/no-unused-vars
+    6:75  warning  'Search' is defined but never used                               @typescript-eslint/no-unused-vars
+   31:12  warning  'loading' is assigned a value but never used                     @typescript-eslint/no-unused-vars
+   62:18  warning  'error' is defined but never used                                @typescript-eslint/no-unused-vars
+   87:18  warning  'e' is defined but never used                                    @typescript-eslint/no-unused-vars
+  159:18  warning  'error' is defined but never used                                @typescript-eslint/no-unused-vars
+  168:15  warning  'websiteLink' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+  371:66  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  371:78  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\admin\reports\page.tsx
+  279:18  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  373:42  warning  'err' is defined but never used    @typescript-eslint/no-unused-vars
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\api\admin\audit\report\route.ts
+   12:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   73:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  100:90  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  114:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\api\admin\github\generate-readme\route.ts
+  16:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\api\admin\github\push-readme\route.ts
+  21:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\api\admin\github\sync\route.ts
+    6:28   warning  'request' is defined but never used       @typescript-eslint/no-unused-vars
+   64:18   warning  'e' is defined but never used             @typescript-eslint/no-unused-vars
+  115:20   error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  118:104  warning  'e' is defined but never used             @typescript-eslint/no-unused-vars
+  128:45   error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  212:21   error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\api\admin\outreach\draft\route.ts
+  85:18  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\api\admin\outreach\leads\route.ts
+   3:27  warning  'portfolio' is defined but never used  @typescript-eslint/no-unused-vars
+  32:27  warning  'req' is defined but never used        @typescript-eslint/no-unused-vars
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\api\admin\stats\route.ts
+  25:15  warning  'dbName' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  32:28  error    Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\api\ai\generate\route.ts
+  158:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\api\audit\route.ts
+  8:23  warning  'type' is assigned a value but never used        @typescript-eslint/no-unused-vars
+  8:29  warning  'resourceId' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  8:50  warning  'referrer' is assigned a value but never used    @typescript-eslint/no-unused-vars
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\api\audit\session\route.ts
+   4:14  warning  'desc' is defined but never used          @typescript-eslint/no-unused-vars
+  18:20  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\api\auth\check\route.ts
+  16:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\api\blogs\reorder\route.ts
+  30:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\api\blogs\route.ts
+    4:48  warning  'not' is defined but never used                        @typescript-eslint/no-unused-vars
+    7:22  error    Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+   16:18  error    Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+   31:9   error    'conditions' is never reassigned. Use 'const' instead  prefer-const
+  158:19  error    Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  177:23  error    Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  194:19  error    Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  209:19  error    Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\api\bootstrap\route.ts
+    8:25  warning  'and' is defined but never used           @typescript-eslint/no-unused-vars
+  142:35  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  148:42  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  156:36  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\api\certifications\route.ts
+  12:14  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  28:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  49:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  64:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\api\chat\route.ts
+  57:28  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  58:30  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\api\contact\route.ts
+  141:29  error  'aiEmailBodyRaw' is never reassigned. Use 'const' instead  prefer-const
+  145:44  error  A `require()` style import is forbidden                    @typescript-eslint/no-require-imports
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\api\debug-db\route.ts
+  21:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\api\debug-mail\route.ts
+  46:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\api\education\route.ts
+  13:12  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  31:19  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  54:19  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  69:19  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\api\experience\route.ts
+  13:12  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  36:19  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  59:19  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  74:19  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\api\profile\route.ts
+   41:83  warning  'e' is defined but never used             @typescript-eslint/no-unused-vars
+   76:23  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  128:89  warning  'e' is defined but never used             @typescript-eslint/no-unused-vars
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\api\projects\reorder\route.ts
+  33:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\api\projects\route.ts
+   11:18  error  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+   57:9   error  'conditions' is never reassigned. Use 'const' instead  prefer-const
+  214:19  error  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  250:23  error  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  289:19  error  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  317:19  error  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\api\skills\route.ts
+  12:12  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  22:19  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  37:19  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\blogs\[slug]\page.tsx
+  4:8  warning  'pool' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\blogs\new\page.tsx
+  11:13  warning  'createBlog' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\not-found.tsx
+  4:26  warning  'Terminal' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\projects\[slug]\edit\page.tsx
+  63:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\projects\[slug]\page.tsx
+  17:17  error  'res' is never reassigned. Use 'const' instead  prefer-const
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\app\sitemap.ts
+  37:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  44:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\components\AIChatWidget.tsx
+    4:15  warning  'Loader2' is defined but never used          @typescript-eslint/no-unused-vars
+   99:50  error    Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  101:17  warning  'config' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  101:25  warning  'ui' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  107:53  error    Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  109:61  error    Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  120:26  error    Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  130:26  error    Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  175:18  warning  'error' is defined but never used            @typescript-eslint/no-unused-vars
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\components\AuditLogger.tsx
+    4:23  warning  'useSearchParams' is defined but never used                                                                    @typescript-eslint/no-unused-vars
+  153:8   warning  React Hook useEffect has a missing dependency: 'flushQueue'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\components\ClientLayout.tsx
+  55:26  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\components\FileUploader.tsx
+  97:29  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\components\PortfolioContext.tsx
+    5:43  warning  'Skill' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+   29:21  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+   30:33  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+   34:26  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+   35:38  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+   39:30  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+   40:42  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+   59:26  warning  'setProjectsMeta' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+   63:11  warning  'parseOrNull' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+   63:57  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+  219:99  warning  'e' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+  310:34  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+  315:46  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+  326:43  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+  332:55  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+  345:39  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+  350:51  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+  394:9   warning  React Hook React.useMemo has missing dependencies: 'createBlog', 'createCertification', 'createEducation', 'createExperience', 'createSkill', 'deleteBlog', 'deleteCertification', 'deleteEducation', 'deleteExperience', 'deleteProject', 'deleteSkill', 'projectsMeta', 'updateBlog', 'updateCertification', 'updateEducation', 'updateExperience', and 'updateProject'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\components\ProjectEditor.tsx
+   20:81  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  100:18  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  131:18  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\components\ProjectEditorPage.tsx
+  3:27  warning  'useEffect' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\components\ProjectLink.tsx
+  6:8  warning  'Link' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\components\RichTextEditor.tsx
+   32:12  error    Component definition is missing display name                                                                         react/display-name
+   32:41  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+   56:21  warning  'X' is defined but never used                                                                                        @typescript-eslint/no-unused-vars
+   63:16  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+   85:22  warning  'e' is defined but never used                                                                                        @typescript-eslint/no-unused-vars
+   94:29  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  154:33  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  168:54  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  237:17  error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  279:65  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  280:63  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  283:72  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  284:70  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\components\pages\AboutPage.tsx
+   10:25  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+   11:24  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+   69:30  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\components\pages\AboutPage.tsx:69:30
+  67 |     );
+  68 |
+> 69 |     if (showLoading) return <LoadingSkeleton />;
+     |                              ^^^^^^^^^^^^^^^ This component is created during render
+  70 |
+  71 |     return (
+  72 |         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl mx-auto space-y-12 pb-12">
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\components\pages\AboutPage.tsx:24:29
+  22 |
+  23 |     // Loading Skeleton Component
+> 24 |     const LoadingSkeleton = () => (
+     |                             ^^^^^^^
+> 25 |         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl mx-auto space-y-12 pb-12">
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 26 |             <div className="text-center mb-12 space-y-4">
+     ΓÇª
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 66 |         </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 67 |     );
+     | ^^^^^^ The component is created during render here
+  68 |
+  69 |     if (showLoading) return <LoadingSkeleton />;
+  70 |  react-hooks/static-components
+  181:60  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  182:61  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  183:63  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  184:60  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  185:58  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\components\pages\AdminPage.tsx
+    5:44   warning  'SaveAll' is defined but never used                                                                                                                                         @typescript-eslint/no-unused-vars
+    7:33   warning  'Search' is defined but never used                                                                                                                                          @typescript-eslint/no-unused-vars
+    7:41   warning  'Upload' is defined but never used                                                                                                                                          @typescript-eslint/no-unused-vars
+   11:10   warning  'Project' is defined but never used                                                                                                                                         @typescript-eslint/no-unused-vars
+   14:10   warning  'BLOG_TAGS' is defined but never used                                                                                                                                       @typescript-eslint/no-unused-vars
+   16:10   warning  'extractFirstImage' is defined but never used                                                                                                                               @typescript-eslint/no-unused-vars
+   20:62   error    Unexpected any. Specify a different type                                                                                                                                    @typescript-eslint/no-explicit-any
+   62:9    warning  'projectsMeta' is assigned a value but never used                                                                                                                           @typescript-eslint/no-unused-vars
+   66:9    warning  'createProject' is assigned a value but never used                                                                                                                          @typescript-eslint/no-unused-vars
+   66:24   warning  'updateProject' is assigned a value but never used                                                                                                                          @typescript-eslint/no-unused-vars
+   66:39   warning  'deleteProject' is assigned a value but never used                                                                                                                          @typescript-eslint/no-unused-vars
+   88:27   warning  'setIsLoadingData' is assigned a value but never used                                                                                                                       @typescript-eslint/no-unused-vars
+   91:25   warning  'setCurrentPage' is assigned a value but never used                                                                                                                         @typescript-eslint/no-unused-vars
+   92:11   warning  'projectsPerPage' is assigned a value but never used                                                                                                                        @typescript-eslint/no-unused-vars
+  110:8    warning  React Hook useEffect has a missing dependency: 'fetchAdminData'. Either include it or remove the dependency array                                                           react-hooks/exhaustive-deps
+  132:8    warning  React Hook useEffect has missing dependencies: 'fetchAdminBlogs', 'fetchAdminCertifications', and 'fetchAdminProjects'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  142:12   warning  'newCertification' is assigned a value but never used                                                                                                                       @typescript-eslint/no-unused-vars
+  142:30   warning  'setNewCertification' is assigned a value but never used                                                                                                                    @typescript-eslint/no-unused-vars
+  148:12   warning  'showAiModal' is assigned a value but never used                                                                                                                            @typescript-eslint/no-unused-vars
+  148:25   warning  'setShowAiModal' is assigned a value but never used                                                                                                                         @typescript-eslint/no-unused-vars
+  149:12   warning  'aiPrompt' is assigned a value but never used                                                                                                                               @typescript-eslint/no-unused-vars
+  149:22   warning  'setAiPrompt' is assigned a value but never used                                                                                                                            @typescript-eslint/no-unused-vars
+  150:12   warning  'isGenerating' is assigned a value but never used                                                                                                                           @typescript-eslint/no-unused-vars
+  150:26   warning  'setIsGenerating' is assigned a value but never used                                                                                                                        @typescript-eslint/no-unused-vars
+  154:54   error    Unexpected any. Specify a different type                                                                                                                                    @typescript-eslint/no-explicit-any
+  156:12   warning  'showReviewModal' is assigned a value but never used                                                                                                                        @typescript-eslint/no-unused-vars
+  169:83   warning  'e' is defined but never used                                                                                                                                               @typescript-eslint/no-unused-vars
+  175:107  warning  'e' is defined but never used                                                                                                                                               @typescript-eslint/no-unused-vars
+  200:18   warning  'error' is defined but never used                                                                                                                                           @typescript-eslint/no-unused-vars
+  246:18   warning  'e' is defined but never used                                                                                                                                               @typescript-eslint/no-unused-vars
+  314:18   warning  'e' is defined but never used                                                                                                                                               @typescript-eslint/no-unused-vars
+  321:11   warning  'handleConfirmImport' is assigned a value but never used                                                                                                                    @typescript-eslint/no-unused-vars
+  329:48   error    Unexpected any. Specify a different type                                                                                                                                    @typescript-eslint/no-explicit-any
+  330:52   error    Unexpected any. Specify a different type                                                                                                                                    @typescript-eslint/no-explicit-any
+  331:51   error    Unexpected any. Specify a different type                                                                                                                                    @typescript-eslint/no-explicit-any
+  336:18   warning  'e' is defined but never used                                                                                                                                               @typescript-eslint/no-unused-vars
+  846:68   error    Unexpected any. Specify a different type                                                                                                                                    @typescript-eslint/no-explicit-any
+  853:62   error    Unexpected any. Specify a different type                                                                                                                                    @typescript-eslint/no-explicit-any
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\components\pages\BlogClientRoute.tsx
+  16:11  warning  'router' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\components\pages\BlogDetailPage.tsx
+  115:29  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\components\pages\BlogEditor.tsx
+    4:10  warning  'useRouter' is defined but never used                                                                                          @typescript-eslint/no-unused-vars
+    5:19  warning  'Trash2' is defined but never used                                                                                             @typescript-eslint/no-unused-vars
+    5:36  warning  'ImageIcon' is defined but never used                                                                                          @typescript-eslint/no-unused-vars
+   12:57  error    Unexpected any. Specify a different type                                                                                       @typescript-eslint/no-explicit-any
+   72:8   warning  React Hook React.useEffect has a missing dependency: 'editingBlog.readTime'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  256:84  error    Unexpected any. Specify a different type                                                                                       @typescript-eslint/no-explicit-any
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\components\pages\BlogsPage.tsx
+   13:48  warning  'createBlog' is assigned a value but never used                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+   41:40  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+   55:8   warning  React Hook useEffect has a missing dependency: 'fetchBlogs'. Either include it or remove the dependency array                                                                                                                                                                            react-hooks/exhaustive-deps
+  161:62  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  198:45  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\components\pages\ContactPage.tsx
+  25:22  warning  'e' is defined but never used                      @typescript-eslint/no-unused-vars
+  31:11  warning  'handleChange' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  63:18  warning  'error' is defined but never used                  @typescript-eslint/no-unused-vars
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\components\pages\GenericReorderPage.tsx
+   52:54  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  184:86  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+  184:91  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+  225:41  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\components\pages\HomePage.tsx
+    3:27  warning  'useEffect' is defined but never used                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+   12:5   warning  'Terminal' is defined but never used                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+   40:13  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  327:41  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\components\pages\ProjectDetailPage.tsx
+   33:21  warning  'setProject' is assigned a value but never used                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+  108:18  warning  'e' is defined but never used                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+  173:25  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\components\pages\ProjectsPage.tsx
+    5:64  warning  'ArrowUp' is defined but never used                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+    5:73  warning  'ArrowDown' is defined but never used                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+   15:46  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  151:75  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  158:45  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\components\pages\ReorderProjectsPage.tsx
+    3:38  warning  'useCallback' is defined but never used                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+   43:54  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+   43:59  warning  'index' is defined but never used                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  186:86  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+  186:91  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+  227:41  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\components\ui\IconPicker.tsx
+  132:41  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  132:50  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\data\portfolioData.ts
+  2:15  warning  'ComponentType' is defined but never used  @typescript-eslint/no-unused-vars
+  2:30  warning  'SVGProps' is defined but never used       @typescript-eslint/no-unused-vars
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\hooks\useCodeBlockEnhancer.ts
+    6:26  error    Unexpected any. Specify a different type                                                                                                                 @typescript-eslint/no-explicit-any
+  182:23  warning  React Hook useEffect has a spread element in its dependency array. This means we can't statically verify whether you've passed the correct dependencies  react-hooks/exhaustive-deps
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\lib\github-sync.ts
+  21:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\lib\utils.ts
+  16:14  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\moham\Desktop\portfolio-app\portfolio-app\test-ai-connection.js
+  1:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  2:14  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+Γ£û 232 problems (117 errors, 115 warnings)
+  4 errors and 0 warnings potentially fixable with the `--fix` option.
+

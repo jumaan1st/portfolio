@@ -12,6 +12,7 @@
     "@aws-sdk/client-s3": "^3.956.0",
     "@types/ua-parser-js": "^0.7.39",
     "@vercel/analytics": "^1.6.1",
+    "axios": "^1.13.4",
     "bcrypt": "^6.0.0",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.45.1",

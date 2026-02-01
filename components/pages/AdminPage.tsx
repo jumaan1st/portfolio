@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import {
     Trash2, Plus, Save, X, Edit2, Loader2, SaveAll, Sparkles,
     LayoutDashboard, User, FolderOpen, PenTool, BookOpen, Briefcase, GraduationCap,
-    LogOut, Menu, ChevronRight, Search, Upload, ExternalLink, RefreshCw, CheckCircle, Award, ShieldAlert
+    LogOut, Menu, ChevronRight, Search, Upload, ExternalLink, RefreshCw, CheckCircle, Award, ShieldAlert, Send
 } from "lucide-react";
 import Link from "next/link";
 import { usePortfolio } from "@/components/PortfolioContext";
@@ -16,6 +16,8 @@ import { FileUploader } from "@/components/FileUploader";
 import { extractFirstImage, formatDateRange } from "@/lib/utils";
 
 // --- Sub-components (could be separate files, kept here for cohesion during migration) ---
+// --- Sub-components (could be separate files, kept here for cohesion during migration) ---
+
 
 const SidebarItem = ({ icon: Icon, label, active, onClick }: any) => (
     <button
@@ -417,6 +419,11 @@ const AdminContent: React.FC = () => {
                         <span>Manage Blogs</span>
                         <ExternalLink size={16} className="ml-auto opacity-50" />
                     </Link>
+                    <Link href="/admin/outreach" className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <Send size={20} />
+                        <span>Outreach Hub</span>
+                        <ExternalLink size={16} className="ml-auto opacity-50" />
+                    </Link>
                     <SidebarItem icon={PenTool} label="Skills" active={activeTab === 'skills'} onClick={() => setActiveTab('skills')} />
                     <SidebarItem icon={Award} label="Certifications" active={activeTab === 'certifications'} onClick={() => setActiveTab('certifications')} />
                     <SidebarItem icon={Briefcase} label="Experience" active={activeTab === 'experience'} onClick={() => setActiveTab('experience')} />
@@ -582,6 +589,11 @@ const AdminContent: React.FC = () => {
                     {/* PROJECTS REMOVED - Managed in /projects */}
 
                     {/* BLOGS */}
+
+
+                    {/* OUTREACH */}
+                    {/* OUTREACH - Moved to /admin/outreach */}
+
 
 
                     {/* SKILLS */}

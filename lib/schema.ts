@@ -156,3 +156,31 @@ export const sessions = requestAudit.table("sessions", {
     user_phone: varchar("user_phone", { length: 50 }),
     started_at: timestamp("started_at").defaultNow(),
 });
+
+export const jobApplications = portfolio.table("job_applications", {
+    id: uuid("id").primaryKey().defaultRandom(),
+    company_name: varchar("company_name", { length: 255 }).notNull(),
+    role: varchar("role", { length: 255 }).notNull(),
+    job_description: text("job_description"),
+    contact_name: varchar("contact_name", { length: 255 }),
+    contact_email: varchar("contact_email", { length: 255 }).notNull(),
+    contact_role: varchar("contact_role", { length: 255 }), // NEW: Recruiter's Role
+    status: varchar("status", { length: 50 }).default('Pending').notNull(), // Pending, Sent, Replied, Rejected
+    is_referral: boolean("is_referral").default(false), // NEW: Distinguish between Applications and Referrals
+    user_context: text("user_context"), // NEW: Custom user input/notes
+    tracking_token: uuid("tracking_token").defaultRandom(),
+    email_sent_count: integer("email_sent_count").default(0),
+    email_opens: integer("email_opens").default(0),
+    last_opened_at: timestamp("last_opened_at"),
+    last_contacted_at: timestamp("last_contacted_at"),
+    created_at: timestamp("created_at").defaultNow(),
+    updated_at: timestamp("updated_at").defaultNow(),
+});
+
+export const outreachThreads = portfolio.table("outreach_threads", {
+    id: uuid("id").primaryKey().defaultRandom(),
+    application_id: uuid("application_id").references(() => jobApplications.id).notNull(),
+    content: text("content"), // The email body or reply
+    direction: varchar("direction", { length: 20 }).notNull(), // 'inbound' (reply) or 'outbound' (sent)
+    sent_at: timestamp("sent_at").defaultNow(),
+});
