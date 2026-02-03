@@ -145,6 +145,31 @@ export default function OutreachManager() {
         }
     };
 
+    const handleDelete = async (id: string) => {
+        try {
+            await axios.delete(`/api/admin/outreach/leads?id=${id}`);
+            addToast("Lead deleted", "success");
+            fetchApps();
+        } catch (e) {
+            addToast("Failed to delete lead", "error");
+        }
+    };
+
+    const handleMarkReplied = async (appId: string) => {
+        const app = apps.find(a => a.id === appId);
+        if (!app) return;
+
+        const newStatus = app.status === 'Replied' ? (app.email_sent_count > 0 ? 'Sent' : 'Pending') : 'Replied';
+
+        try {
+            await axios.put('/api/admin/outreach/leads', { id: appId, status: newStatus });
+            addToast(`Marked as ${newStatus}`, "success");
+            fetchApps();
+        } catch (e) {
+            addToast("Failed to update status", "error");
+        }
+    };
+
     // Handle Send Real Email (From Modal)
     const handleSendEmail = async () => {
         setSending(true);
@@ -226,7 +251,7 @@ export default function OutreachManager() {
     const recentOpens = apps.filter(a => a.last_opened_at).sort((a, b) => new Date(b.last_opened_at!).getTime() - new Date(a.last_opened_at!).getTime()).slice(0, 5);
 
     return (
-        <div className="space-y-8">
+        <div className="h-full flex flex-col p-6 gap-6">
             {/* Header */}
             <div className="flex justify-between items-center">
                 <div>
@@ -246,135 +271,100 @@ export default function OutreachManager() {
                 </button>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
-                {/* Main List */}
-                <div className="md:col-span-2 space-y-4">
-                    <div className="flex justify-between items-center bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+            {/* Main Content Area - Full Width */}
+            <div className="flex-1 overflow-hidden relative">
+                <div className="flex flex-col h-full space-y-4">
+                    <div className="flex justify-between items-center bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm shrink-0">
                         <h2 className="font-bold text-lg dark:text-white">Active Leads ({apps.length})</h2>
-                        <button onClick={fetchApps} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"><RefreshCw size={18} /></button>
+                        <button onClick={fetchApps} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"><RefreshCw size={18} /></button>
                     </div>
 
-                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-                        <table className="w-full text-left text-sm">
-                            <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-                                <tr>
-                                    <th className="p-4 w-10">
-                                        <input type="checkbox" onChange={(e) => {
-                                            if (e.target.checked) setSelectedIds(new Set(apps.map(a => a.id)));
-                                            else setSelectedIds(new Set());
-                                        }} />
-                                    </th>
-                                    <th className="p-4 font-semibold dark:text-slate-300">Company & Role</th>
-                                    <th className="p-4 font-semibold dark:text-slate-300">Status</th>
-                                    <th className="p-4 font-semibold dark:text-slate-300">Engagement</th>
-                                    <th className="p-4 font-semibold dark:text-slate-300 text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                {apps.map(app => (
-                                    <tr key={app.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
-                                        <td className="p-4">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedIds.has(app.id)}
-                                                onChange={() => toggleSelect(app.id)}
-                                            />
-                                        </td>
-                                        <td className="p-4">
-                                            <div className="font-bold text-slate-900 dark:text-white">{app.company_name}</div>
-                                            <div className="text-xs text-slate-500">{app.role}</div>
-                                            <div className="text-xs text-blue-500 mt-1">
-                                                {app.contact_name}
-                                                {app.contact_role && <span className="text-slate-400"> • {app.contact_role}</span>}
-                                                {app.is_referral && <span className="ml-2 bg-purple-100 text-purple-700 text-[10px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wide">Referral</span>}
-                                            </div>
-                                        </td>
-                                        <td className="p-4">
-                                            <span className={`px-2 py-1 rounded text-xs font-medium 
-                                                ${app.status === 'Sent' ? 'bg-blue-100 text-blue-700' :
-                                                    app.status === 'Replied' ? 'bg-green-100 text-green-700' :
-                                                        'bg-slate-100 text-slate-600'}`}>
-                                                {app.status}
-                                            </span>
-                                            {app.email_sent_count > 0 && (
-                                                <div className="text-xs text-slate-400 mt-1">
-                                                    {app.email_sent_count} emails sent
-                                                </div>
-                                            )}
-                                        </td>
-                                        <td className="p-4">
-                                            <div className="flex items-center gap-2">
-                                                <Eye size={14} className={app.email_opens > 0 ? "text-green-500" : "text-slate-300"} />
-                                                <span className="font-medium">{app.email_opens} Opens</span>
-                                            </div>
-                                            {app.last_opened_at && (
-                                                <div className="text-xs text-slate-500 mt-1">
-                                                    Last: {new Date(app.last_opened_at).toLocaleTimeString()}
-                                                </div>
-                                            )}
-                                        </td>
-                                        <td className="p-4 text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <button onClick={() => handleEditClick(app)} className="text-slate-400 hover:text-blue-600 p-2" title="Edit Lead">
-                                                    <FileText size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleGenerateDraft(app.id)}
-                                                    disabled={drafting === app.id}
-                                                    className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-all hover:shadow-sm"
-                                                >
-                                                    {drafting === app.id ? <RefreshCw className="animate-spin" size={14} /> : <Zap size={14} />}
-                                                    {app.status === 'Pending' ? 'Draft Email' : 'Follow Up'}
-                                                </button>
-                                            </div>
-                                        </td>
+                    <div className="flex-1 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm relative">
+                        <div className="absolute inset-0 overflow-auto">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-10 backdrop-blur-sm">
+                                    <tr>
+                                        <th className="p-4 w-10">
+                                            <input type="checkbox" onChange={(e) => {
+                                                if (e.target.checked) setSelectedIds(new Set(apps.map(a => a.id)));
+                                                else setSelectedIds(new Set());
+                                            }} />
+                                        </th>
+                                        <th className="p-4 font-semibold dark:text-slate-300">Company & Role</th>
+                                        <th className="p-4 font-semibold dark:text-slate-300">Status</th>
+                                        <th className="p-4 font-semibold dark:text-slate-300">Engagement</th>
+                                        <th className="p-4 font-semibold dark:text-slate-300 text-right">Action</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                {/* Live Feed Widget */}
-                <div className="md:col-span-1 space-y-6">
-                    <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-lg relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
-                            <Eye size={100} />
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                    {apps.map(app => (
+                                        <tr key={app.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
+                                            <td className="p-4">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedIds.has(app.id)}
+                                                    onChange={() => toggleSelect(app.id)}
+                                                />
+                                            </td>
+                                            <td className="p-4">
+                                                <div className="font-bold text-slate-900 dark:text-white">{app.company_name}</div>
+                                                <div className="text-xs text-slate-500">{app.role}</div>
+                                                <div className="text-xs text-blue-500 mt-1">
+                                                    {app.contact_name}
+                                                    {app.contact_role && <span className="text-slate-400"> • {app.contact_role}</span>}
+                                                    {app.is_referral && <span className="ml-2 bg-purple-100 text-purple-700 text-[10px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wide">Referral</span>}
+                                                </div>
+                                            </td>
+                                            <td className="p-4">
+                                                <span className={`px-2 py-1 rounded text-xs font-medium 
+                                                    ${app.status === 'Sent' ? 'bg-blue-100 text-blue-700' :
+                                                        app.status === 'Replied' ? 'bg-green-100 text-green-700' :
+                                                            'bg-slate-100 text-slate-600'}`}>
+                                                    {app.status}
+                                                </span>
+                                                {app.email_sent_count > 0 && (
+                                                    <div className="text-xs text-slate-400 mt-1">
+                                                        {app.email_sent_count} emails sent
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td className="p-4">
+                                                <div className="flex items-center gap-2">
+                                                    <Eye size={14} className={app.email_opens > 0 ? "text-green-500" : "text-slate-300"} />
+                                                    <span className="font-medium">{app.email_opens} Opens</span>
+                                                </div>
+                                                {app.last_opened_at && (
+                                                    <div className="text-xs text-slate-500 mt-1">
+                                                        Last: {new Date(app.last_opened_at).toLocaleTimeString()}
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td className="p-4 text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <button onClick={() => handleMarkReplied(app.id)} className={`p-2 transition-colors ${app.status === 'Replied' ? 'text-green-600 bg-green-50 rounded-full' : 'text-slate-400 hover:text-green-600'}`} title={app.status === 'Replied' ? "Unmark Replied" : "Mark as Replied"}>
+                                                        <CheckCircle size={16} className={app.status === 'Replied' ? 'fill-green-100' : ''} />
+                                                    </button>
+                                                    <button onClick={() => handleDelete(app.id)} className="text-slate-400 hover:text-red-500 p-2" title="Delete Lead">
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                    <button onClick={() => handleEditClick(app)} className="text-slate-400 hover:text-blue-600 p-2" title="Edit Lead">
+                                                        <FileText size={16} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleGenerateDraft(app.id)}
+                                                        disabled={drafting === app.id}
+                                                        className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-all hover:shadow-sm"
+                                                    >
+                                                        {drafting === app.id ? <RefreshCw className="animate-spin" size={14} /> : <Zap size={14} />}
+                                                        {app.status === 'Pending' ? 'Draft Email' : 'Follow Up'}
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
-                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2 dark:text-white">
-                            <span className="relative flex h-3 w-3">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                            </span>
-                            Live Feed
-                        </h3>
-                        <div className="space-y-4">
-                            {recentOpens.length === 0 ? (
-                                <p className="text-slate-500 text-sm italic">No recent activity detected.</p>
-                            ) : (
-                                recentOpens.map(log => (
-                                    <div key={log.id} className="flex gap-3 items-start animate-in fade-in slide-in-from-right-4">
-                                        <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-full text-green-600 shrink-0">
-                                            <Eye size={14} />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-medium dark:text-slate-200">
-                                                <span className="font-bold text-slate-900 dark:text-white">{log.company_name}</span> has opened your email.
-                                            </p>
-                                            <p className="text-xs text-slate-400 mt-1">
-                                                {new Date(log.last_opened_at!).toLocaleString()}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Tips */}
-                    <div className="bg-blue-50 dark:bg-blue-900/20 p-5 rounded-xl text-blue-800 dark:text-blue-300 text-sm border border-blue-100 dark:border-blue-900/50">
-                        <strong>⚡ Pro Tip:</strong>
-                        <p className="mt-1 opacity-90">Click &quot;Draft Email&quot; to review the AI-generated message before sending. The AI will personalize it based on your Resume & their Job Description.</p>
                     </div>
                 </div>
             </div>

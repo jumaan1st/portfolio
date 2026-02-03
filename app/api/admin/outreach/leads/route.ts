@@ -47,13 +47,13 @@ export async function GET(req: Request) {
 
 export async function PUT(req: Request) {
     try {
-        const { id, company_name, role, job_description, contact_name, contact_email, contact_role, is_referral, user_context } = await req.json();
+        const { id, company_name, role, job_description, contact_name, contact_email, contact_role, is_referral, user_context, status } = await req.json();
 
         if (!id) {
             return NextResponse.json({ success: false, error: 'ID required' }, { status: 400 });
         }
 
-        const [updatedApp] = await db.update(jobApplications).set({
+        const updateData: any = {
             company_name,
             role,
             job_description,
@@ -63,12 +63,34 @@ export async function PUT(req: Request) {
             is_referral,
             user_context,
             updated_at: new Date()
-        }).where(eq(jobApplications.id, id)).returning();
+        };
+
+        if (status) updateData.status = status;
+
+        const [updatedApp] = await db.update(jobApplications).set(updateData).where(eq(jobApplications.id, id)).returning();
 
         return NextResponse.json({ success: true, application: updatedApp });
 
     } catch (error) {
         console.error('Update Lead Error:', error);
         return NextResponse.json({ success: false, error: 'Failed to update lead' }, { status: 500 });
+    }
+}
+
+export async function DELETE(req: Request) {
+    try {
+        const { searchParams } = new URL(req.url);
+        const id = searchParams.get('id');
+
+        if (!id) {
+            return NextResponse.json({ success: false, error: 'ID required' }, { status: 400 });
+        }
+
+        await db.delete(jobApplications).where(eq(jobApplications.id, id));
+
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        console.error('Delete Lead Error:', error);
+        return NextResponse.json({ success: false, error: 'Failed to delete lead' }, { status: 500 });
     }
 }
