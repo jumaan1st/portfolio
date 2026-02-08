@@ -55,9 +55,14 @@ export async function POST(req: Request) {
             Goal: Convince them to review my resume and interview me.`;
         }
 
+        const today = new Date().toDateString();
+        const lastContacted = app.last_contacted_at ? new Date(app.last_contacted_at).toDateString() : 'Never';
+
         // 2. Construct Prompt
         const prompt = `
             You are ${myProfile.name}, a ${myProfile.role}.
+            
+            Current Date: ${today}
             
             ${promptTask}
             
@@ -72,6 +77,7 @@ export async function POST(req: Request) {
             - Company: ${app.company_name}
             - Role: ${app.role}
             - Job Description snippet: "${app.job_description?.slice(0, 800)}..."
+            - Last Communicated Date: ${lastContacted}
             
             ${app.user_context ? `
             IMPORTANT - USER NOTES / CONTEXT:
@@ -90,7 +96,7 @@ export async function POST(req: Request) {
             2. **Body**: 
                - Professional tone.
                - **Focus on Technical Fit**: Don't just say "I want to connect". Explain specifically *how* my skills/projects solve the problems found in the Job Description.
-               - ${isReferral ? 'Ask if they are open to a quick chat or if they can refer me.' : 'Explicitly mention that I have attached my resume.'}
+               - **Resume Attached**: Explicitly mention "I have attached my resume for your review" or similar clear indication that the resume is included.
                - Keep it under 200 words.
                - Use HTML formatting (<p>, <b>, <br>) for the body.
                - **Include a Greeting**: Start with a professional greeting appropriate for the context (e.g., "Hi [Name]" or "Dear Hiring Manager").

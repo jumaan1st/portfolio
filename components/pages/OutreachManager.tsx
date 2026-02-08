@@ -54,6 +54,10 @@ export default function OutreachManager() {
         id: '', company_name: '', role: '', job_description: '', contact_name: '', contact_role: '', contact_email: '', is_referral: false, user_context: ''
     });
 
+    // Delete Modal State
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+
     // Fetch Data
     const fetchApps = useCallback(async () => {
         setLoading(true);
@@ -145,13 +149,24 @@ export default function OutreachManager() {
         }
     };
 
-    const handleDelete = async (id: string) => {
+
+
+    const handleDelete = (id: string) => {
+        setDeleteTargetId(id);
+        setShowDeleteConfirm(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteTargetId) return;
         try {
-            await axios.delete(`/api/admin/outreach/leads?id=${id}`);
+            await axios.delete(`/api/admin/outreach/leads?id=${deleteTargetId}`);
             addToast("Lead deleted", "success");
             fetchApps();
         } catch (e) {
             addToast("Failed to delete lead", "error");
+        } finally {
+            setShowDeleteConfirm(false);
+            setDeleteTargetId(null);
         }
     };
 
@@ -198,48 +213,42 @@ export default function OutreachManager() {
         const websiteLink = 'https://jumaan.me';
 
         // Postcards/Huddleup Style Template (Adapted)
-        return `
-            <div style="background-color: #b49dd7; padding: 20px; font-family: 'Inter', sans-serif;">
-                 <!-- Spacer -->
-                <div style="height: 20px;"></div>
+        const cleanPhone = myProfile.phone ? myProfile.phone.replace(/[^0-9]/g, '') : '';
+        const whatsappLink = cleanPhone ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent("Hi, I received your application and would like to chat.")}` : '#';
 
-                <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.1);">
+        return `
+            <div style="background-color: #f9fafb; padding: 40px 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1f2937;">
+                <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e5e7eb; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);">
+                    
                     <!-- Header -->
-                    <div style="padding: 40px 40px 20px 40px; background-color: #321a59; text-align: center;">
-                        <h1 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 32px; font-weight: 700; color: #ffffff;">${myProfile.name}</h1>
-                        <p style="margin: 5px 0 0; font-family: 'Inter', sans-serif; font-size: 16px; color: #b49dd7; font-weight: 500;">${Array.isArray(myProfile.roles) ? myProfile.roles[0] : 'Full Stack Engineer'}</p>
+                    <div style="padding: 40px 40px 30px 40px; text-align: center; border-bottom: 1px solid #f3f4f6;">
+                        <h1 style="margin: 0; font-size: 26px; font-weight: 700; color: #111827; letter-spacing: -0.5px;">${myProfile.name}</h1>
+                        <p style="margin: 8px 0 0; font-size: 15px; color: #6b7280; font-weight: 500;">${Array.isArray(myProfile.roles) ? myProfile.roles[0] : 'Full Stack Engineer'}</p>
                     </div>
 
                     <!-- Content -->
                     <div style="padding: 40px; background-color: #ffffff;">
-                        <div style="font-family: 'Inter', sans-serif; font-size: 16px; line-height: 1.6; color: #565558;">
-                            ${currentDraft.body}
+                        <div style="font-size: 16px; line-height: 1.7; color: #374151;">
+                            ${currentDraft.body.replace(/\n/g, '<br/>')}
                         </div>
 
-                        <!-- Portfolio CTA -->
-                        <div style="margin-top: 25px; text-align: center;">
-                            <a href="${websiteLink}" style="background-color: #321a59; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px; display: inline-block;">View My Portfolio</a>
-                        </div>
-
+                        <!-- Attachments Area -->
                          ${currentDraft.attachResume ? `
-                            <div style="margin-top: 30px; padding: 15px; background-color: #f3f0f9; border-left: 4px solid #321a59; border-radius: 4px;">
-                                <p style="margin: 0; font-size: 14px; color: #321a59; font-weight: 600;">📎 Resume attached.</p>
+                            <div style="margin-top: 35px; padding: 16px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; display: flex; align-items: center; gap: 12px;">
+                                <div style="background: #eff6ff; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px;">📄</div>
+                                <div>
+                                    <p style="margin: 0; font-size: 14px; font-weight: 600; color: #1e293b;">Resume Attached</p>
+                                    <p style="margin: 0; font-size: 12px; color: #64748b;">PDF Document</p>
+                                </div>
                             </div>` : ''}
                     </div>
 
                     <!-- Footer -->
-                    <div style="padding: 0 40px 40px 40px; background-color: #ffffff;">
-                        <div style="text-align: center; padding-top: 20px; border-top: 1px solid #eee;">
-                            <a href="#" style="display:inline-block; margin: 0 10px; text-decoration: none; color: #321a59; font-weight: 600; font-size: 14px;">Portfolio</a>
-                            <a href="#" style="display:inline-block; margin: 0 10px; text-decoration: none; color: #321a59; font-weight: 600; font-size: 14px;">LinkedIn</a>
-                            <a href="#" style="display:inline-block; margin: 0 10px; text-decoration: none; color: #321a59; font-weight: 600; font-size: 14px;">GitHub</a>
-                        </div>
+                    <div style="background-color: #f9fafb; padding: 30px 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+                        <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+                            &copy; ${new Date().getFullYear()} ${myProfile.name} • ${myProfile.email}
+                        </p>
                     </div>
-                </div>
-                
-                 <!-- Bottom Sig -->
-                <div style="text-align: center; padding: 20px; font-size: 12px; color: #321a59; opacity: 0.8;">
-                     &copy; ${new Date().getFullYear()} ${myProfile.name}
                 </div>
             </div>
         `;
@@ -507,6 +516,38 @@ export default function OutreachManager() {
                                         Send Email
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+            {/* Delete Confirmation Modal */}
+            {
+                showDeleteConfirm && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl max-w-sm w-full shadow-2xl space-y-4 animate-in zoom-in-95 duration-200 border border-slate-200 dark:border-slate-800">
+                            <div className="flex flex-col items-center text-center gap-3">
+                                <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full text-red-600 dark:text-red-400">
+                                    <Trash2 size={32} />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold dark:text-white">Delete Lead?</h3>
+                                    <p className="text-slate-500 text-sm mt-1">This action cannot be undone. Are you sure you want to permanently delete this lead?</p>
+                                </div>
+                            </div>
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    onClick={() => setShowDeleteConfirm(false)}
+                                    className="flex-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-medium transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={confirmDelete}
+                                    className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-500/20 transition-all"
+                                >
+                                    Yes, Delete
+                                </button>
                             </div>
                         </div>
                     </div>
