@@ -23,9 +23,21 @@ export default function AuditLogger() {
         const source = params.get("ref") || params.get("source") || params.get("utm_source");
 
         if (source) {
-            // Only set if not already set for this session context (first touch attribution)
-            if (!localStorage.getItem("portfolio_traffic_source")) {
+            const storedSource = localStorage.getItem("portfolio_traffic_source");
+
+            // If new source is different, or no source existed -> Start Fresh Session
+            if (source !== storedSource) {
+                console.debug(`[Audit] New traffic source detected: ${source} (was: ${storedSource}). Starting new session.`);
+
                 localStorage.setItem("portfolio_traffic_source", source);
+
+                // FORCE NEW SESSION
+                const newSessionId = uuidv4();
+                localStorage.setItem("portfolio_session_id", newSessionId);
+                localStorage.setItem("portfolio_last_active", Date.now().toString());
+
+                // Clear queue to prevent mixing events
+                queueRef.current = [];
             }
         }
     }, []);
@@ -79,7 +91,6 @@ export default function AuditLogger() {
 
         try {
             // Use keepalive for reliability
-            // Use keepalive for reliability
             const res = await fetch("/api/audit/session", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -93,7 +104,14 @@ export default function AuditLogger() {
                 if (data.newSessionId) {
                     localStorage.setItem("portfolio_session_id", data.newSessionId);
                     console.debug("Session rotated by server:", data.newSessionId);
+
+                    // If we had events, they were likely saved under the NEW session ID by the server?
+                    // Typically if server rotated, it meant the old one was stale. 
+                    // The server logic should typically insert the events under the new ID if it rotated.
                 }
+            } else {
+                // If failed, maybe put back? No, simplistic for now to avoid infinite loops.
+                console.warn("[Audit] Failed to flush events", res.status);
             }
         } catch (e) {
             console.error("Audit flush failed", e);

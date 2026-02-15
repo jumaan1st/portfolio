@@ -70,36 +70,57 @@ export async function POST(req: Request) {
         const userEmail = identity?.email || null;
         const userPhone = identity?.phone || null;
 
+        let returnNextResponse: NextResponse | null = null;
+
         // Drizzle Transaction
         await db.transaction(async (tx) => {
             console.log(`[Audit] Processing session ${sessionId} - Events: ${events.length}`);
 
             // 1. Fetch existing session
-            // Note: Explicitly assuming sessionId is valid UUID
             const existing = await tx.select().from(sessions).where(eq(sessions.session_id, sessionId));
 
             let currentHistory: LogEvent[] = [];
-            let isNewSession = true; // Default to new if not found
+            let isNewSession = true;
+            let activeSessionId = sessionId; // The ID we will actually write to (might change if rotated)
+            let sessionRotated = false;
 
             if (existing.length > 0) {
-                isNewSession = false;
                 const row = existing[0];
-                currentHistory = (row.visit_history as LogEvent[]) || [];
+                const lastActive = row.last_active_at ? new Date(row.last_active_at).getTime() : 0;
+                const now = new Date().getTime();
+
+                // TIMEOUT CHECK (30 mins)
+                if ((now - lastActive) > 30 * 60 * 1000) {
+                    // Session Expired -> Rotate
+                    console.log(`[Audit] Session ${sessionId} expired (Last active: ${row.last_active_at}). Rotating.`);
+
+                    // Generate NEW Session ID
+                    const crypto = require('crypto');
+                    activeSessionId = crypto.randomUUID();
+                    sessionRotated = true;
+                    isNewSession = true; // Treat as new insertion
+                    currentHistory = []; // Start fresh
+                } else {
+                    // Continue existing
+                    isNewSession = false;
+                    currentHistory = (row.visit_history as LogEvent[]) || [];
+                }
             }
 
-            // Note: We removed the "stale session" suffixing logic because session_id is a UUID PK.
-            // We cannot change the ID of an existing row, nor insert a new row with the same ID.
-            // We will simply update the existing session with new events.
-
             // Calculate History
-            const existingPaths = new Set(currentHistory.map(e => e.path));
-            const uniqueNewEvents = events.filter(e => !existingPaths.has(e.path));
-            const finalHistory = uniqueNewEvents.length > 0 ? [...currentHistory, ...uniqueNewEvents] : currentHistory;
+            // We filter new events to avoid duplicates if client retries
+            const existingPaths = new Set(currentHistory.map(e => e.path + e.timestamp)); // Composite key for better dedup
+            const uniqueNewEvents = events.filter(e => !existingPaths.has(e.path + e.timestamp));
+
+            // If it's a new session (or rotated), we just take the new events.
+            // If continuing, we append.
+            const finalHistory = isNewSession ? uniqueNewEvents : [...currentHistory, ...uniqueNewEvents];
+
             const nowTime = new Date();
 
             if (isNewSession) {
                 await tx.insert(sessions).values({
-                    session_id: sessionId,
+                    session_id: activeSessionId,
                     ip_address: ip,
                     user_identity: identity || {},
                     visit_history: finalHistory,
@@ -120,11 +141,12 @@ export async function POST(req: Request) {
                 await tx.update(sessions).set({
                     visit_history: finalHistory,
                     last_active_at: nowTime,
-                    user_identity: identity ? identity : undefined,
-                    ip_address: ip,
+                    // Merge identity if provided, otherwise keep existing
+                    user_identity: identity && Object.keys(identity).length > 0 ? identity : undefined,
+                    ip_address: ip, // Update IP if changed
                     device_info: deviceInfo ? deviceInfo : undefined,
                     geo_info: geoInfo,
-                }).where(eq(sessions.session_id, sessionId));
+                }).where(eq(sessions.session_id, activeSessionId));
             }
 
             // Retention cleanup
@@ -137,10 +159,17 @@ export async function POST(req: Request) {
                     ORDER BY last_active_at DESC 
                     OFFSET 1000
                 )
-                AND session_id <> ${sessionId}::uuid
+                AND session_id <> ${activeSessionId}::uuid
             `);
 
+            // If we rotated, we MUST tell the client the new ID
+            if (sessionRotated) {
+                returnNextResponse = NextResponse.json({ success: true, newSessionId: activeSessionId });
+            }
         });
+
+        if (returnNextResponse) return returnNextResponse;
+
 
         return NextResponse.json({ success: true });
     } catch (error) {
