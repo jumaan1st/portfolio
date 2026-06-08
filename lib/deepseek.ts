@@ -3,9 +3,9 @@
 export const callDeepSeekAPI = async (
     prompt: string,
     systemInstruction = ""
-): Promise<string> => {
+): Promise<{ text: string; promptTokens: number; completionTokens: number; totalTokens: number }> => {
     const apiKey = process.env.DEEPSEEK_API_KEY || "";
-    if (!apiKey) return "Error: Missing DeepSeek API key.";
+    if (!apiKey) return { text: "Error: Missing DeepSeek API key.", promptTokens: 0, completionTokens: 0, totalTokens: 0 };
 
     const url = "https://api.deepseek.com/chat/completions";
 
@@ -40,7 +40,13 @@ export const callDeepSeekAPI = async (
             }
 
             const data = await res.json();
-            return data.choices?.[0]?.message?.content || "No response generated.";
+            const text = data.choices?.[0]?.message?.content || "No response generated.";
+            const usage = data.usage || {};
+            const promptTokens = usage.prompt_tokens || 0;
+            const completionTokens = usage.completion_tokens || 0;
+            const totalTokens = usage.total_tokens || 0;
+
+            return { text, promptTokens, completionTokens, totalTokens };
 
         } catch (err: unknown) {
             console.error(`DeepSeek Attempt ${attempt + 1} failed:`, err);
@@ -49,13 +55,14 @@ export const callDeepSeekAPI = async (
 
             if (attempt >= maxRetries) {
                 // Return friendly error for UI handling
-                if (errorMessage.includes("Rate limit")) return "Error: 429 Rate limit exceeded.";
-                return `Error: ${errorMessage}. Please try again later.`;
+                if (errorMessage.includes("Rate limit")) return { text: "Error: 429 Rate limit exceeded.", promptTokens: 0, completionTokens: 0, totalTokens: 0 };
+                return { text: `Error: ${errorMessage}. Please try again later.`, promptTokens: 0, completionTokens: 0, totalTokens: 0 };
             }
 
             await new Promise((r) => setTimeout(r, delay));
             delay *= 2;
         }
     }
-    return "Unknown error.";
+    return { text: "Unknown error.", promptTokens: 0, completionTokens: 0, totalTokens: 0 };
 };
+

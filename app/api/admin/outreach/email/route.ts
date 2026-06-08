@@ -22,6 +22,19 @@ export async function POST(req: Request) {
         const attachments = [];
         // Only attach if requested AND url exists. 
         if (attachResume && myProfile.resume_url) {
+            // Verify the file exists to prevent Nodemailer from throwing a raw 404 error
+            try {
+                const checkRes = await fetch(myProfile.resume_url, { method: 'HEAD' });
+                if (!checkRes.ok) {
+                    return NextResponse.json({
+                        success: false,
+                        error: 'Resume file not found. Please go to the Dashboard (Profile section) and re-upload your resume, then click "Save Changes".'
+                    }, { status: 400 });
+                }
+            } catch (err) {
+                console.error("Error checking resume URL:", err);
+            }
+
             // Nodemailer supports URL paths for attachments
             attachments.push({
                 filename: `${(myProfile.name || 'Resume').replace(/\s+/g, '_')}_Resume.pdf`,
@@ -130,7 +143,7 @@ export async function POST(req: Request) {
         });
 
         await transporter.sendMail({
-            from: `"${myProfile.name}" < ${ process.env.EMAIL_USER }> `,
+            from: `"${myProfile.name}" < ${process.env.EMAIL_USER}> `,
             to: app.contact_email,
             cc: process.env.EMAIL_USER,
             subject: subject,
@@ -142,13 +155,13 @@ export async function POST(req: Request) {
         await db.update(jobApplications).set({
             status: 'Sent',
             last_contacted_at: new Date(),
-            email_sent_count: sql`${ jobApplications.email_sent_count } + 1`
+            email_sent_count: sql`${jobApplications.email_sent_count} + 1`
         }).where(eq(jobApplications.id, app.id));
 
         // 6. Log Thread History
         await db.insert(outreachThreads).values({
             application_id: app.id,
-            content: `Subject: ${ subject } \n\n${ body } `,
+            content: `Subject: ${subject} \n\n${body} `,
             direction: 'outbound'
         });
 

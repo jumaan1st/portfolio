@@ -1,7 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
-import { callAI } from '@/lib/ai-manager';
+import { callAI, callAIWithUsage } from '@/lib/ai-manager';
 
 export async function POST(request: Request) {
     try {
@@ -47,7 +47,8 @@ export async function POST(request: Request) {
         }
 
         // 2. Call AI Manager (Switches between Gemini/DeepSeek)
-        const aiResponse = await callAI(context);
+        const aiRes = await callAIWithUsage(context, "", name, normalizedEmail, "chat");
+        const aiResponse = aiRes.text;
 
         if (aiResponse.startsWith("Error:") || aiResponse.startsWith("No response")) {
             console.warn(`[AI Chat] AI Provider Error: ${aiResponse}`);

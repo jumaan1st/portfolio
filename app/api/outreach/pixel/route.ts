@@ -4,6 +4,7 @@ import { jobApplications, sessions } from '@/lib/schema';
 import { eq, sql } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { UAParser } from 'ua-parser-js';
+import { v4 as uuidv4 } from 'uuid';
 
 // Transparent 1x1 GIF
 const TRANSPARENT_GIF = Buffer.from(
@@ -24,62 +25,75 @@ export async function GET(req: Request) {
             if (apps.length > 0) {
                 const app = apps[0];
 
-                // 2. Update stats (Async/Fire-and-forget logic for speed)
-                await db.update(jobApplications).set({
-                    email_opens: sql`${jobApplications.email_opens} + 1`,
-                    last_opened_at: new Date()
-                }).where(eq(jobApplications.id, app.id));
+                // 2. Update stats (Critical update)
+                try {
+                    await db.update(jobApplications).set({
+                        email_opens: sql`${jobApplications.email_opens} + 1`,
+                        last_opened_at: new Date()
+                    }).where(eq(jobApplications.id, app.id));
+                    console.log(`[Outreach] Pixel open registered for ${app.company_name} (${app.contact_email})`);
+                } catch (updateErr) {
+                    console.error("Failed to update email open count:", updateErr);
+                }
 
-                // 3. Log detailed session info (The "Special Session")
-                // We create a new session ID for this interaction to track the IP/Device
-                const sessionId = crypto.randomUUID();
-                const headersList = await headers();
-                const ip = headersList.get('x-forwarded-for') || '127.0.0.1';
-                const userAgent = headersList.get('user-agent') || 'Unknown';
+                // 3. Log detailed session info (Non-critical, wrap separately to prevent failures from blocking open count)
+                try {
+                    const sessionId = uuidv4();
+                    const headersList = await headers();
+                    let ip = headersList.get('x-forwarded-for') || '127.0.0.1';
+                    
+                    // Clean x-forwarded-for by taking first IP and truncating to fit 45 chars
+                    if (ip.includes(',')) {
+                        ip = ip.split(',')[0].trim();
+                    }
+                    ip = ip.substring(0, 45);
 
-                // Basic Geo
-                const geoInfo = {
-                    country: headersList.get('x-vercel-ip-country'),
-                    city: headersList.get('x-vercel-ip-city'),
-                    region: headersList.get('x-vercel-ip-country-region')
-                };
+                    const userAgent = headersList.get('user-agent') || 'Unknown';
 
-                const parser = new UAParser(userAgent);
-                const result = parser.getResult();
+                    // Basic Geo
+                    const geoInfo = {
+                        country: headersList.get('x-vercel-ip-country'),
+                        city: headersList.get('x-vercel-ip-city'),
+                        region: headersList.get('x-vercel-ip-country-region')
+                    };
 
-                // Log as a "Recruiter Encounter" in the main session log
-                // User Identity explicitly marks this as the Recruiter
-                await db.insert(sessions).values({
-                    session_id: sessionId,
-                    ip_address: ip,
-                    user_identity: {
-                        name: `[Recruiter] ${app.contact_name}`,
-                        email: app.contact_email,
-                        company: app.company_name,
-                        role: 'Recruiter'
-                    },
-                    visit_history: [{
-                        path: '/email/open',
-                        timestamp: new Date().toISOString(),
-                        meta: 'Email Tracking Pixel'
-                    }],
-                    device_info: {
-                        userAgent,
-                        screen: 'Email Client',
-                    },
-                    geo_info: geoInfo,
-                    started_at: new Date(),
-                    last_active_at: new Date(),
-                    browser_name: result.browser.name,
-                    operating_system: result.os.name,
-                    device_type: result.device.type || 'desktop'
-                });
+                    const parser = new UAParser(userAgent);
+                    const result = parser.getResult();
 
-                console.log(`[Outreach] Pixel opened by ${app.company_name} (${app.contact_email})`);
+                    // Log as a "Recruiter Encounter" in the main session log
+                    await db.insert(sessions).values({
+                        session_id: sessionId,
+                        ip_address: ip,
+                        user_identity: {
+                            name: `[Recruiter] ${app.contact_name}`,
+                            email: app.contact_email,
+                            company: app.company_name,
+                            role: 'Recruiter'
+                        },
+                        visit_history: [{
+                            path: '/email/open',
+                            timestamp: new Date().toISOString(),
+                            meta: 'Email Tracking Pixel'
+                        }],
+                        device_info: {
+                            userAgent,
+                            screen: 'Email Client',
+                        },
+                        geo_info: geoInfo,
+                        started_at: new Date(),
+                        last_active_at: new Date(),
+                        browser_name: result.browser.name,
+                        operating_system: result.os.name,
+                        device_type: result.device.type || 'desktop'
+                    });
+                    console.log(`[Outreach] Created session log for recruiter visit of ${app.company_name}`);
+                } catch (sessionErr) {
+                    console.error("Failed to log tracking session:", sessionErr);
+                }
             }
         }
     } catch (e) {
-        console.error("Pixel tracking error:", e);
+        console.error("General pixel tracking error:", e);
     }
 
     return new NextResponse(TRANSPARENT_GIF, {
@@ -91,3 +105,4 @@ export async function GET(req: Request) {
         }
     });
 }
+

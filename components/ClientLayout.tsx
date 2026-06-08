@@ -87,7 +87,9 @@ function Shell({ children }: { children: React.ReactNode }) {
                     name: reviewForm.name,
                     email: reviewForm.email,
                     message: reviewForm.review,
-                    type: "Project Review"
+                    type: "Project Review",
+                    rating: reviewForm.rating,
+                    phone: reviewForm.phone
                 })
             });
 

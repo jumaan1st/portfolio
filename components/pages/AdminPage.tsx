@@ -1,16 +1,18 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
     Trash2, Plus, Save, X, Edit2, Loader2, SaveAll, Sparkles,
     LayoutDashboard, User, FolderOpen, PenTool, BookOpen, Briefcase, GraduationCap,
-    LogOut, Menu, ChevronRight, Search, Upload, ExternalLink, RefreshCw, CheckCircle, Award, ShieldAlert, Send
+    LogOut, Menu, ChevronRight, Search, Upload, ExternalLink, RefreshCw, CheckCircle, Award, ShieldAlert, Send,
+    Github, Eye, ArrowLeft, ArrowRight, Lock, FileText
 } from "lucide-react";
 import Link from "next/link";
 import { usePortfolio } from "@/components/PortfolioContext";
 import { Project } from "@/data/portfolioData";
 import { useToast } from "@/components/ui/Toast";
 import { IconPicker } from "@/components/ui/IconPicker";
+import { marked } from "marked";
 import { BLOG_TAGS } from "@/data/constants";
 import { FileUploader } from "@/components/FileUploader";
 import { extractFirstImage, formatDateRange } from "@/lib/utils";
@@ -88,7 +90,6 @@ const AdminContent: React.FC = () => {
     };
     const [loginForm, setLoginForm] = useState({ email: "", password: "" });
     const [isLoadingData, setIsLoadingData] = useState(false);
-    const [isSyncingGithub, setIsSyncingGithub] = useState(false);
 
     const [currentPage, setCurrentPage] = useState(1);
     const projectsPerPage = 10;
@@ -232,28 +233,6 @@ const AdminContent: React.FC = () => {
         if (profileForm) await updateProfile(profileForm);
     }, "Profile updated!");
 
-    const handleGitHubSync = async () => {
-        setIsSyncingGithub(true);
-        try {
-            const res = await fetch('/api/admin/github/sync', { method: 'POST' });
-            const data = await res.json();
-            if (res.ok) {
-                // Determine message based on response (created vs updated)
-                const msg = data.message || "README Updated!";
-                setSuccessMessage(msg);
-                setShowSuccessModal(true);
-            } else {
-                addToast(data.error || "Failed to sync to GitHub", "error");
-            }
-        } catch (e) {
-            addToast("Network error during sync", "error");
-        } finally {
-            setIsSyncingGithub(false);
-        }
-    };
-
-
-
     // Experience
     const saveExp = async () => {
         if (!editingExperience) return;
@@ -391,7 +370,7 @@ const AdminContent: React.FC = () => {
             )}
 
             {/* Sidebar */}
-            <aside className={`fixed inset-y-0 left-0 z-40 w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transform transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static`}>
+            <aside className={`fixed inset-y-0 left-0 z-40 w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transform transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static lg:relative`}>
                 <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg">
@@ -407,8 +386,13 @@ const AdminContent: React.FC = () => {
                     </button>
                 </div>
 
-                <div className="p-4 space-y-2 overflow-y-auto h-[calc(100vh-140px)]">
+                <div className="p-4 space-y-2 overflow-y-auto h-[calc(100vh-140px)] pb-24">
                     <SidebarItem icon={User} label="Profile" active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
+                    <Link href="/admin/github" className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <Github size={20} className="text-purple-600 dark:text-purple-500" />
+                        <span>GitHub Sync</span>
+                        <ExternalLink size={16} className="ml-auto opacity-50" />
+                    </Link>
                     <Link href="/projects" className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
                         <FolderOpen size={20} />
                         <span>Manage Projects</span>
@@ -473,10 +457,6 @@ const AdminContent: React.FC = () => {
                             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pb-4 border-b dark:border-slate-700">
                                 <h3 className="text-lg font-bold">Personal Information</h3>
                                 <button onClick={saveProfile} className="w-full md:w-auto bg-blue-600 text-white px-6 py-2 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors"><Save size={16} /> Save Changes</button>
-                                <button onClick={handleGitHubSync} disabled={isSyncingGithub} className="w-full md:w-auto bg-slate-800 text-white px-6 py-2 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-slate-900 transition-colors border border-slate-700">
-                                    {isSyncingGithub ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
-                                    Sync to GitHub
-                                </button>
                             </div>
                             <div className="grid md:grid-cols-2 gap-6">
                                 <div className="space-y-4">
@@ -491,11 +471,23 @@ const AdminContent: React.FC = () => {
                                 </div>
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <FileUploader label="Photo (Light)" value={profileForm.photoLightUrl || ''} onChange={(v: string) => setProfileForm({ ...profileForm, photoLightUrl: v })} folder="photos" />
-                                        <FileUploader label="Photo (Dark)" value={profileForm.photoDarkUrl || ''} onChange={(v: string) => setProfileForm({ ...profileForm, photoDarkUrl: v })} folder="photos" />
+                                        <FileUploader label="Photo (Light)" value={profileForm.photoLightUrl || ''} onChange={(v: string) => {
+                                            const newProfile = { ...profileForm, photoLightUrl: v };
+                                            setProfileForm(newProfile);
+                                            updateProfile(newProfile);
+                                        }} folder="photos" />
+                                        <FileUploader label="Photo (Dark)" value={profileForm.photoDarkUrl || ''} onChange={(v: string) => {
+                                            const newProfile = { ...profileForm, photoDarkUrl: v };
+                                            setProfileForm(newProfile);
+                                            updateProfile(newProfile);
+                                        }} folder="photos" />
                                     </div>
                                     <Input label="Phone Number" value={profileForm.phone} onChange={(v: string) => setProfileForm({ ...profileForm, phone: v })} />
-                                    <FileUploader label="Resume URL" value={profileForm.resumeUrl} onChange={(v: string) => setProfileForm({ ...profileForm, resumeUrl: v })} folder="resumes" />
+                                    <FileUploader label="Resume URL" value={profileForm.resumeUrl} onChange={(v: string) => {
+                                        const newProfile = { ...profileForm, resumeUrl: v };
+                                        setProfileForm(newProfile);
+                                        updateProfile(newProfile);
+                                    }} folder="resumes" />
                                 </div>
                                 <div className="md:col-span-2">
                                     <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-2 block">Professional Summary</label>
@@ -575,15 +567,14 @@ const AdminContent: React.FC = () => {
                                             </div>
                                         ))}
                                         {(!profileForm.currentlyLearning || profileForm.currentlyLearning.length === 0) && (
-                                            <div className="text-center py-6 text-slate-400 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
-                                                No learning items added.
-                                            </div>
+                                            <p className="text-slate-400 dark:text-slate-500 text-sm italic text-center py-4">No learning topics added yet.</p>
                                         )}
                                     </div>
                                 </div>
                             </div>
                         </div>
                     )}
+
 
 
                     {/* PROJECTS REMOVED - Managed in /projects */}
@@ -645,7 +636,7 @@ const AdminContent: React.FC = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="w-full min-w-0">
                                             <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">Date</label>
-                                            <input type="date" className="w-full min-w-0 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 outline-none focus:ring-2 ring-blue-500 transition-all" value={editingCertification.date || ''} onChange={e => setEditingCertification({ ...editingCertification, date: e.target.value })} />
+                                            <input type="date" className="w-full min-w-0 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-755 rounded-xl p-3 outline-none focus:ring-2 ring-blue-500 transition-all" value={editingCertification.date || ''} onChange={e => setEditingCertification({ ...editingCertification, date: e.target.value })} />
                                         </div>
                                         <Input label="Credential URL" value={editingCertification.url} onChange={v => setEditingCertification({ ...editingCertification, url: v })} />
                                     </div>
@@ -666,7 +657,7 @@ const AdminContent: React.FC = () => {
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <h4 className="font-bold text-slate-900 dark:text-white truncate">{c.name}</h4>
-                                                <p className="text-sm text-slate-500 dark:text-slate-400">{c.issuer}</p>
+                                                <p className="text-sm text-slate-550 dark:text-slate-450">{c.issuer}</p>
                                                 <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
                                                     <span>{c.date}</span>
                                                     {c.url && (

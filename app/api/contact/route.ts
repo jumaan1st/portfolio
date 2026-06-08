@@ -3,11 +3,11 @@ import { db } from '@/lib/db';
 import { review, profile, aiEmailUsage } from '@/lib/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
-import { callAI } from '@/lib/ai-manager';
+import { callAI, callAIWithUsage } from '@/lib/ai-manager';
 
 export async function POST(request: Request) {
     try {
-        const { name, email, message, type } = await request.json();
+        const { name, email, message, type, rating, phone } = await request.json();
 
         if (!name || !email || !message) {
             return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
@@ -30,7 +30,8 @@ export async function POST(request: Request) {
             name: cleanName,
             email: cleanEmail,
             feedback: messageToStore,
-            stars: 5,
+            stars: typeof rating === 'number' ? rating : 5,
+            phone: phone || null,
         });
         console.log(`[Contact API] Saved to portfolio.review.`);
 
@@ -138,7 +139,8 @@ export async function POST(request: Request) {
                 } else {
                     // Call AI
                     try {
-                        let aiEmailBodyRaw = await callAI(aiPrompt);
+                        const aiRes = await callAIWithUsage(aiPrompt, "", cleanName, cleanEmail, "email_reply");
+                        let aiEmailBodyRaw = aiRes.text;
                         if (aiEmailBodyRaw.includes("Error:") || aiEmailBodyRaw.includes("No response")) {
                             throw new Error(aiEmailBodyRaw);
                         }

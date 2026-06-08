@@ -18,44 +18,48 @@ export default function EditProjectPage({ params }: { params: Promise<{ slug: st
 
     useEffect(() => {
         const loadProject = async () => {
-            // 1. Try finding in Context by slug
+            if (contextLoading) return;
+            
+            try {
+                // Ensure we fetch the full project from the backend. The 'data.projects'
+                // context array is usually populated by the bootstrap API which omits heavy
+                // fields like 'longDescription' (case study) and 'features' to save payload size.
+                // Falling back to context early would cause us to overwrite them.
+                const res = await fetch(`/api/projects?slug=${slug}&summary=false`);
+                if (res.ok) {
+                    const json = await res.json();
+                    let fetched = json;
+                    if (json.data) {
+                        fetched = Array.isArray(json.data) ? json.data[0] : json.data;
+                    }
+                    if (fetched) {
+                        setProject(fetched);
+                        setLoading(false);
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to fetch project full data, attempting fallback", e);
+            }
+
+            // Fallback (only reached if API fetch fails or project not found natively above)
             const found = data.projects.find(p => p.slug === slug || String(p.id) === slug);
             if (found) {
                 setProject(found);
-                setLoading(false);
-                return;
             }
-
-            // 2. Fallback: Fetch from API
-            if (!contextLoading) {
-                try {
-                    const res = await fetch(`/api/projects?slug=${slug}`);
-                    if (res.ok) {
-                        const json = await res.json();
-                        // Correctly handle direct object response (from new API) or wrapper
-                        let fetched = json;
-                        if (json.data) {
-                            fetched = Array.isArray(json.data) ? json.data[0] : json.data;
-                        }
-                        setProject(fetched);
-                    }
-                } catch (e) {
-                    console.error("Failed to fetch project", e);
-                } finally {
-                    setLoading(false);
-                }
-            }
+            setLoading(false);
         };
 
-        loadProject();
+        if (!contextLoading) {
+            loadProject();
+        }
     }, [data.projects, slug, contextLoading]);
 
     useEffect(() => {
-        if (!contextLoading && !isAuthenticated) {
-            // Only redirect if effectively loaded and confirmed not auth
+        if (!contextLoading && !isAuthenticated && !loading) {
             router.push("/projects");
         }
-    }, [contextLoading, isAuthenticated, router]);
+    }, [contextLoading, isAuthenticated, loading, router]);
 
     if (loading || contextLoading) return <div className="p-8 text-center flex justify-center"><div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full"></div></div>;
     if (!project) return <div className="p-8 text-center text-red-500">Project not found</div>;

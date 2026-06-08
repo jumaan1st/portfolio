@@ -184,3 +184,16 @@ export const outreachThreads = portfolio.table("outreach_threads", {
     direction: varchar("direction", { length: 20 }).notNull(), // 'inbound' (reply) or 'outbound' (sent)
     sent_at: timestamp("sent_at").defaultNow(),
 });
+
+export const aiUsageLog = portfolio.table("ai_usage_log", {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    user_name: varchar("user_name", { length: 255 }),
+    user_email: varchar("user_email", { length: 255 }),
+    action_type: varchar("action_type", { length: 50 }).notNull(), // 'chat', 'email_reply', 'outreach_draft', etc.
+    prompt_tokens: integer("prompt_tokens").default(0),
+    completion_tokens: integer("completion_tokens").default(0),
+    total_tokens: integer("total_tokens").default(0),
+    provider: varchar("provider", { length: 50 }),
+    created_at: timestamp("created_at").defaultNow(),
+});
+

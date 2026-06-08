@@ -2,9 +2,9 @@
 export const callGeminiAPI = async (
     prompt: string,
     systemInstruction = ""
-): Promise<string> => {
+): Promise<{ text: string; promptTokens: number; completionTokens: number; totalTokens: number }> => {
     const apiKey = process.env.GEMINI_API_KEY || "";
-    if (!apiKey) return "Error: Missing Gemini API key.";
+    if (!apiKey) return { text: "Error: Missing Gemini API key.", promptTokens: 0, completionTokens: 0, totalTokens: 0 };
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
@@ -33,18 +33,22 @@ export const callGeminiAPI = async (
             }
 
             const data = await res.json();
-            return (
-                data.candidates?.[0]?.content?.parts?.[0]?.text ||
-                "No response generated."
-            );
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated.";
+            const usage = data.usageMetadata || {};
+            const promptTokens = usage.promptTokenCount || 0;
+            const completionTokens = usage.candidatesTokenCount || 0;
+            const totalTokens = usage.totalTokenCount || 0;
+
+            return { text, promptTokens, completionTokens, totalTokens };
         } catch (err: unknown) {
             attempt++;
             const errorMessage = err instanceof Error ? err.message : String(err);
             if (attempt >= maxRetries)
-                return `Error: ${errorMessage}. Please try again later.`;
+                return { text: `Error: ${errorMessage}. Please try again later.`, promptTokens: 0, completionTokens: 0, totalTokens: 0 };
             await new Promise((r) => setTimeout(r, delay));
             delay *= 2;
         }
     }
-    return "Unknown error.";
+    return { text: "Unknown error.", promptTokens: 0, completionTokens: 0, totalTokens: 0 };
 };
+
