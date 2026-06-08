@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { callAI, callAIWithUsage } from '@/lib/ai-manager';
+import { logError } from '@/lib/logger';
 
 export async function POST(request: Request) {
     try {
@@ -94,7 +95,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ response: aiResponse, remaining: 5 - (currentCount + 1) });
 
     } catch (error) {
-        console.error('Error in chat API:', error);
+        await logError(error, { path: '/api/chat', method: 'POST' });
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

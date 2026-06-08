@@ -197,3 +197,12 @@ export const aiUsageLog = portfolio.table("ai_usage_log", {
     created_at: timestamp("created_at").defaultNow(),
 });
 
+export const errorLog = portfolio.table("error_log", {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    error_message: text("error_message").notNull(),
+    error_stack: text("error_stack"),
+    context: jsonb("context"),
+    created_at: timestamp("created_at").defaultNow(),
+});
+
+

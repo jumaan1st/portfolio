@@ -41,8 +41,16 @@ export async function GET() {
 
             ALTER TABLE portfolio.experience DROP COLUMN IF EXISTS period;
             ALTER TABLE portfolio.education DROP COLUMN IF EXISTS year;
+
+            CREATE TABLE IF NOT EXISTS portfolio.error_log (
+                id BIGSERIAL PRIMARY KEY,
+                error_message TEXT NOT NULL,
+                error_stack TEXT,
+                context JSONB,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
         `);
-        return NextResponse.json({ success: true, message: 'Tables ai_email_usage, ai_chat_usage, and certifications created or already exist.' });
+        return NextResponse.json({ success: true, message: 'Tables ai_email_usage, ai_chat_usage, certifications, and error_log created or already exist.' });
     } catch (error) {
         console.error('DB Setup Error:', error);
         return NextResponse.json({ error: 'Failed to setup DB' }, { status: 500 });

@@ -4,6 +4,7 @@ import { review, profile, aiEmailUsage } from '@/lib/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
 import { callAI, callAIWithUsage } from '@/lib/ai-manager';
+import { logError } from '@/lib/logger';
 
 export async function POST(request: Request) {
     try {
@@ -206,7 +207,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: true, message: 'Saved and email sent' });
 
     } catch (error) {
-        console.error('Error in contact/review API:', error);
+        await logError(error, { path: '/api/contact', method: 'POST' });
         return NextResponse.json({ error: 'Failed to process request' }, { status: 500 });
     }
 }
