@@ -3,8 +3,13 @@ import pool from '@/lib/db';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import nodemailer from 'nodemailer';
+import { verifyAuth, UserRole } from '@/lib/auth';
 
 export async function POST(req: Request) {
+    const authResult = await verifyAuth(req, [UserRole.ADMIN, UserRole.VIEW_ONLY_ADMIN]);
+    if (!authResult.success) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     try {
         const { filters, type = 'detailed' } = await req.json();
 

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { blogs } from '@/lib/schema';
 import { eq, ilike, and, desc, sql, or, count, not } from 'drizzle-orm';
+import { verifyAuth, UserRole } from '@/lib/auth';
 
 // Helper to map DB row to Frontend Interface
 const mapRow = (row: any) => ({
@@ -120,6 +121,11 @@ const toSlug = (text: string) => {
 };
 
 export async function POST(request: Request) {
+  const authResult = await verifyAuth(request, [UserRole.ADMIN]);
+  if (!authResult.success) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const { title, excerpt, content, tags, date, readTime, image, is_hidden } = body;
@@ -164,6 +170,11 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  const authResult = await verifyAuth(request, [UserRole.ADMIN]);
+  if (!authResult.success) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
@@ -200,6 +211,11 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const authResult = await verifyAuth(request, [UserRole.ADMIN]);
+  if (!authResult.success) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');

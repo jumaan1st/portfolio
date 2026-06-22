@@ -10,7 +10,8 @@ import { Loader2 } from 'lucide-react';
 export default function EditBlogPage() {
     const router = useRouter();
     const params = useParams();
-    const { isAuthenticated } = usePortfolio();
+    const { isAuthenticated, user } = usePortfolio();
+    const isFullAdmin = isAuthenticated && user?.role === 'admin';
     const [blog, setBlog] = useState<BlogPost | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -18,14 +19,14 @@ export default function EditBlogPage() {
 
     // Protect Route
     useEffect(() => {
-        if (!isAuthenticated && !loading) {
+        if (!isFullAdmin && !loading) {
             // wait for loading to finish potentially, or just check auth immediately if known
             // assuming isAuthenticated is reliable
         }
-    }, [isAuthenticated, loading]);
+    }, [isFullAdmin, loading]);
 
     useEffect(() => {
-        if (!isAuthenticated) return;
+        if (!isFullAdmin) return;
 
         const fetchBlog = async () => {
             try {
@@ -45,7 +46,7 @@ export default function EditBlogPage() {
         };
 
         fetchBlog();
-    }, [slug, isAuthenticated, router]);
+    }, [slug, isFullAdmin, router]);
 
     const handleSave = async (updatedBlog: BlogPost) => {
         if (!blog) return;
@@ -67,9 +68,9 @@ export default function EditBlogPage() {
         }
     };
 
-    if (!isAuthenticated) {
+    if (!isFullAdmin) {
         if (loading) return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-955">
                 <Loader2 className="animate-spin text-slate-400" />
             </div>
         );

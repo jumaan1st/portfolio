@@ -26,7 +26,8 @@ interface Application {
 }
 
 export default function OutreachManager() {
-    const { isAuthenticated, isLoading: authLoading, data } = usePortfolio();
+    const { isAuthenticated, user, isLoading: authLoading, data } = usePortfolio();
+    const isAdmin = isAuthenticated && (user?.role === 'admin' || user?.role === 'view_only_admin');
     const router = useRouter();
     const { addToast } = useToast();
 
@@ -74,9 +75,9 @@ export default function OutreachManager() {
     }, [addToast]);
 
     useEffect(() => {
-        if (!authLoading && !isAuthenticated) router.push("/admin");
-        else if (isAuthenticated) fetchApps();
-    }, [isAuthenticated, authLoading, router, fetchApps]);
+        if (!authLoading && !isAdmin) router.push("/admin");
+        else if (isAdmin) fetchApps();
+    }, [isAdmin, authLoading, router, fetchApps]);
 
     // Handle Add / Edit Lead
     const handleSaveLead = async () => {
@@ -255,6 +256,7 @@ export default function OutreachManager() {
     };
 
     if (authLoading) return <div className="p-10 text-center">Loading...</div>;
+    if (!isAdmin) return null;
 
     // Filter for "Recent Opens" (The Live Feed Logic)
     const recentOpens = apps.filter(a => a.last_opened_at).sort((a, b) => new Date(b.last_opened_at!).getTime() - new Date(a.last_opened_at!).getTime()).slice(0, 5);

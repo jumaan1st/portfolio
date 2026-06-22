@@ -1,9 +1,9 @@
-
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { profile } from '@/lib/schema';
 import { eq } from 'drizzle-orm';
 import { unstable_cache, revalidateTag } from 'next/cache';
+import { verifyAuth, UserRole } from '@/lib/auth';
 
 const getProfile = unstable_cache(
   async () => {
@@ -48,6 +48,11 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
+  const authResult = await verifyAuth(request, [UserRole.ADMIN]);
+  if (!authResult.success) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const {

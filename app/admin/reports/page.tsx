@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { usePortfolio } from "@/components/PortfolioContext";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { 
     Database, HardDrive, FileText, FolderOpen, CheckCircle, 
     AlertTriangle, RefreshCw, ShieldAlert, Eye, X, 
@@ -226,7 +227,8 @@ const UsageStatsTab = () => {
 };
 
 export default function ReportsPage() {
-    const { isAuthenticated, isLoading: authLoading } = usePortfolio();
+    const { isAuthenticated, isLoading: authLoading, user } = usePortfolio();
+    const isAdmin = isAuthenticated && (user?.role === 'admin' || user?.role === 'view_only_admin');
     const router = useRouter();
     const { addToast } = useToast();
     const [activeTab, setActiveTab] = useState<'audit' | 'usage' | 'reviews' | 'ai_usage'>('audit');
@@ -246,7 +248,13 @@ export default function ReportsPage() {
     const [reviewsLoading, setReviewsLoading] = useState(true);
     const [selectedReview, setSelectedReview] = useState<Review | null>(null);
     const [reviewsPagination, setReviewsPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
-    const [reviewsFilter, setReviewsFilter] = useState({ type: 'all', stars: '', search: '' });
+    const [reviewsFilter, setReviewsFilter] = useState({ type: 'all', stars: '', search: '', userEmail: 'all' });
+    const [uniqueUsers, setUniqueUsers] = useState<{ name: string; email: string }[]>([]);
+    const [groupByUser, setGroupByUser] = useState(false);
+    const [replySubject, setReplySubject] = useState("");
+    const [replyMessage, setReplyMessage] = useState("");
+    const [isDrafting, setIsDrafting] = useState(false);
+    const [isSending, setIsSending] = useState(false);
     const [deleteReviewConfirm, setDeleteReviewConfirm] = useState<{ show: boolean, reviewId: number | null }>({ show: false, reviewId: null });
     const [reviewsStats, setReviewsStats] = useState({
         totalReviews: 0,
@@ -268,6 +276,24 @@ export default function ReportsPage() {
         providers: [] as { provider: string, tokens: number, requests: number }[],
         actions: [] as { action: string, tokens: number, requests: number }[]
     });
+
+    // Helper to group reviews by user email when grouping toggle is enabled
+    const groupedReviews = React.useMemo(() => {
+        if (!groupByUser) return null;
+        const groups: { [email: string]: { name: string; email: string; phone: string | null; reviews: Review[] } } = {};
+        reviews.forEach(rev => {
+            if (!groups[rev.email]) {
+                groups[rev.email] = {
+                    name: rev.name,
+                    email: rev.email,
+                    phone: rev.phone,
+                    reviews: []
+                };
+            }
+            groups[rev.email].reviews.push(rev);
+        });
+        return Object.values(groups);
+    }, [reviews, groupByUser]);
 
     // --- FETCH CALLS ---
 
@@ -311,7 +337,8 @@ export default function ReportsPage() {
                 limit: reviewsPagination.limit.toString(),
                 type: reviewsFilter.type,
                 stars: reviewsFilter.stars,
-                search: reviewsFilter.search
+                search: reviewsFilter.search,
+                userEmail: reviewsFilter.userEmail
             });
 
             const res = await fetch(`/api/admin/reviews?${query.toString()}`);
@@ -320,6 +347,11 @@ export default function ReportsPage() {
             if (res.ok && data.success) {
                 setReviews(data.reviews);
                 setReviewsStats(data.stats);
+                setUniqueUsers(
+                    Array.from(
+                        new Map((data.users || []).map((u: { name: string; email: string }) => [u.email, u])).values()
+                    ) as { name: string; email: string }[]
+                );
                 setReviewsPagination(prev => ({
                     ...prev,
                     total: data.pagination.total,
@@ -382,6 +414,8 @@ export default function ReportsPage() {
     useEffect(() => {
         if (!authLoading && !isAuthenticated) {
             router.push("/admin");
+        } else if (isAuthenticated && user && user.role !== 'admin' && user.role !== 'view_only_admin') {
+            router.push("/admin");
         } else if (isAuthenticated) {
             if (activeTab === 'audit') {
                 fetchSessions();
@@ -392,7 +426,7 @@ export default function ReportsPage() {
             }
         }
     }, [
-        isAuthenticated, authLoading, 
+        isAuthenticated, authLoading, user,
         sessionsPagination.page, 
         reviewsPagination.page, 
         aiPagination.page, 
@@ -400,6 +434,15 @@ export default function ReportsPage() {
         router, activeTab, 
         fetchSessions, fetchReviews, fetchUsageStats
     ]);
+
+    // Sync reply fields when a review is selected
+    useEffect(() => {
+        if (selectedReview) {
+            const isProjectReview = selectedReview.feedback?.startsWith('[Project Review]');
+            setReplySubject(isProjectReview ? "Re: Your review on my portfolio" : "Re: Your message to Mohammed Jumaan");
+            setReplyMessage("");
+        }
+    }, [selectedReview]);
 
     // --- ACTION HANDLERS ---
 
@@ -454,7 +497,7 @@ export default function ReportsPage() {
             </div>
         );
     }
-    if (!isAuthenticated) return null;
+    if (!isAdmin) return null;
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 md:p-8 relative text-slate-700 dark:text-slate-300 transition-colors duration-300">
@@ -463,11 +506,14 @@ export default function ReportsPage() {
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
+                        <Link href="/admin" className="inline-flex items-center gap-1.5 text-sm text-blue-650 dark:text-blue-400 hover:underline mb-3 font-bold transition-all">
+                            <ChevronLeft size={16} /> Back to Dashboard
+                        </Link>
                         <h1 className="text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
                             <ShieldAlert className="text-blue-600 dark:text-blue-500" />
                             System Reports
                         </h1>
-                        <p className="text-slate-500 dark:text-slate-400 mt-1">
+                        <p className="text-slate-505 dark:text-slate-400 mt-1">
                             Monitor audit logs, resource limits, customer feedback, and AI token metrics.
                         </p>
                     </div>
@@ -645,16 +691,18 @@ export default function ReportsPage() {
                                                                 >
                                                                     <Eye size={16} />
                                                                 </button>
-                                                                <button
-                                                                    onClick={async (e) => {
-                                                                        e.stopPropagation();
-                                                                        setDeleteSessionConfirm({ show: true, sessionId: log.session_id });
-                                                                    }}
-                                                                    className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500 transition-colors"
-                                                                    title="Delete Log"
-                                                                >
-                                                                    <Trash2 size={16} />
-                                                                </button>
+                                                                {user?.role !== 'view_only_admin' && (
+                                                                    <button
+                                                                        onClick={async (e) => {
+                                                                            e.stopPropagation();
+                                                                            setDeleteSessionConfirm({ show: true, sessionId: log.session_id });
+                                                                        }}
+                                                                        className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500 transition-colors"
+                                                                        title="Delete Log"
+                                                                    >
+                                                                        <Trash2 size={16} />
+                                                                    </button>
+                                                                )}
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -726,10 +774,10 @@ export default function ReportsPage() {
                         </div>
 
                         {/* Filters */}
-                        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-205 dark:border-slate-800 shadow-sm grid grid-cols-1 md:grid-cols-5 gap-4">
                             <div className="space-y-1">
                                 <label className="text-xs font-semibold text-slate-500 uppercase">Feedback Type</label>
-                                <select className="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:border-blue-500" value={reviewsFilter.type} onChange={e => setReviewsFilter(p => ({ ...p, type: e.target.value }))}>
+                                <select className="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:border-blue-500 text-slate-750 dark:text-slate-300" value={reviewsFilter.type} onChange={e => setReviewsFilter(p => ({ ...p, type: e.target.value }))}>
                                     <option value="all">All Feedback ({reviewsStats.reviewsCount + reviewsStats.contactsCount})</option>
                                     <option value="review">Portfolio Reviews ({reviewsStats.reviewsCount})</option>
                                     <option value="contact">Contact Inquiries ({reviewsStats.contactsCount})</option>
@@ -737,7 +785,7 @@ export default function ReportsPage() {
                             </div>
                             <div className="space-y-1">
                                 <label className="text-xs font-semibold text-slate-500 uppercase">Stars Rating</label>
-                                <select className="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:border-blue-500" value={reviewsFilter.stars} onChange={e => setReviewsFilter(p => ({ ...p, stars: e.target.value }))}>
+                                <select className="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:border-blue-500 text-slate-750 dark:text-slate-300" value={reviewsFilter.stars} onChange={e => setReviewsFilter(p => ({ ...p, stars: e.target.value }))}>
                                     <option value="">All Ratings</option>
                                     <option value="5">5 Stars</option>
                                     <option value="4">4 Stars</option>
@@ -747,10 +795,25 @@ export default function ReportsPage() {
                                 </select>
                             </div>
                             <div className="space-y-1">
-                                <label className="text-xs font-semibold text-slate-500 uppercase">Search Sender</label>
-                                <input type="text" placeholder="Name or Email..." className="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:border-blue-500" value={reviewsFilter.search} onChange={e => setReviewsFilter(p => ({ ...p, search: e.target.value }))} />
+                                <label className="text-xs font-semibold text-slate-500 uppercase">Filter By User</label>
+                                <select className="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:border-blue-500 text-slate-750 dark:text-slate-300" value={reviewsFilter.userEmail} onChange={e => setReviewsFilter(p => ({ ...p, userEmail: e.target.value }))}>
+                                    <option value="all">All Users</option>
+                                    {uniqueUsers.map(u => (
+                                        <option key={u.email} value={u.email}>
+                                            {u.name || u.email} ({u.email})
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
-                            <div className="flex items-end">
+                            <div className="space-y-1">
+                                <label className="text-xs font-semibold text-slate-500 uppercase">Search Sender</label>
+                                <input type="text" placeholder="Name or Email..." className="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:border-blue-500 text-slate-750 dark:text-slate-300" value={reviewsFilter.search} onChange={e => setReviewsFilter(p => ({ ...p, search: e.target.value }))} />
+                            </div>
+                            <div className="flex flex-col justify-end gap-2">
+                                <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-500 dark:text-slate-400 select-none">
+                                    <input type="checkbox" checked={groupByUser} onChange={e => setGroupByUser(e.target.checked)} className="rounded border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-blue-500 w-4 h-4" />
+                                    Group by User
+                                </label>
                                 <button onClick={() => { setReviewsPagination(p => ({ ...p, page: 1 })); fetchReviews(); }} className="w-full bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white py-2 rounded-lg text-sm font-medium transition-colors">Search & Filter</button>
                             </div>
                         </div>
@@ -774,6 +837,73 @@ export default function ReportsPage() {
                                             <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-400">Loading feedback entries...</td></tr>
                                         ) : reviews.length === 0 ? (
                                             <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-400">No feedback matching current filters.</td></tr>
+                                        ) : groupByUser ? (
+                                            groupedReviews?.map((group) => (
+                                                <React.Fragment key={group.email}>
+                                                    {/* User Header Row */}
+                                                    <tr className="bg-slate-105/85 dark:bg-slate-800/85 font-bold text-slate-800 dark:text-slate-200 border-y border-slate-200 dark:border-slate-800">
+                                                        <td colSpan={6} className="px-6 py-3">
+                                                            <div className="flex justify-between items-center text-xs sm:text-sm">
+                                                                <span>{group.name} ({group.email}) {group.phone ? `| ${group.phone}` : ''}</span>
+                                                                <span className="text-[10px] bg-blue-105 text-blue-700 dark:bg-blue-900/50 dark:text-blue-200 px-2.5 py-0.5 rounded-full font-extrabold uppercase tracking-wider">
+                                                                    {group.reviews.length} entries
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                    {/* Reviews for this User */}
+                                                    {group.reviews.map((rev) => {
+                                                        const isProjectReview = rev.feedback?.startsWith('[Project Review]');
+                                                        const cleanMessage = rev.feedback ? rev.feedback.replace(/^\[(Project Review|Contact)\]\s*/, '') : '';
+                                                        return (
+                                                            <tr key={rev.review_id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                                                                <td className="px-6 py-4 text-xs font-mono text-slate-500 pl-10">
+                                                                    {new Date(rev.created_at).toLocaleDateString()}
+                                                                </td>
+                                                                <td className="px-6 py-4">
+                                                                    <span className="text-slate-400 text-xs italic">— Grouped User Review</span>
+                                                                </td>
+                                                                <td className="px-6 py-4">
+                                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${isProjectReview 
+                                                                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400' 
+                                                                        : 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-400'}`}>
+                                                                        {isProjectReview ? 'Review' : 'Contact'}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="px-6 py-4">
+                                                                    {renderStars(rev.stars)}
+                                                                </td>
+                                                                <td className="px-6 py-4 max-w-[200px] truncate" title={cleanMessage}>
+                                                                    {cleanMessage}
+                                                                </td>
+                                                                <td className="px-6 py-4 text-center">
+                                                                    <div className="flex items-center justify-center gap-1">
+                                                                        <button
+                                                                            onClick={() => setSelectedReview(rev)}
+                                                                            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-blue-600 transition-colors"
+                                                                            title="View Details"
+                                                                        >
+                                                                            <Eye size={16} />
+                                                                        </button>
+                                                                        {user?.role !== 'view_only_admin' && (
+                                                                            <button
+                                                                                onClick={async (e) => {
+                                                                                    e.stopPropagation();
+                                                                                    setDeleteReviewConfirm({ show: true, reviewId: rev.review_id });
+                                                                                }}
+                                                                                className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500 transition-colors"
+                                                                                title="Delete Review"
+                                                                            >
+                                                                                <Trash2 size={16} />
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </React.Fragment>
+                                            ))
                                         ) : (
                                             reviews.map((rev) => {
                                                 const isProjectReview = rev.feedback?.startsWith('[Project Review]');
@@ -813,16 +943,18 @@ export default function ReportsPage() {
                                                                 >
                                                                     <Eye size={16} />
                                                                 </button>
-                                                                <button
-                                                                    onClick={async (e) => {
-                                                                        e.stopPropagation();
-                                                                        setDeleteReviewConfirm({ show: true, reviewId: rev.review_id });
-                                                                    }}
-                                                                    className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500 transition-colors"
-                                                                    title="Delete Review"
-                                                                >
-                                                                    <Trash2 size={16} />
-                                                                </button>
+                                                                {user?.role !== 'view_only_admin' && (
+                                                                    <button
+                                                                        onClick={async (e) => {
+                                                                            e.stopPropagation();
+                                                                            setDeleteReviewConfirm({ show: true, reviewId: rev.review_id });
+                                                                        }}
+                                                                        className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500 transition-colors"
+                                                                        title="Delete Review"
+                                                                    >
+                                                                        <Trash2 size={16} />
+                                                                    </button>
+                                                                )}
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -1144,12 +1276,10 @@ export default function ReportsPage() {
                             </div>
                         </div>
                     </div>
-                )}
-
-                {/* Review Details Modal */}
+                )}                {/* Review Details Modal */}
                 {selectedReview && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-lg w-full border border-slate-200 dark:border-slate-800 p-6 relative">
+                        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-800 p-6 relative">
                             <button onClick={() => setSelectedReview(null)} className="absolute top-4 right-4 p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-500 hover:text-slate-800">
                                 <X size={20} />
                             </button>
@@ -1161,16 +1291,16 @@ export default function ReportsPage() {
                                 <div className="p-4 bg-slate-50 dark:bg-slate-800/30 rounded-xl space-y-2 text-sm border border-slate-100 dark:border-slate-800/50">
                                     <div className="grid grid-cols-3 font-semibold text-slate-500 dark:text-slate-455">
                                         <span>Sender:</span>
-                                        <span className="col-span-2 text-slate-850 dark:text-slate-200">{selectedReview.name}</span>
+                                        <span className="col-span-2 text-slate-855 dark:text-slate-200">{selectedReview.name}</span>
                                     </div>
                                     <div className="grid grid-cols-3 font-semibold text-slate-500 dark:text-slate-455">
                                         <span>Email:</span>
-                                        <span className="col-span-2 text-slate-850 dark:text-slate-200 font-mono">{selectedReview.email}</span>
+                                        <span className="col-span-2 text-slate-855 dark:text-slate-200 font-mono">{selectedReview.email}</span>
                                     </div>
                                     {selectedReview.phone && (
                                         <div className="grid grid-cols-3 font-semibold text-slate-500 dark:text-slate-455">
                                             <span>Phone:</span>
-                                            <span className="col-span-2 text-slate-850 dark:text-slate-200">{selectedReview.phone}</span>
+                                            <span className="col-span-2 text-slate-855 dark:text-slate-200">{selectedReview.phone}</span>
                                         </div>
                                     )}
                                     <div className="grid grid-cols-3 font-semibold text-slate-500 dark:text-slate-455">
@@ -1179,7 +1309,7 @@ export default function ReportsPage() {
                                     </div>
                                     <div className="grid grid-cols-3 font-semibold text-slate-500 dark:text-slate-455">
                                         <span>Received:</span>
-                                        <span className="col-span-2 text-slate-850 dark:text-slate-200">{new Date(selectedReview.created_at).toLocaleString()}</span>
+                                        <span className="col-span-2 text-slate-855 dark:text-slate-200">{new Date(selectedReview.created_at).toLocaleString()}</span>
                                     </div>
                                 </div>
 
@@ -1188,6 +1318,128 @@ export default function ReportsPage() {
                                     <p className="p-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 rounded-xl text-sm leading-relaxed whitespace-pre-wrap select-text max-h-[200px] overflow-y-auto">
                                         {selectedReview.feedback ? selectedReview.feedback.replace(/^\[(Project Review|Contact)\]\s*/, '') : ''}
                                     </p>
+                                </div>
+
+                                {/* Collapsible Email Reply Form */}
+                                <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                                    <details className="group" open>
+                                        <summary className="flex items-center justify-between cursor-pointer font-bold text-sm text-slate-700 dark:text-slate-350 select-none list-none">
+                                            <span className="flex items-center gap-2">
+                                                <Mail size={16} className="text-blue-500" />
+                                                Reply via Email
+                                            </span>
+                                            <span className="transition group-open:rotate-180">
+                                                <svg fill="none" height="24" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="24" className="w-4 h-4 text-slate-500">
+                                                    <path d="M6 9l6 6 6-6"></path>
+                                                </svg>
+                                            </span>
+                                        </summary>
+                                        <div className="mt-3 space-y-3 animate-in fade-in duration-200">
+                                            {/* Subject Line */}
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-semibold text-slate-500 uppercase">Subject</label>
+                                                <input
+                                                    type="text"
+                                                    value={replySubject}
+                                                    onChange={e => setReplySubject(e.target.value)}
+                                                    placeholder="Email subject..."
+                                                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-955 border border-slate-205 dark:border-slate-800 text-sm outline-none focus:border-blue-500 text-slate-850 dark:text-slate-200"
+                                                />
+                                            </div>
+                                            
+                                            {/* Message Body */}
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-semibold text-slate-550 uppercase flex justify-between items-center">
+                                                    <span>Message Body</span>
+                                                    <button
+                                                        type="button"
+                                                        disabled={isDrafting}
+                                                        onClick={async () => {
+                                                            setIsDrafting(true);
+                                                            try {
+                                                                const res = await fetch('/api/admin/reviews/draft', {
+                                                                    method: 'POST',
+                                                                    headers: { 'Content-Type': 'application/json' },
+                                                                    body: JSON.stringify({
+                                                                        name: selectedReview.name,
+                                                                        feedback: selectedReview.feedback,
+                                                                        type: selectedReview.feedback?.startsWith('[Project Review]') ? 'review' : 'contact'
+                                                                    })
+                                                                });
+                                                                const data = await res.json();
+                                                                if (res.ok && data.success) {
+                                                                    setReplySubject(data.subject);
+                                                                    setReplyMessage(data.body);
+                                                                    addToast("Draft generated with Gemini!", "success");
+                                                                } else {
+                                                                    addToast(data.error || "Failed to generate draft", "error");
+                                                                }
+                                                            } catch (err) {
+                                                                addToast("Error generating draft", "error");
+                                                            } finally {
+                                                                setIsDrafting(false);
+                                                            }
+                                                        }}
+                                                        className="text-blue-600 dark:text-blue-450 hover:underline flex items-center gap-1 disabled:opacity-50 text-xs font-bold font-sans"
+                                                    >
+                                                        <Sparkles size={12} className={isDrafting ? "animate-pulse" : ""} />
+                                                        {isDrafting ? "Drafting..." : "Draft with AI"}
+                                                    </button>
+                                                </label>
+                                                <textarea
+                                                    rows={4}
+                                                    value={replyMessage}
+                                                    onChange={e => setReplyMessage(e.target.value)}
+                                                    placeholder="Write your response here..."
+                                                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-955 border border-slate-205 dark:border-slate-800 text-sm outline-none focus:border-blue-500 text-slate-850 dark:text-slate-200 leading-relaxed"
+                                                />
+                                            </div>
+
+                                            {/* Send Button */}
+                                            <button
+                                                type="button"
+                                                disabled={isSending || !replySubject || !replyMessage}
+                                                onClick={async () => {
+                                                    setIsSending(true);
+                                                    try {
+                                                        const res = await fetch('/api/admin/reviews/reply', {
+                                                            method: 'POST',
+                                                            headers: { 'Content-Type': 'application/json' },
+                                                            body: JSON.stringify({
+                                                                email: selectedReview.email,
+                                                                subject: replySubject,
+                                                                message: replyMessage
+                                                            })
+                                                        });
+                                                        const data = await res.json();
+                                                        if (res.ok && data.success) {
+                                                            addToast("Reply email sent successfully!", "success");
+                                                            setSelectedReview(null); // Close modal on success
+                                                        } else {
+                                                            addToast(data.error || "Failed to send email", "error");
+                                                        }
+                                                    } catch (err) {
+                                                        addToast("Error sending reply email", "error");
+                                                    } finally {
+                                                        setIsSending(false);
+                                                    }
+                                                }}
+                                                className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 text-white rounded-xl font-semibold shadow-md transition-colors text-sm flex items-center justify-center gap-2 disabled:cursor-not-allowed"
+                                            >
+                                                {isSending ? (
+                                                    <>
+                                                        <div className="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent"></div>
+                                                        Sending...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Send size={14} />
+                                                        Send Reply
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                    </details>
                                 </div>
                             </div>
                         </div>

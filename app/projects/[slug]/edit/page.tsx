@@ -7,7 +7,8 @@ import { useRouter } from "next/navigation";
 import type { Project } from "@/data/portfolioData";
 
 export default function EditProjectPage({ params }: { params: Promise<{ slug: string }> }) {
-    const { data, updateProject, isAuthenticated, isLoading: contextLoading } = usePortfolio();
+    const { data, updateProject, isAuthenticated, user, isLoading: contextLoading } = usePortfolio();
+    const isFullAdmin = isAuthenticated && user?.role === 'admin';
     const router = useRouter();
 
     // Unwrap params using React.use()
@@ -56,10 +57,10 @@ export default function EditProjectPage({ params }: { params: Promise<{ slug: st
     }, [data.projects, slug, contextLoading]);
 
     useEffect(() => {
-        if (!contextLoading && !isAuthenticated && !loading) {
+        if (!contextLoading && !isFullAdmin && !loading) {
             router.push("/projects");
         }
-    }, [contextLoading, isAuthenticated, loading, router]);
+    }, [contextLoading, isFullAdmin, loading, router]);
 
     if (loading || contextLoading) return <div className="p-8 text-center flex justify-center"><div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full"></div></div>;
     if (!project) return <div className="p-8 text-center text-red-500">Project not found</div>;

@@ -10,7 +10,9 @@ import { ProjectLink } from "../ProjectLink";
 import { Trash2, Plus } from "lucide-react";
 
 export const ProjectsPage: React.FC = () => {
-    const { isAuthenticated, deleteProject } = usePortfolio();
+    const { isAuthenticated, user, deleteProject } = usePortfolio();
+    const isAdmin = isAuthenticated && (user?.role === 'admin' || user?.role === 'view_only_admin');
+    const isFullAdmin = isAuthenticated && user?.role === 'admin';
 
     const [projects, setProjects] = useState<any[]>([]);
     const [meta, setMeta] = useState({ page: 1, totalPages: 1, total: 0 });
@@ -94,7 +96,7 @@ export const ProjectsPage: React.FC = () => {
                     development, system design, and problem-solving.
                 </p>
 
-                {isAuthenticated && (
+                {isFullAdmin && (
                     <Link
                         href="/projects/new"
                         className="mt-6 inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-full font-bold hover:bg-blue-700 transition-all shadow-lg hover:shadow-blue-500/30"
@@ -103,7 +105,7 @@ export const ProjectsPage: React.FC = () => {
                     </Link>
                 )}
 
-                {isAuthenticated && (
+                {isFullAdmin && (
                     <Link
                         href="/admin/reorder"
                         className="mt-6 ml-4 inline-flex items-center gap-2 bg-slate-800 text-white px-6 py-2 rounded-full font-bold hover:bg-slate-900 transition-all border border-slate-700"
@@ -171,7 +173,7 @@ export const ProjectsPage: React.FC = () => {
                                                     {project.tech[0]}
                                                 </div>
                                             )}
-                                            {isAuthenticated && (
+                                            {isFullAdmin && (
                                                 <button
                                                     onClick={(e) => {
                                                         e.preventDefault();

@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { projects } from '@/lib/schema';
 import { eq, ilike, and, desc, sql, or, count } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
+import { verifyAuth, UserRole } from '@/lib/auth';
 
 
 import { unstable_cache } from 'next/cache';
@@ -27,7 +28,9 @@ const getCachedProjects = unstable_cache(
         githubLink: projects.github_link,
         color: projects.color,
         image: projects.image,
-        slug: projects.slug
+        slug: projects.slug,
+        isClient: projects.is_client,
+        priority: projects.priority
       }).from(projects).where(eq(projects.id, id));
 
       return rows.length > 0 ? rows[0] : null;
@@ -48,7 +51,9 @@ const getCachedProjects = unstable_cache(
         githubLink: projects.github_link,
         color: projects.color,
         image: projects.image,
-        slug: projects.slug
+        slug: projects.slug,
+        isClient: projects.is_client,
+        priority: projects.priority
       }).from(projects).where(eq(projects.slug, slug));
       return rows.length > 0 ? rows[0] : null;
     }
@@ -80,6 +85,8 @@ const getCachedProjects = unstable_cache(
       githubLink: projects.github_link,
       color: projects.color,
       image: projects.image,
+      isClient: projects.is_client,
+      priority: projects.priority,
       ...(summaryMode ? {} : {
         longDescription: projects.long_description,
         features: projects.features,
@@ -88,7 +95,7 @@ const getCachedProjects = unstable_cache(
     })
       .from(projects)
       .where(whereClause)
-      .orderBy(desc(projects.sort_order), desc(projects.id))
+      .orderBy(desc(projects.priority), desc(projects.sort_order), desc(projects.id))
       .limit(limit)
       .offset(offset);
 
@@ -144,6 +151,11 @@ const toSlug = (text: string) => {
 };
 
 export async function POST(request: Request) {
+  const authResult = await verifyAuth(request, [UserRole.ADMIN]);
+  if (!authResult.success) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const {
@@ -157,7 +169,9 @@ export async function POST(request: Request) {
       link,
       githubLink,
       color,
-      image
+      image,
+      isClient,
+      priority
     } = body;
 
     // Generate ID
@@ -192,7 +206,9 @@ export async function POST(request: Request) {
       github_link: githubLink,
       color: color,
       image: image,
-      sort_order: newSortOrder
+      sort_order: newSortOrder,
+      is_client: isClient || false,
+      priority: priority || 0
     }).returning({
       id: projects.id,
       slug: projects.slug,
@@ -207,7 +223,9 @@ export async function POST(request: Request) {
       githubLink: projects.github_link,
       color: projects.color,
       image: projects.image,
-      sort_order: projects.sort_order
+      sort_order: projects.sort_order,
+      isClient: projects.is_client,
+      priority: projects.priority
     });
 
     return NextResponse.json(rows[0]);
@@ -223,6 +241,11 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  const authResult = await verifyAuth(request, [UserRole.ADMIN]);
+  if (!authResult.success) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
@@ -244,6 +267,8 @@ export async function PUT(request: Request) {
       githubLink,
       color,
       image,
+      isClient,
+      priority,
       slug: requestedSlug
     } = body;
 
@@ -260,6 +285,8 @@ export async function PUT(request: Request) {
     if (color !== undefined) updateData.color = color;
     if (image !== undefined) updateData.image = image;
     if (requestedSlug !== undefined) updateData.slug = requestedSlug;
+    if (isClient !== undefined) updateData.is_client = isClient;
+    if (priority !== undefined) updateData.priority = priority;
 
     const rows = await db.update(projects)
       .set(updateData)
@@ -278,7 +305,9 @@ export async function PUT(request: Request) {
         githubLink: projects.github_link,
         color: projects.color,
         image: projects.image,
-        sort_order: projects.sort_order
+        sort_order: projects.sort_order,
+        isClient: projects.is_client,
+        priority: projects.priority
       });
 
     if (rows.length === 0) {
@@ -298,6 +327,11 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const authResult = await verifyAuth(request, [UserRole.ADMIN]);
+  if (!authResult.success) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');

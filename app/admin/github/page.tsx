@@ -37,9 +37,11 @@ export default function GitHubSyncPage() {
     const { 
         data, 
         isAuthenticated, 
+        user,
         isLoading: authLoading,
         fetchAdminData 
     } = usePortfolio();
+    const isAdmin = isAuthenticated && (user?.role === 'admin' || user?.role === 'view_only_admin');
     
     const router = useRouter();
     const { addToast } = useToast();
@@ -86,13 +88,13 @@ export default function GitHubSyncPage() {
     }, [addToast]);
 
     useEffect(() => {
-        if (!authLoading && !isAuthenticated) {
+        if (!authLoading && !isAdmin) {
             router.push("/admin");
-        } else if (isAuthenticated) {
+        } else if (isAdmin) {
             fetchGithubPreview();
             fetchAdminData();
         }
-    }, [isAuthenticated, authLoading, router, fetchGithubPreview, fetchAdminData]);
+    }, [isAdmin, authLoading, router, fetchGithubPreview, fetchAdminData]);
 
     const handleGitHubSync = async () => {
         setIsSyncingGithub(true);
@@ -122,7 +124,7 @@ export default function GitHubSyncPage() {
         );
     }
     
-    if (!isAuthenticated) return null;
+    if (!isAdmin) return null;
 
     const getReadmeHtml = () => {
         if (!githubPreview) return "";

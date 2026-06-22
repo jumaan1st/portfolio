@@ -18,7 +18,9 @@ import { extractFirstImage } from "@/lib/utils";
 
 export const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ blog: initialBlog }) => {
     const router = useRouter();
-    const { isAuthenticated, refreshData } = usePortfolio();
+    const { isAuthenticated, user, refreshData } = usePortfolio();
+    const isAdmin = isAuthenticated && (user?.role === 'admin' || user?.role === 'view_only_admin');
+    const isFullAdmin = isAuthenticated && user?.role === 'admin';
     const [blog, setBlog] = useState(initialBlog);
     const [isEditing, setIsEditing] = useState(false);
     const contentRef = React.useRef<HTMLElement>(null);
@@ -96,7 +98,7 @@ export const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ blog: initialBlo
                         <Printer size={20} />
                         <span className="hidden sm:inline">PDF</span>
                     </button>
-                    {isAuthenticated && (
+                    {isFullAdmin && (
                         <button
                             onClick={() => setIsEditing(true)}
                             className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2 bg-slate-200 dark:bg-slate-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 rounded-lg text-sm font-bold transition-all"

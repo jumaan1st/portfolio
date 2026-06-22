@@ -247,9 +247,13 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeh
                 // PASTE LISTENER
                 const handlePaste = async (e: ClipboardEvent) => {
                     if (e.clipboardData && e.clipboardData.files && e.clipboardData.files.length) {
-                        e.preventDefault();
                         const file = e.clipboardData.files[0];
                         if (file.type.startsWith('image/')) {
+                            e.preventDefault();
+                            if (!allowImages) {
+                                alert("Image uploads are disabled in this editor.");
+                                return;
+                            }
                             const url = await handleImageUpload(file);
                             if (url && quillRef.current) {
                                 const quill = quillRef.current.getEditor();
@@ -263,9 +267,13 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeh
                 // DROP LISTENER
                 const handleDrop = async (e: DragEvent) => {
                     if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
-                        e.preventDefault();
                         const file = e.dataTransfer.files[0];
                         if (file.type.startsWith('image/')) {
+                            e.preventDefault();
+                            if (!allowImages) {
+                                alert("Image uploads are disabled in this editor.");
+                                return;
+                            }
                             const url = await handleImageUpload(file);
                             if (url && quillRef.current) {
                                 const quill = quillRef.current.getEditor();

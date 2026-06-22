@@ -8,6 +8,7 @@
 
     html,
     body {
+        font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         overflow-x: hidden;
         max-width: 100vw;
     }

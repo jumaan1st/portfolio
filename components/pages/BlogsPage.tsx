@@ -10,7 +10,9 @@ import { extractFirstImage } from "@/lib/utils";
 import { BlogPlaceholder } from "../BlogPlaceholder";
 
 export const BlogsPage: React.FC = () => {
-    const { data: globalData, isAuthenticated, createBlog } = usePortfolio();
+    const { data: globalData, isAuthenticated, user, createBlog } = usePortfolio();
+    const isAdmin = isAuthenticated && (user?.role === 'admin' || user?.role === 'view_only_admin');
+    const isFullAdmin = isAuthenticated && user?.role === 'admin';
     const router = useRouter();
 
     const handleCreate = () => {
@@ -52,7 +54,7 @@ export const BlogsPage: React.FC = () => {
             fetchBlogs(1, search, tag);
         }, 500);
         return () => clearTimeout(timer);
-    }, [search, tag, isAuthenticated]); // Re-fetch when auth status changes
+    }, [search, tag, isAuthenticated, user]); // Re-fetch when auth status changes
 
     const fetchBlogs = async (p: number, s: string, t: string) => {
         setIsLoading(true);
@@ -64,7 +66,7 @@ export const BlogsPage: React.FC = () => {
                 tag: t,
                 summary: "true"
             });
-            if (isAuthenticated) {
+            if (isAdmin) {
                 query.append('include_hidden', 'true');
             }
 
@@ -106,7 +108,7 @@ export const BlogsPage: React.FC = () => {
                         {globalData.ui.blogSubtitle}
                     </p>
 
-                    {isAuthenticated && (
+                    {isFullAdmin && (
                         <div className="mt-6 flex gap-4">
                             <button
                                 onClick={handleCreate}
@@ -166,7 +168,7 @@ export const BlogsPage: React.FC = () => {
                                     onClick={() => router.push(`/blogs/${blog.slug || blog.id}`)}
                                     className={`bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 hover:bg-slate-50 dark:hover:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-600 transition-all cursor-pointer group shadow-sm flex flex-col w-full relative ${blog.is_hidden ? 'opacity-75' : ''}`}
                                 >
-                                    {isAuthenticated && blog.is_hidden && (
+                                    {isAdmin && blog.is_hidden && (
                                         <div className="absolute top-4 right-4 z-20">
                                             <span className="px-3 py-1 bg-yellow-400 text-yellow-900 text-[10px] font-bold uppercase tracking-wider rounded-full shadow-md animate-pulse">
                                                 Hidden
@@ -174,7 +176,7 @@ export const BlogsPage: React.FC = () => {
                                         </div>
                                     )}
 
-                                    {isAuthenticated && (
+                                    {isFullAdmin && (
                                         <div className="absolute top-14 right-4 z-10 flex flex-col gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); router.push(`/blogs/${blog.id}/edit`); }}

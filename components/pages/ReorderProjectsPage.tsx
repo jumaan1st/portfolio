@@ -16,7 +16,8 @@ interface ReorderProject {
 }
 
 export const ReorderProjectsPage = () => {
-    const { isAuthenticated } = usePortfolio();
+    const { isAuthenticated, user } = usePortfolio();
+    const isFullAdmin = isAuthenticated && user?.role === 'admin';
     const router = useRouter();
     const { addToast } = useToast();
 
@@ -138,7 +139,7 @@ export const ReorderProjectsPage = () => {
         }
     };
 
-    if (!isAuthenticated) return (
+    if (!isFullAdmin) return (
         <div className="flex items-center justify-center min-h-screen text-red-500 font-bold">
             Access Denied. Admins Only.
         </div>
