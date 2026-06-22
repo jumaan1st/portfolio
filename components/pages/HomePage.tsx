@@ -115,9 +115,15 @@ export const HomePage: React.FC = () => {
                         </span>
                         <span
                             className="text-slate-600 dark:text-slate-300 text-xs font-bold uppercase tracking-wider">
-                            {globalData.ui.statusLabel}{" "}
-                            <span
-                                className="text-green-600 dark:text-green-400">{globalData.profile.currentCompany}</span>
+                            {(!globalData.profile.currentCompany || 
+                              ['freelance', 'open to work', 'self-employed', 'none'].includes(globalData.profile.currentCompany.toLowerCase())) ? (
+                                <span className="text-blue-600 dark:text-blue-400 font-extrabold">Open to New Opportunities / Freelance</span>
+                            ) : (
+                                <>
+                                    {globalData.ui.statusLabel || "Currently working as Backend Developer at"}{" "}
+                                    <span className="text-green-600 dark:text-green-400">{globalData.profile.currentCompany}</span>
+                                </>
+                            )}
                         </span>
                     </div>
 

@@ -1860,6 +1860,9 @@ const AdminContent: React.FC = () => {
                                 <div className="space-y-4">
                                     <Input label="Full Name" value={profileForm.name} onChange={v => setProfileForm({ ...profileForm, name: v })} />
                                     <Input label="Current Role" value={profileForm.currentRole} onChange={v => setProfileForm({ ...profileForm, currentRole: v })} />
+                                    <Input label="Current Company (Leave empty if Freelance/Open to Work)" value={profileForm.currentCompany || ''} onChange={v => setProfileForm({ ...profileForm, currentCompany: v })} />
+                                    <Input label="Current Company URL" value={profileForm.currentCompanyUrl || ''} onChange={v => setProfileForm({ ...profileForm, currentCompanyUrl: v })} />
+                                    <Input label="Location" value={profileForm.location || ''} onChange={v => setProfileForm({ ...profileForm, location: v })} />
                                     <Input
                                         label="Roles (comma separated)"
                                         value={Array.isArray(profileForm.roles) ? profileForm.roles.join(', ') : profileForm.roles}
