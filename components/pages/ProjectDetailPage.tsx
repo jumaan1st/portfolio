@@ -28,7 +28,9 @@ interface Props {
 }
 
 export const ProjectDetailPage: React.FC<Props> = ({ project: initialProject, onBack }) => {
-    const { isAuthenticated, deleteProject } = usePortfolio();
+    const { isAuthenticated, user, deleteProject } = usePortfolio();
+    const isAdmin = isAuthenticated && (user?.role === 'admin' || user?.role === 'view_only_admin');
+    const isFullAdmin = isAuthenticated && user?.role === 'admin';
 
     const [project, setProject] = useState(initialProject);
     const [activeTab, setActiveTab] = useState<"overview" | "case-study" | "tech" | "outcome" | "ai">("overview");
@@ -141,7 +143,7 @@ export const ProjectDetailPage: React.FC<Props> = ({ project: initialProject, on
                     >
                         <Printer size={20} className="sm:w-4 sm:h-4" /> <span className="hidden sm:inline">PDF</span>
                     </button>
-                    {isAuthenticated && (
+                    {isFullAdmin && (
                         <>
                             <Link
                                 href={`/projects/${project.id}/edit`}

@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import {
@@ -7,6 +6,24 @@ import {
 } from '@/lib/schema';
 import { desc, asc, eq, and, sql } from 'drizzle-orm';
 import { unstable_cache } from 'next/cache';
+import { jwtVerify } from 'jose';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'secret';
+
+async function isAuthorizedAdmin(request: Request) {
+    const cookieHeader = request.headers.get('cookie') || '';
+    const match = cookieHeader.match(/portfolio_auth=([^;]+)/);
+    const token = match ? match[1] : null;
+
+    if (!token) return false;
+    try {
+        const verified = await jwtVerify(token, new TextEncoder().encode(JWT_SECRET));
+        const role = verified.payload.role;
+        return role === 'admin' || role === 'view_only_admin';
+    } catch {
+        return false;
+    }
+}
 
 async function fetchBootstrapRaw(mode: string = 'public') {
     const includeDetails = mode === 'admin' || mode === 'full';
@@ -136,7 +153,15 @@ const getBootstrapData = unstable_cache(
 export async function GET(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
-        const mode = searchParams.get('mode') || 'public';
+        let mode = searchParams.get('mode') || 'public';
+
+        // Security check: Only allow 'admin' or 'full' mode if authenticated as admin
+        if (mode === 'admin' || mode === 'full') {
+            const authorized = await isAuthorizedAdmin(request);
+            if (!authorized) {
+                mode = 'public';
+            }
+        }
 
         let data;
         if (process.env.NODE_ENV === 'development') {

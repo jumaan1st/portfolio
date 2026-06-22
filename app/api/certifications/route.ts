@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { certifications } from '@/lib/schema';
 import { eq, desc } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
+import { verifyAuth, UserRole } from '@/lib/auth';
 
 export async function GET() {
     try {
@@ -15,6 +16,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+    const authResult = await verifyAuth(request, [UserRole.ADMIN]);
+    if (!authResult.success) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     try {
         const { name, issuer, url, date, icon } = await request.json();
         const rows = await db.insert(certifications).values({
@@ -34,6 +40,11 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+    const authResult = await verifyAuth(request, [UserRole.ADMIN]);
+    if (!authResult.success) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     try {
         const { searchParams } = new URL(request.url);
         const id = searchParams.get('id');
@@ -55,6 +66,11 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+    const authResult = await verifyAuth(request, [UserRole.ADMIN]);
+    if (!authResult.success) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     try {
         const { searchParams } = new URL(request.url);
         const id = searchParams.get('id');

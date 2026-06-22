@@ -15,13 +15,13 @@ type NavItem = {
 const navItems: NavItem[] = [
     { href: "/", label: "Home", icon: Home },
     { href: "/about", label: "About", icon: User },
-    { href: "/projects", label: "Projects", icon: Layout },
+    { href: "/works", label: "Works", icon: Layout },
     { href: "/blogs", label: "Blogs", icon: BookOpen },
-    { href: "/contact", label: "Contact", icon: Mail },
+    { href: "/enquiry", label: "Enquiry", icon: Mail },
 ];
 
 export const Navbar: React.FC = () => {
-    const { isAuthenticated, data } = usePortfolio();
+    const { isAuthenticated, user, data } = usePortfolio();
     const { theme, setTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -49,23 +49,18 @@ export const Navbar: React.FC = () => {
         <nav className="sticky top-0 z-40 w-full bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800/60 transition-colors duration-300">
             <div className="max-w-6xl mx-auto px-4 py-2">
 
-                {/* Desktop navbar - Unchanged */}
+                {/* Desktop navbar */}
                 <div className="hidden md:flex justify-between items-center">
-                    <Link href="/" className="flex items-center gap-3 group">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-blue-900/20 group-hover:shadow-blue-900/40 transition-all">
-                            MJ
-                        </div>
-                        <div className="text-left hidden sm:block">
-                            <h1 className="font-bold text-slate-900 dark:text-white leading-none group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                                Portfolio
-                            </h1>
-                            <p className="text-[10px] text-slate-500 tracking-wider uppercase">
-                                Jumaan
-                            </p>
-                        </div>
+                    <Link href="/" className="flex items-center gap-2 group">
+                        <span 
+                            className="font-black text-2xl tracking-tight text-slate-900 dark:text-white transition-transform duration-300 transform group-hover:scale-105 active:scale-95 ease-out select-none"
+                            style={{ fontFamily: "'Outfit', sans-serif" }}
+                        >
+                            Jumaan<span className="text-blue-600 dark:text-blue-400">.</span>
+                        </span>
                     </Link>
 
-                    <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900/50 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
+                    <div className="flex items-center gap-0.5 lg:gap-1 bg-slate-100/90 dark:bg-slate-900/50 p-1.5 rounded-xl border border-slate-200 dark:border-slate-800">
                         {/* Socials (Desktop) */}
                         <div className="hidden lg:flex items-center gap-1 mr-2 px-2 border-r border-slate-200 dark:border-slate-800">
                             {data.profile.github && (
@@ -94,10 +89,10 @@ export const Navbar: React.FC = () => {
                             <Link
                                 key={href}
                                 href={href}
-                                className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800 transition-all"
+                                className="flex items-center gap-1.5 px-2.5 py-1.5 lg:px-4 lg:py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800 transition-all duration-200"
                             >
                                 <Icon size={18} />
-                                <span className="hidden md:block font-medium">{label}</span>
+                                <span className="hidden lg:block font-semibold text-sm">{label}</span>
                             </Link>
                         ))}
 
@@ -106,7 +101,7 @@ export const Navbar: React.FC = () => {
                         <div className="relative">
                             <button
                                 onClick={toggleTheme}
-                                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${showThemeTutorial
+                                className={`flex items-center justify-center p-2 rounded-lg transition-all ${showThemeTutorial
                                     ? "bg-blue-100 text-blue-600 ring-2 ring-blue-500 ring-offset-2 animate-pulse dark:ring-offset-slate-900"
                                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800"
                                     }`}
@@ -123,35 +118,26 @@ export const Navbar: React.FC = () => {
 
                         <Link
                             href="/admin"
-                            className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800"
+                            className="flex items-center gap-1.5 px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800"
                         >
                             {isAuthenticated ? <Lock size={18} /> : <Edit3 size={18} />}
-                            <span className="hidden md:block font-medium">
-                                {isAuthenticated ? "Dashboard" : "Admin"}
+                            <span className="hidden lg:block font-semibold text-sm">
+                                {isAuthenticated ? (user?.role === 'client' ? "Client Dashboard" : "Dashboard") : "Client Portal"}
                             </span>
                         </Link>
-
-                        {isAuthenticated && (
-                            <Link
-                                href="/admin/reports"
-                                className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800"
-                                title="View Audit Reports"
-                            >
-                                <FileText size={18} />
-                                <span className="hidden md:block font-medium">Reports</span>
-                            </Link>
-                        )}
                     </div>
                 </div>
 
                 {/* Mobile Header (Double Decker) */}
                 <div className="md:hidden flex flex-col gap-3 pb-2">
                     <div className="flex items-center justify-between">
-                        <Link href="/" className="flex items-center gap-2">
-                            <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold shadow">
-                                MJ
-                            </div>
-                            <span className="font-bold text-slate-900 dark:text-white">Jumaan</span>
+                        <Link href="/" className="flex items-center gap-2 group">
+                            <span 
+                                className="font-black text-xl tracking-tight text-slate-900 dark:text-white transition-transform duration-300 transform group-hover:scale-105 active:scale-95 ease-out select-none"
+                                style={{ fontFamily: "'Outfit', sans-serif" }}
+                            >
+                                Jumaan<span className="text-blue-600 dark:text-blue-400">.</span>
+                            </span>
                         </Link>
 
                         <div className="flex items-center gap-2">
@@ -210,19 +196,8 @@ export const Navbar: React.FC = () => {
                                 className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800 active:scale-95 transition-all"
                             >
                                 <Edit3 size={20} />
-                                <span className="font-medium">{isAuthenticated ? "Dashboard" : "Admin"}</span>
+                                <span className="font-medium">{isAuthenticated ? (user?.role === 'client' ? "Client Dashboard" : "Dashboard") : "Client Portal"}</span>
                             </Link>
-
-                            {isAuthenticated && (
-                                <Link
-                                    href="/admin/reports"
-                                    onClick={() => setIsMenuOpen(false)}
-                                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800 active:scale-95 transition-all"
-                                >
-                                    <FileText size={20} />
-                                    <span className="font-medium">Reports</span>
-                                </Link>
-                            )}
 
                             <div className="h-px bg-slate-200 dark:bg-slate-700 mx-4 my-1" />
 

@@ -6,21 +6,22 @@ import { jwtVerify } from 'jose';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 
-async function checkAuth(req: Request) {
+async function checkAuth(req: Request, allowViewOnly = false) {
     const cookieHeader = req.headers.get('cookie') || '';
     const match = cookieHeader.match(/portfolio_auth=([^;]+)/);
     const token = match ? match[1] : null;
     if (!token) return false;
     try {
-        await jwtVerify(token, new TextEncoder().encode(JWT_SECRET));
-        return true;
+        const verified = await jwtVerify(token, new TextEncoder().encode(JWT_SECRET));
+        const role = verified.payload.role;
+        return role === 'admin' || (allowViewOnly && role === 'view_only_admin');
     } catch {
         return false;
     }
 }
 
 export async function GET(req: Request) {
-    const isAuthed = await checkAuth(req);
+    const isAuthed = await checkAuth(req, true);
     if (!isAuthed) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -34,6 +35,7 @@ export async function GET(req: Request) {
         const type = searchParams.get('type') || 'all'; // 'all', 'review', 'contact'
         const stars = searchParams.get('stars');
         const search = searchParams.get('search');
+        const userEmail = searchParams.get('userEmail');
 
         const conditions = [];
 
@@ -54,6 +56,10 @@ export async function GET(req: Request) {
             ));
         }
 
+        if (userEmail && userEmail !== 'all') {
+            conditions.push(eq(reviewTable.email, userEmail));
+        }
+
         const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
         // Fetch counts
@@ -67,6 +73,24 @@ export async function GET(req: Request) {
             .orderBy(desc(reviewTable.created_at))
             .limit(limit)
             .offset(offset);
+
+        // Fetch unique users (by email only) for the filter dropdown
+        // Group only by email so that name variations for the same email don't produce duplicates
+        const uniqueUsersRaw = await db.select({
+            name: sql<string>`MIN(${reviewTable.name})`,
+            email: reviewTable.email
+        })
+        .from(reviewTable)
+        .groupBy(reviewTable.email)
+        .orderBy(reviewTable.email);
+
+        // Extra dedup safeguard in JS (in case DB returns duplicates)
+        const seenEmails = new Set<string>();
+        const uniqueUsers = uniqueUsersRaw.filter(u => {
+            if (seenEmails.has(u.email)) return false;
+            seenEmails.add(u.email);
+            return true;
+        });
 
         // Calculate Stats for KPI Cards (Only for Reviews)
         const statsRes = await db.select({
@@ -104,6 +128,7 @@ export async function GET(req: Request) {
         return NextResponse.json({
             success: true,
             reviews,
+            users: uniqueUsers,
             pagination: {
                 total,
                 page,
@@ -126,7 +151,7 @@ export async function GET(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-    const isAuthed = await checkAuth(req);
+    const isAuthed = await checkAuth(req, false);
     if (!isAuthed) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

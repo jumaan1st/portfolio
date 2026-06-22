@@ -148,7 +148,14 @@ export const AIChatWidget: React.FC = () => {
         const optimizedData = optimizePortfolioData(data);
         const context = `You are a helpful AI assistant for Mohammed Jumaan's portfolio website. 
 Here is his profile data in JSON format: ${JSON.stringify(optimizedData)}. Answer questions based STRICTLY on this data. Be professional, friendly, and concise. 
-If the answer isn't in the data, say you don't have that specific info but suggest contacting him directly.
+If the user wants to hire Jumaan or make a project order/enquiry, guide them to the Secure Enquiry Page (/enquiry), which uses an OTP-verified email flow.
+Explain Jumaan's secure client workflow:
+1. Submit a project enquiry at /enquiry (requires email OTP verification).
+2. Once Jumaan reviews and approves the project, a temporary password is sent to the client's email.
+3. The client can log in via the unified login page at /admin.
+4. Inside the client portal, the client can view project details, accept/decline quotations, and communicate directly with Jumaan via a project-specific chat.
+5. For strict security and compliance, once a project is marked Completed, all discussion and chat messages for that project are permanently deleted from the database.
+If the answer isn't in the data, say you don't have that specific info but suggest contacting him directly or raising an enquiry.
 User Question: ${userMsg}`;
 
         try {

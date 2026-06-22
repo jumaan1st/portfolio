@@ -1,5 +1,21 @@
-/* eslint-disable */
-const { Pool } = require('pg');
-// ... rest of file (overwriting for simplicity or replacing?)
-// Wait, write_to_file overwrites. I cannot use write_to_file to PREPEND.
-// I must use replace_file_content.
+const fs = require('fs');
+const logPath = 'C:\\Users\\moham\\.gemini\\antigravity-ide\\brain\\f94199a0-3876-4464-adea-fff7ad77c8f4\\.system_generated\\logs\\transcript.jsonl';
+const fileContent = fs.readFileSync(logPath, 'utf8');
+const lines = fileContent.split('\n');
+
+for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    try {
+        const obj = JSON.parse(line);
+        if (obj.step_index >= 0 && obj.step_index < 450 && obj.tool_calls) {
+            for (const tc of obj.tool_calls) {
+                const argsStr = JSON.stringify(tc.args);
+                if (argsStr.includes('reports')) {
+                    console.log(`\n=== Step ${obj.step_index} (${obj.created_at}) [${tc.name}] ===`);
+                    console.log(JSON.stringify(tc, null, 2));
+                }
+            }
+        }
+    } catch (e) {}
+}

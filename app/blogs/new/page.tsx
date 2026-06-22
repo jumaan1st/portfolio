@@ -8,14 +8,15 @@ import { BlogPost } from '@/data/portfolioData';
 
 export default function NewBlogPage() {
     const router = useRouter();
-    const { createBlog, isAuthenticated } = usePortfolio();
+    const { createBlog, isAuthenticated, user } = usePortfolio();
+    const isFullAdmin = isAuthenticated && user?.role === 'admin';
 
     // Protect Route
     React.useEffect(() => {
-        if (!isAuthenticated) {
+        if (!isFullAdmin) {
             router.push('/admin');
         }
-    }, [isAuthenticated, router]);
+    }, [isFullAdmin, router]);
 
     const handleSave = async (blog: BlogPost) => {
         try {
@@ -39,7 +40,7 @@ export default function NewBlogPage() {
         }
     };
 
-    if (!isAuthenticated) return null;
+    if (!isFullAdmin) return null;
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 md:p-8">

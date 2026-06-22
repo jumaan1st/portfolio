@@ -49,10 +49,27 @@ const ProfileAvatar = ({ photoLight, photoDark, name, theme }: { photoLight?: st
 };
 
 export const HomePage: React.FC = () => {
-    const { data: globalData, isAuthenticated, updateProfile, isLoading } = usePortfolio(); // Use global loading state
+    const { data: globalData, isAuthenticated, user, updateProfile, isLoading } = usePortfolio(); // Use global loading state
+    const isAdmin = isAuthenticated && (user?.role === 'admin' || user?.role === 'view_only_admin');
     const { theme } = useTheme();
     const [currentProjectIndex, setCurrentProjectIndex] = useState(0);
     const router = useRouter();
+    const [clientCount, setClientCount] = useState(0);
+
+    useEffect(() => {
+        const fetchClients = async () => {
+            try {
+                const res = await fetch("/api/works/clients");
+                if (res.ok) {
+                    const data = await res.json();
+                    setClientCount(data?.length || 0);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        };
+        fetchClients();
+    }, []);
 
     // Use global data populated by bootstrap
     const projects = globalData.projects || [];
@@ -126,7 +143,7 @@ export const HomePage: React.FC = () => {
                     <h1 className="text-5xl md:text-7xl font-bold text-slate-900 dark:text-white tracking-tight">
                         <EditableField
                             value={globalData.profile.name}
-                            isEditing={isAuthenticated}
+                            isEditing={isAdmin}
                             onSave={(val) => onUpdateProfile({ name: val })}
                         />
                     </h1>
@@ -138,7 +155,7 @@ export const HomePage: React.FC = () => {
                     <div className="text-slate-600 dark:text-slate-400 leading-relaxed text-lg max-w-2xl mx-auto">
                         <EditableField
                             value={globalData.profile.summary}
-                            isEditing={isAuthenticated}
+                            isEditing={isAdmin}
                             type="textarea"
                             onSave={(val) => onUpdateProfile({ summary: val })}
                         />
@@ -148,15 +165,15 @@ export const HomePage: React.FC = () => {
                 {/* ACTION BUTTONS (updated for mobile) */}
                 <div className="flex flex-col md:flex-row gap-4 mt-12 w-full justify-center items-center">
                     <button
-                        onClick={() => router.push("/projects")}
-                        className="w-full md:w-auto group bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 rounded-full font-bold transition-all flex items-center gap-2 justify-center"
+                        onClick={() => router.push("/works")}
+                        className="w-full md:w-auto group bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 rounded-full font-bold transition-all flex items-center gap-2 justify-center shadow-lg hover:shadow-blue-500/20"
                     >
                         See My Work <ArrowRight size={18} />
                     </button>
 
                     <button
-                        onClick={() => router.push("/contact")}
-                        className="w-full md:w-auto bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white px-8 py-4 rounded-full font-bold border border-slate-200 dark:border-slate-700 transition-all justify-center"
+                        onClick={() => router.push("/enquiry")}
+                        className="w-full md:w-auto bg-white dark:bg-slate-900 hover:bg-slate-105 dark:hover:bg-slate-800 text-slate-900 dark:text-white px-8 py-4 rounded-full font-bold border border-slate-200 dark:border-slate-700 transition-all justify-center"
                     >
                         Contact Me
                     </button>
@@ -174,6 +191,75 @@ export const HomePage: React.FC = () => {
             </section>
 
             <Marquee items={globalData.skills} />
+
+            {/* DYNAMIC CLIENT TIMELINE OR FREELANCE CAPABILITIES SECTION */}
+            {clientCount > 0 ? (
+                <section className="max-w-5xl mx-auto w-full px-4 animate-in fade-in duration-500">
+                    <div className="text-center mb-10">
+                        <h3 className="text-3xl font-extrabold text-slate-905 dark:text-white mb-2">
+                            Clients Served & Collaborative Journey
+                        </h3>
+                        <p className="text-slate-500 max-w-lg mx-auto text-sm font-medium">
+                            Demonstrated track record of delivering production-grade systems for <span className="text-blue-600 dark:text-blue-450 font-bold">{clientCount} corporate partners</span>.
+                        </p>
+                    </div>
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-3xl shadow-xl flex flex-col items-center justify-center text-center space-y-4">
+                        <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-2xl flex items-center justify-center font-bold text-2xl">
+                            {clientCount}
+                        </div>
+                        <p className="text-lg font-bold text-slate-800 dark:text-slate-200">
+                            Partnering for Success
+                        </p>
+                        <p className="text-sm text-slate-505 max-w-md leading-relaxed">
+                            Through structured planning, milestone-based updates, and high quality freelance engineering, I have supported companies with scalable tech architectures.
+                        </p>
+                        <Link href="/works" className="mt-2 text-sm text-blue-650 dark:text-blue-400 font-bold flex items-center gap-1 hover:underline">
+                            View Client Directory <ArrowRight size={14} />
+                        </Link>
+                    </div>
+                </section>
+            ) : (
+                <section className="max-w-5xl mx-auto w-full px-4 animate-in fade-in duration-500">
+                    <div className="text-center mb-12">
+                        <h3 className="text-3xl font-extrabold text-slate-905 dark:text-white mb-2">
+                            Freelance Capabilities
+                        </h3>
+                        <div className="h-1 w-20 bg-blue-600 mx-auto rounded-full" />
+                        <p className="text-slate-505 mt-4 max-w-xl mx-auto text-sm font-medium">
+                            Providing robust backend systems, scalable cloud services, and secure integrations to help clients scale.
+                        </p>
+                    </div>
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="bg-white dark:bg-slate-900 border border-slate-202 dark:border-slate-800 p-6 rounded-2xl shadow-sm space-y-3">
+                            <div className="w-10 h-10 bg-blue-50 dark:bg-blue-905/20 text-blue-605 rounded-xl flex items-center justify-center font-bold">
+                                01
+                            </div>
+                            <h4 className="font-bold text-slate-900 dark:text-white">API Design & Security</h4>
+                            <p className="text-xs text-slate-500 leading-relaxed">
+                                Building lightning-fast RESTful APIs and GraphQL services backed by JWT role controls and robust database designs.
+                            </p>
+                        </div>
+                        <div className="bg-white dark:bg-slate-900 border border-slate-202 dark:border-slate-800 p-6 rounded-2xl shadow-sm space-y-3">
+                            <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-905/20 text-indigo-650 rounded-xl flex items-center justify-center font-bold">
+                                02
+                            </div>
+                            <h4 className="font-bold text-slate-900 dark:text-white">Cloud Architecture</h4>
+                            <p className="text-xs text-slate-500 leading-relaxed">
+                                Designing serverless infrastructures, database replica scaling, and content caching using Cloudflare and modern cloud clusters.
+                            </p>
+                        </div>
+                        <div className="bg-white dark:bg-slate-900 border border-slate-202 dark:border-slate-800 p-6 rounded-2xl shadow-sm space-y-3">
+                            <div className="w-10 h-10 bg-purple-55 bg-purple-100 dark:bg-purple-905/20 text-purple-600 rounded-xl flex items-center justify-center font-bold">
+                                03
+                            </div>
+                            <h4 className="font-bold text-slate-900 dark:text-white">Fullstack Delivery</h4>
+                            <p className="text-xs text-slate-500 leading-relaxed">
+                                Creating client portals, real-time message boards, and financial calculators using React, Next.js, and type-safe database adapters.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+            )}
 
             {/* Featured projects carousel */}
             {project && (

@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { education } from '@/lib/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
+import { verifyAuth, UserRole } from '@/lib/auth';
 
 export async function GET() {
   try {
@@ -16,6 +17,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const authResult = await verifyAuth(request, [UserRole.ADMIN]);
+  if (!authResult.success) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const { degree, school, grade, start_date, end_date } = body;
@@ -37,6 +43,11 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  const authResult = await verifyAuth(request, [UserRole.ADMIN]);
+  if (!authResult.success) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
@@ -60,6 +71,11 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const authResult = await verifyAuth(request, [UserRole.ADMIN]);
+  if (!authResult.success) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');

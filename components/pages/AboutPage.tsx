@@ -6,6 +6,52 @@ import { usePortfolio } from "@/components/PortfolioContext";
 import { IconRenderer } from "@/components/IconRenderer";
 import { formatDateRange, formatDate } from "@/lib/utils";
 
+// Loading Skeleton Component
+const LoadingSkeleton = () => (
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl mx-auto space-y-12 pb-12">
+        <div className="text-center mb-12 space-y-4">
+            <div className="h-8 w-48 bg-slate-200 dark:bg-slate-800 rounded-lg mx-auto animate-pulse" />
+            <div className="h-1 w-20 bg-blue-600 dark:bg-blue-500 mx-auto rounded-full" />
+            <div className="flex justify-center gap-4">
+                <div className="h-10 w-32 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse" />
+                <div className="h-10 w-32 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse" />
+            </div>
+        </div>
+
+        <div className="space-y-8">
+            <h3 className="h-8 w-40 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse" />
+            <div className="border-l-2 border-slate-200 dark:border-slate-800 ml-3 space-y-12 pl-8 relative">
+                {[1, 2, 3].map((i) => (
+                    <div key={i} className="space-y-3">
+                        <div className="h-6 w-1/3 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse" />
+                        <div className="h-4 w-1/4 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse" />
+                        <div className="h-24 w-full bg-slate-200 dark:bg-slate-800 rounded-2xl animate-pulse" />
+                    </div>
+                ))}
+            </div>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-8">
+            <div className="space-y-6">
+                <h3 className="h-8 w-40 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse" />
+                <div className="space-y-4">
+                    {[1, 2].map(i => (
+                        <div key={i} className="h-32 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
+                    ))}
+                </div>
+            </div>
+            <div className="space-y-6">
+                <h3 className="h-8 w-40 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse" />
+                <div className="flex flex-wrap gap-3">
+                    {[1, 2, 3, 4, 5, 6].map(i => (
+                        <div key={i} className="h-10 w-24 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse" />
+                    ))}
+                </div>
+            </div>
+        </div>
+    </div>
+);
+
 interface AboutPageProps {
     initialExperience?: any[];
     initialEducation?: any[];
@@ -19,52 +65,6 @@ export const AboutPage: React.FC<AboutPageProps> = ({ initialExperience = [], in
 
     // We only wait for globalData (profile/skills), exp/edu are passed in
     const showLoading = globalLoading;
-
-    // Loading Skeleton Component
-    const LoadingSkeleton = () => (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl mx-auto space-y-12 pb-12">
-            <div className="text-center mb-12 space-y-4">
-                <div className="h-8 w-48 bg-slate-200 dark:bg-slate-800 rounded-lg mx-auto animate-pulse" />
-                <div className="h-1 w-20 bg-blue-600 dark:bg-blue-500 mx-auto rounded-full" />
-                <div className="flex justify-center gap-4">
-                    <div className="h-10 w-32 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse" />
-                    <div className="h-10 w-32 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse" />
-                </div>
-            </div>
-
-            <div className="space-y-8">
-                <h3 className="h-8 w-40 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse" />
-                <div className="border-l-2 border-slate-200 dark:border-slate-800 ml-3 space-y-12 pl-8 relative">
-                    {[1, 2, 3].map((i) => (
-                        <div key={i} className="space-y-3">
-                            <div className="h-6 w-1/3 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse" />
-                            <div className="h-4 w-1/4 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse" />
-                            <div className="h-24 w-full bg-slate-200 dark:bg-slate-800 rounded-2xl animate-pulse" />
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-8">
-                <div className="space-y-6">
-                    <h3 className="h-8 w-40 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse" />
-                    <div className="space-y-4">
-                        {[1, 2].map(i => (
-                            <div key={i} className="h-32 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
-                        ))}
-                    </div>
-                </div>
-                <div className="space-y-6">
-                    <h3 className="h-8 w-40 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse" />
-                    <div className="flex flex-wrap gap-3">
-                        {[1, 2, 3, 4, 5, 6].map(i => (
-                            <div key={i} className="h-10 w-24 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse" />
-                        ))}
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
 
     if (showLoading) return <LoadingSkeleton />;
 

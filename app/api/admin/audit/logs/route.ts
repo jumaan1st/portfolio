@@ -2,8 +2,13 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { sessions } from '@/lib/schema';
 import { desc, count, ilike, and, gte, lte, eq } from 'drizzle-orm';
+import { verifyAuth, UserRole } from '@/lib/auth';
 
 export async function GET(req: Request) {
+    const authResult = await verifyAuth(req, [UserRole.ADMIN, UserRole.VIEW_ONLY_ADMIN]);
+    if (!authResult.success) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     try {
         const { searchParams } = new URL(req.url);
         const page = parseInt(searchParams.get('page') || '1');
@@ -49,6 +54,10 @@ export async function GET(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+    const authResult = await verifyAuth(req, [UserRole.ADMIN]);
+    if (!authResult.success) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     try {
         const { searchParams } = new URL(req.url);
         const id = searchParams.get('id');

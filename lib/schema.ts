@@ -9,6 +9,7 @@ export const config = portfolio.table("config", {
     admin_email: varchar("admin_email", { length: 255 }).notNull(),
     admin_pass: varchar("admin_pass", { length: 255 }).notNull(),
     show_welcome_modal: boolean("show_welcome_modal").notNull(),
+    must_reset_password: boolean("must_reset_password").default(false),
 });
 
 export const uiConfig = portfolio.table("ui_config", {
@@ -65,6 +66,8 @@ export const projects = portfolio.table("projects", {
     image: text("image"),
     slug: text("slug"), // Added via migration
     sort_order: integer("sort_order").default(0), // Added via migration context check
+    is_client: boolean("is_client").default(false),
+    priority: integer("priority").default(0),
 });
 
 export const blogs = portfolio.table("blogs", {
@@ -150,7 +153,7 @@ export const sessions = requestAudit.table("sessions", {
     operating_system: varchar("operating_system", { length: 100 }),
     device_type: varchar("device_type", { length: 50 }),
     country_name: varchar("country_name", { length: 100 }),
-    city_name: varchar("city_name", { length: 100 }),
+    city_name: varchar("city_name", { length: 105 }),
     user_name: varchar("user_name", { length: 255 }),
     user_email: varchar("user_email", { length: 255 }),
     user_phone: varchar("user_phone", { length: 50 }),
@@ -204,5 +207,86 @@ export const errorLog = portfolio.table("error_log", {
     context: jsonb("context"),
     created_at: timestamp("created_at").defaultNow(),
 });
+
+export const enquiry = portfolio.table("enquiry", {
+    id: serial("id").primaryKey(),
+    name: varchar("name", { length: 150 }).notNull(),
+    email: varchar("email", { length: 255 }).notNull(),
+    subject: varchar("subject", { length: 255 }).notNull(),
+    message: text("message").notNull(),
+    status: varchar("status", { length: 50 }).default("Pending").notNull(),
+    created_at: timestamp("created_at").defaultNow(),
+});
+
+export const enquiryOtp = portfolio.table("enquiry_otp", {
+    id: uuid("id").primaryKey().defaultRandom(),
+    email: varchar("email", { length: 255 }).notNull(),
+    otp: varchar("otp", { length: 6 }).notNull(),
+    expires_at: timestamp("expires_at").notNull(),
+    verified: boolean("verified").default(false),
+});
+
+export const client = portfolio.table("client", {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: varchar("name", { length: 150 }).notNull(),
+    email: varchar("email", { length: 255 }).notNull().unique(),
+    password_hash: varchar("password_hash", { length: 255 }).notNull(),
+    company_name: varchar("company_name", { length: 255 }),
+    company_logo_url: text("company_logo_url"),
+    phone: varchar("phone", { length: 50 }),
+    must_reset_password: boolean("must_reset_password").default(true),
+    created_at: timestamp("created_at").defaultNow(),
+    description: text("description"),
+});
+
+export const clientProject = portfolio.table("client_project", {
+    id: uuid("id").primaryKey().defaultRandom(),
+    client_id: uuid("client_id").references(() => client.id).notNull(),
+    title: varchar("title", { length: 255 }).notNull(),
+    description: text("description"),
+    status: varchar("status", { length: 50 }).default("Inquiry").notNull(), // Inquiry, Quoted, In Progress, Testing, Completed
+    cost: integer("cost").default(0).notNull(),
+    discount: integer("discount").default(0).notNull(),
+    deadline: timestamp("deadline"),
+    created_at: timestamp("created_at").defaultNow(),
+    project_image_url: text("project_image_url"),
+    live_url: varchar("live_url", { length: 500 }),
+});
+
+export const projectMessage = portfolio.table("project_message", {
+    id: uuid("id").primaryKey().defaultRandom(),
+    project_id: uuid("project_id").references(() => clientProject.id).notNull(),
+    sender_role: varchar("sender_role", { length: 20 }).notNull(), // 'admin' or 'client'
+    message: text("message").notNull(),
+    created_at: timestamp("created_at").defaultNow(),
+    is_read: boolean("is_read").default(false).notNull(),
+});
+
+export const projectPayment = portfolio.table("project_payment", {
+    id: uuid("id").primaryKey().defaultRandom(),
+    project_id: uuid("project_id").references(() => clientProject.id).notNull(),
+    title: varchar("title", { length: 255 }).notNull(),
+    amount: integer("amount").notNull(),
+    status: varchar("status", { length: 50 }).default("Pending").notNull(),
+    created_at: timestamp("created_at").defaultNow(),
+});
+
+export const viewOnlyAdmin = portfolio.table("view_only_admin", {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: varchar("name", { length: 150 }).notNull(),
+    email: varchar("email", { length: 255 }).notNull().unique(),
+    password_hash: varchar("password_hash", { length: 255 }).notNull(),
+    must_reset_password: boolean("must_reset_password").default(true),
+    created_at: timestamp("created_at").defaultNow(),
+});
+
+export const passwordResetOtp = portfolio.table("password_reset_otp", {
+    id: uuid("id").primaryKey().defaultRandom(),
+    email: varchar("email", { length: 255 }).notNull(),
+    otp: varchar("otp", { length: 6 }).notNull(),
+    expires_at: timestamp("expires_at").notNull(),
+    verified: boolean("verified").default(false),
+});
+
 
 

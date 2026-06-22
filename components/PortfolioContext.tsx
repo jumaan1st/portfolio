@@ -10,6 +10,8 @@ type PortfolioContextType = {
     projectsMeta?: { total: number; page: number; limit: number; totalPages: number };
     isAuthenticated: boolean;
     setIsAuthenticated: (v: boolean) => void;
+    user: { email: string; role: 'admin' | 'client' | 'view_only_admin'; id?: string; mustReset?: boolean } | null;
+    setUser: (u: { email: string; role: 'admin' | 'client' | 'view_only_admin'; id?: string; mustReset?: boolean } | null) => void;
     isLoading: boolean;
     updateProfile: (p: Partial<PortfolioData['profile']>) => Promise<void>;
     createProject: (p: Partial<PortfolioData['projects'][0]>) => Promise<PortfolioData['projects'][0]>;
@@ -58,6 +60,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
     const [data, setData] = useState<PortfolioData>(initialEmptyData);
     const [projectsMeta, setProjectsMeta] = useState<{ total: number; page: number; limit: number; totalPages: number } | undefined>(undefined);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [user, setUser] = useState<{ email: string; role: 'admin' | 'client' | 'view_only_admin'; id?: string; mustReset?: boolean } | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     const parseOrNull = async (res: Response, fallback: any) => {
@@ -198,7 +201,13 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
             await dataPromise;
             try {
                 const res = await authPromise;
-                if (res.ok) setIsAuthenticated(true);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.isAuthenticated) {
+                        setIsAuthenticated(true);
+                        setUser(data.user);
+                    }
+                }
             } catch (e) { console.error("Auth check failed", e); }
         };
         init();
@@ -364,6 +373,8 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
         projectsMeta,
         isAuthenticated,
         setIsAuthenticated,
+        user,
+        setUser,
         isLoading,
         updateProfile,
         createProject,
