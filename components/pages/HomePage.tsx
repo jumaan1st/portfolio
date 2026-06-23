@@ -447,11 +447,11 @@ export const HomePage: React.FC = () => {
                                     className="text-slate-600 dark:text-slate-400 text-sm mb-4 line-clamp-3 prose dark:prose-invert max-w-none break-words [&>*]:m-0 overflow-hidden"
                                     dangerouslySetInnerHTML={{ __html: blog.excerpt || '' }}
                                 />
-                                <div className="flex gap-2 mt-auto">
+                                <div className="flex flex-wrap gap-1.5 mt-auto pt-4">
                                     {blog.tags.map((tag: string) => (
                                         <span
                                             key={tag}
-                                            className="text-[10px] uppercase font-bold tracking-wider text-slate-500 bg-slate-100 dark:bg-slate-950 px-2 py-1 rounded"
+                                            className="text-[9px] uppercase font-extrabold tracking-wider text-slate-500 bg-slate-100 dark:bg-slate-950 px-2 py-1 rounded"
                                         >
                                             #{tag}
                                         </span>
@@ -462,6 +462,35 @@ export const HomePage: React.FC = () => {
                     })}
                 </div>
             </section>
-        </div >
+
+            {/* Contact & Suggestion CTA Section */}
+            <section className="max-w-5xl mx-auto w-full px-4 pt-12 pb-6 animate-in fade-in duration-500">
+                <div className="relative bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-10 text-center space-y-5 shadow-sm">
+                    <div className="max-w-md mx-auto space-y-2">
+                        <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+                            Have a Suggestion?
+                        </h3>
+                        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
+                            Whether you have feedback on my work, want to suggest new features, or wish to collaborate, I'd love to hear from you.
+                        </p>
+                    </div>
+                    <div className="flex flex-col sm:flex-row justify-center items-center gap-3 max-w-sm mx-auto pt-2">
+                        <Link
+                            href="/contact"
+                            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4.5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all text-[11px] uppercase tracking-wider hover:scale-[1.02] shadow-md hover:shadow-blue-500/20"
+                        >
+                            <span>Share Suggestion</span>
+                            <ArrowRight size={13} />
+                        </Link>
+                        <Link
+                            href="/enquiry"
+                            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4.5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-850 dark:text-slate-250 font-bold rounded-xl transition-all text-[11px] uppercase tracking-wider hover:scale-[1.02]"
+                        >
+                            <span>Request Portal Access</span>
+                        </Link>
+                    </div>
+                </div>
+            </section>
+        </div>
     );
 };

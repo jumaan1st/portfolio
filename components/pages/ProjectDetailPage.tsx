@@ -10,7 +10,9 @@ import {
     Zap,
     Edit,
     Trash2,
-    Printer
+    Printer,
+    Star,
+    CheckCircle2
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -33,13 +35,78 @@ export const ProjectDetailPage: React.FC<Props> = ({ project: initialProject, on
     const isFullAdmin = isAuthenticated && user?.role === 'admin';
 
     const [project, setProject] = useState(initialProject);
-    const [activeTab, setActiveTab] = useState<"overview" | "case-study" | "tech" | "outcome" | "ai">("overview");
+    const [activeTab, setActiveTab] = useState<"overview" | "case-study" | "tech" | "outcome" | "suggestions" | "ai">("overview");
     const [aiInsight, setAiInsight] = useState<string | null>(null);
     const [loadingAi, setLoadingAi] = useState(false);
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const router = useRouter();
     const contentRef = React.useRef<HTMLDivElement>(null);
     useCodeBlockEnhancer(contentRef, [project.longDescription, activeTab]);
+
+    // Review Form States
+    const [reviewForm, setReviewForm] = useState({
+        name: "",
+        email: "",
+        phone: "",
+        review: "",
+        rating: 5,
+    });
+    const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+    const [reviewSubmitted, setReviewSubmitted] = useState(false);
+
+    // Auto-fill identity for review
+    React.useEffect(() => {
+        const stored = localStorage.getItem("portfolio_user_identity");
+        if (stored) {
+            try {
+                const { name, email } = JSON.parse(stored);
+                setReviewForm(prev => ({ ...prev, name: name || "", email: email || "" }));
+            } catch (e) {
+                // ignore
+            }
+        }
+    }, [activeTab]);
+
+    const handleReviewSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmittingReview(true);
+        localStorage.setItem("portfolio_user_identity", JSON.stringify({ name: reviewForm.name, email: reviewForm.email }));
+
+        try {
+            const res = await fetch('/api/contact', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: reviewForm.name,
+                    email: reviewForm.email,
+                    message: reviewForm.review,
+                    type: "Project Review",
+                    rating: reviewForm.rating,
+                    phone: reviewForm.phone,
+                    projectId: project.id,
+                    projectTitle: project.title
+                })
+            });
+
+            if (res.ok) {
+                setReviewSubmitted(true);
+                setReviewForm({
+                    name: "",
+                    email: "",
+                    phone: "",
+                    review: "",
+                    rating: 5,
+                });
+            } else {
+                alert("Failed to submit suggestion. Please try again.");
+            }
+        } catch (error) {
+            console.error("Error submitting suggestion:", error);
+            alert("Connection error. Please try again.");
+        } finally {
+            setIsSubmittingReview(false);
+        }
+    };
 
     const handlePrint = useReactToPrint({
         contentRef: contentRef,
@@ -199,19 +266,20 @@ export const ProjectDetailPage: React.FC<Props> = ({ project: initialProject, on
                                 { key: "case-study", label: "Case Study" },
                                 { key: "tech", label: "Tech" },
                                 { key: "outcome", label: "Outcome" },
+                                { key: "suggestions", label: "Suggestions" },
                                 { key: "ai", label: "✨ AI Insights" },
                             ].map((tab) => (
                                 <button
                                     key={tab.key}
                                     onClick={() =>
                                         setActiveTab(
-                                            tab.key as "overview" | "case-study" | "tech" | "outcome" | "ai"
+                                            tab.key as "overview" | "case-study" | "tech" | "outcome" | "suggestions" | "ai"
                                         )
                                     }
                                     className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all flex items-center gap-2 ${activeTab === tab.key
                                         ? "bg-blue-50 dark:bg-blue-600/10 text-blue-600 dark:text-blue-400 border-l-4 border-blue-500"
                                         : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
-                                        } ${tab.key === "ai" ? "text-purple-600 dark:text-purple-400" : ""}`}
+                                        } ${tab.key === "ai" ? "text-purple-600 dark:text-purple-400" : ""} ${tab.key === "suggestions" ? "text-indigo-600 dark:text-indigo-400" : ""}`}
                                 >
                                     {tab.label}
                                 </button>
@@ -390,6 +458,108 @@ export const ProjectDetailPage: React.FC<Props> = ({ project: initialProject, on
                                             </p>
                                         </div>
                                     )}
+                                </div>
+                            )}
+
+                            {activeTab === "suggestions" && (
+                                <div className="animate-in fade-in duration-300 space-y-6">
+                                    <div className="bg-slate-50 dark:bg-slate-900/30 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
+                                        {reviewSubmitted ? (
+                                            <div className="text-center py-8 space-y-4">
+                                                <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-green-600 mx-auto">
+                                                    <CheckCircle2 size={32} className="text-green-600 dark:text-green-400" />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <h4 className="text-lg font-bold text-slate-900 dark:text-white">Suggestion Submitted!</h4>
+                                                    <p className="text-xs text-slate-550 dark:text-slate-400 font-medium">
+                                                        Thank you for your feedback. Your rating and suggestion have been securely logged.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <form onSubmit={handleReviewSubmit} className="space-y-4">
+                                                <div className="space-y-1">
+                                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                                                        Leave a Suggestion
+                                                    </h3>
+                                                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                                                        Your suggestions help me improve. Verified suggestions will be displayed on the client portal.
+                                                    </p>
+                                                </div>
+
+                                                {/* Star Rating Selection */}
+                                                <div className="flex justify-center sm:justify-start gap-1.5 py-2">
+                                                    {[...Array(5)].map((_, i) => (
+                                                        <Star
+                                                            key={i}
+                                                            size={28}
+                                                            className={`${i < reviewForm.rating
+                                                                ? "fill-yellow-400 text-yellow-400"
+                                                                : "text-slate-300 dark:text-slate-700"
+                                                                } cursor-pointer transition-all hover:scale-110`}
+                                                            onClick={() => setReviewForm(prev => ({ ...prev, rating: i + 1 }))}
+                                                        />
+                                                    ))}
+                                                </div>
+
+                                                <div className="grid sm:grid-cols-2 gap-4">
+                                                    <div className="space-y-1">
+                                                        <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Your Name</label>
+                                                        <input
+                                                            type="text"
+                                                            required
+                                                            placeholder="Your Name"
+                                                            className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs outline-none focus:ring-2 ring-blue-500/50 text-slate-900 dark:text-white"
+                                                            value={reviewForm.name}
+                                                            onChange={(e) => setReviewForm(prev => ({ ...prev, name: e.target.value }))}
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Email Address</label>
+                                                        <input
+                                                            type="email"
+                                                            required
+                                                            placeholder="you@example.com"
+                                                            className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs outline-none focus:ring-2 ring-blue-500/50 text-slate-900 dark:text-white"
+                                                            value={reviewForm.email}
+                                                            onChange={(e) => setReviewForm(prev => ({ ...prev, email: e.target.value }))}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Phone (Optional)</label>
+                                                    <input
+                                                        type="tel"
+                                                        placeholder="Your Phone Number"
+                                                        className="w-full bg-white dark:bg-slate-955 border border-slate-202 dark:border-slate-800 rounded-xl p-3 text-xs outline-none focus:ring-2 ring-blue-500/50 text-slate-900 dark:text-white"
+                                                        value={reviewForm.phone}
+                                                        onChange={(e) => setReviewForm(prev => ({ ...prev, phone: e.target.value }))}
+                                                    />
+                                                </div>
+
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Your Suggestion</label>
+                                                    <textarea
+                                                        required
+                                                        rows={4}
+                                                        placeholder="Share your suggestions, feature requests, or feedback for this project..."
+                                                        className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs outline-none focus:ring-2 ring-blue-500/50 text-slate-900 dark:text-white resize-none"
+                                                        value={reviewForm.review}
+                                                        onChange={(e) => setReviewForm(prev => ({ ...prev, review: e.target.value }))}
+                                                    />
+                                                </div>
+
+                                                <button
+                                                    type="submit"
+                                                    disabled={isSubmittingReview}
+                                                    className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-bold py-3 rounded-xl transition-all shadow-md hover:shadow-blue-650/20 active:scale-98 text-xs uppercase tracking-wider flex items-center justify-center gap-2"
+                                                >
+                                                    {isSubmittingReview ? "Submitting Suggestion..." : "Submit Suggestion"}
+                                                </button>
+                                            </form>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </div>
