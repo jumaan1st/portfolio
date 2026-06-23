@@ -250,6 +250,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeh
                         const file = e.clipboardData.files[0];
                         if (file.type.startsWith('image/')) {
                             e.preventDefault();
+                            e.stopPropagation();
                             if (!allowImages) {
                                 alert("Image uploads are disabled in this editor.");
                                 return;
@@ -270,6 +271,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeh
                         const file = e.dataTransfer.files[0];
                         if (file.type.startsWith('image/')) {
                             e.preventDefault();
+                            e.stopPropagation();
                             if (!allowImages) {
                                 alert("Image uploads are disabled in this editor.");
                                 return;
@@ -284,12 +286,12 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeh
                     }
                 };
 
-                editor.addEventListener('paste', handlePaste as any);
-                editor.addEventListener('drop', handleDrop as any);
+                editor.addEventListener('paste', handlePaste as any, true);
+                editor.addEventListener('drop', handleDrop as any, true);
 
                 return () => {
-                    editor.removeEventListener('paste', handlePaste as any);
-                    editor.removeEventListener('drop', handleDrop as any);
+                    editor.removeEventListener('paste', handlePaste as any, true);
+                    editor.removeEventListener('drop', handleDrop as any, true);
                 };
             }
         }
