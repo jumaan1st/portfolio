@@ -83,7 +83,7 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ blog, onSave, onCancel, 
         const date = new Date(e.target.value);
         // Format to "Jan 1, 2024" style
         const formatted = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-        setEditingBlog({ ...editingBlog, date: formatted });
+        setEditingBlog(prev => ({ ...prev, date: formatted }));
     };
 
     const handleSave = async () => {
@@ -194,7 +194,7 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ blog, onSave, onCancel, 
                 <Input
                     label="Article Title *"
                     value={editingBlog.title}
-                    onChange={(v: string) => setEditingBlog({ ...editingBlog, title: v })}
+                    onChange={(v: string) => setEditingBlog(prev => ({ ...prev, title: v }))}
                     placeholder="Enter an engaging title..."
                 />
 
@@ -211,7 +211,7 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ blog, onSave, onCancel, 
                     <Input
                         label="Read Time (Auto)"
                         value={editingBlog.readTime}
-                        onChange={(v: string) => setEditingBlog({ ...editingBlog, readTime: v })}
+                        onChange={(v: string) => setEditingBlog(prev => ({ ...prev, readTime: v }))}
                         placeholder="Calculated automatically..."
                     />
                 </div>
@@ -221,7 +221,7 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ blog, onSave, onCancel, 
                         type="checkbox"
                         id="is_hidden"
                         checked={editingBlog.is_hidden || false}
-                        onChange={(e) => setEditingBlog({ ...editingBlog, is_hidden: e.target.checked })}
+                        onChange={(e) => setEditingBlog(prev => ({ ...prev, is_hidden: e.target.checked }))}
                         className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                     />
                     <label htmlFor="is_hidden" className="text-sm font-bold text-slate-700 dark:text-slate-300 cursor-pointer select-none">
@@ -234,7 +234,7 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ blog, onSave, onCancel, 
                     <FileUploader
                         label="Cover Image"
                         value={editingBlog.image || ''}
-                        onChange={(url: string) => setEditingBlog({ ...editingBlog, image: url })}
+                        onChange={(url: string) => setEditingBlog(prev => ({ ...prev, image: url }))}
                         folder="blog-covers"
                     />
                 </div>
@@ -243,7 +243,7 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ blog, onSave, onCancel, 
                     <Input
                         label="Tags (comma separated)"
                         value={Array.isArray(editingBlog.tags) ? editingBlog.tags.join(', ') : editingBlog.tags}
-                        onChange={(v: string) => setEditingBlog({ ...editingBlog, tags: v.split(',').map(s => s.trim()) })}
+                        onChange={(v: string) => setEditingBlog(prev => ({ ...prev, tags: v.split(',').map(s => s.trim()) }))}
                     />
                     <div className="flex flex-wrap gap-2 mt-2 px-1">
                         <span className="text-xs text-slate-400">Quick Add:</span>
@@ -258,7 +258,7 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ blog, onSave, onCancel, 
 
                                     if (!cleanTags.includes(tag)) {
                                         const newTags = [...cleanTags, tag];
-                                        setEditingBlog({ ...editingBlog, tags: newTags });
+                                        setEditingBlog(prev => ({ ...prev, tags: newTags }));
                                     }
                                 }}
                                 className="text-xs px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-md hover:bg-purple-100 hover:text-purple-600 transition-colors"
@@ -274,7 +274,7 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ blog, onSave, onCancel, 
                         <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-2 block">Excerpt (Summary) *</label>
                         <RichTextEditor
                             value={editingBlog.excerpt || ''}
-                            onChange={v => setEditingBlog({ ...editingBlog, excerpt: v })}
+                            onChange={v => setEditingBlog(prev => ({ ...prev, excerpt: v }))}
                             placeholder="Short summary for the card view..."
                             className="min-h-[100px]"
                             allowImages={false}
@@ -285,7 +285,7 @@ export const BlogEditor: React.FC<BlogEditorProps> = ({ blog, onSave, onCancel, 
                         <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-2 block">Content *</label>
                         <RichTextEditor
                             value={editingBlog.content || ''}
-                            onChange={v => setEditingBlog({ ...editingBlog, content: v })}
+                            onChange={v => setEditingBlog(prev => ({ ...prev, content: v }))}
                             placeholder="Write your article here..."
                             className="min-h-[400px]"
                         />

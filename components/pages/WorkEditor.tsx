@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Save, X } from 'lucide-react';
 import RichTextEditor from '@/components/RichTextEditor';
+import { FileUploader } from '@/components/FileUploader';
 import { PROJECT_CATEGORIES } from '@/data/constants';
 
 const Input = ({ label, value, onChange, placeholder }: any) => (
@@ -88,7 +89,7 @@ export const WorkEditor: React.FC<WorkEditorProps> = ({ project, onSave, onCance
                 <Input
                     label="Work Title *"
                     value={editingProject.title}
-                    onChange={(v: string) => setEditingProject({ ...editingProject, title: v })}
+                    onChange={(v: string) => setEditingProject((prev: any) => ({ ...prev, title: v }))}
                     placeholder="Enter work / project title..."
                 />
 
@@ -98,7 +99,7 @@ export const WorkEditor: React.FC<WorkEditorProps> = ({ project, onSave, onCance
                         <select
                             className="w-full bg-slate-55 dark:bg-slate-900 border border-slate-202 dark:border-slate-700 rounded-xl px-4 py-3 outline-none focus:ring-2 ring-blue-500 transition-all text-slate-700 dark:text-slate-200 appearance-none cursor-pointer"
                             value={editingProject.category || ''}
-                            onChange={(e) => setEditingProject({ ...editingProject, category: e.target.value })}
+                            onChange={(e) => setEditingProject((prev: any) => ({ ...prev, category: e.target.value }))}
                         >
                             <option value="">Select Category</option>
                             {PROJECT_CATEGORIES.map(cat => (
@@ -109,7 +110,7 @@ export const WorkEditor: React.FC<WorkEditorProps> = ({ project, onSave, onCance
                     <Input
                         label="Technologies (comma separated)"
                         value={Array.isArray(editingProject.tech) ? editingProject.tech.join(', ') : editingProject.tech}
-                        onChange={(v: string) => setEditingProject({ ...editingProject, tech: v.split(',').map(s => s.trim()).filter(Boolean) })}
+                        onChange={(v: string) => setEditingProject((prev: any) => ({ ...prev, tech: v.split(',').map(s => s.trim()).filter(Boolean) }))}
                         placeholder="React, Next.js, Node.js"
                     />
                 </div>
@@ -118,13 +119,13 @@ export const WorkEditor: React.FC<WorkEditorProps> = ({ project, onSave, onCance
                     <Input
                         label="Demo Link"
                         value={editingProject.link}
-                        onChange={(v: string) => setEditingProject({ ...editingProject, link: v })}
+                        onChange={(v: string) => setEditingProject((prev: any) => ({ ...prev, link: v }))}
                         placeholder="https://demo.com"
                     />
                     <Input
                         label="GitHub Link"
                         value={editingProject.githubLink}
-                        onChange={(v: string) => setEditingProject({ ...editingProject, githubLink: v })}
+                        onChange={(v: string) => setEditingProject((prev: any) => ({ ...prev, githubLink: v }))}
                         placeholder="https://github.com/..."
                     />
                 </div>
@@ -134,7 +135,7 @@ export const WorkEditor: React.FC<WorkEditorProps> = ({ project, onSave, onCance
                         type="checkbox"
                         id="is_client"
                         checked={editingProject.isClient || false}
-                        onChange={(e) => setEditingProject({ ...editingProject, isClient: e.target.checked })}
+                        onChange={(e) => setEditingProject((prev: any) => ({ ...prev, isClient: e.target.checked }))}
                         className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                     />
                     <label htmlFor="is_client" className="text-sm font-bold text-slate-700 dark:text-slate-300 cursor-pointer select-none">
@@ -142,13 +143,22 @@ export const WorkEditor: React.FC<WorkEditorProps> = ({ project, onSave, onCance
                     </label>
                 </div>
 
+                <div className="space-y-2">
+                    <FileUploader
+                        label="Cover Image"
+                        value={editingProject.image || ''}
+                        onChange={(url: string) => setEditingProject((prev: any) => ({ ...prev, image: url }))}
+                        folder="project-covers"
+                    />
+                </div>
+
                 <div className="space-y-6 pt-4 border-t border-slate-100 dark:border-slate-800">
                     <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-2 block">Short Summary (Card Preview) *</label>
+                        <label className="text-xs font-bold text-slate-555 uppercase ml-1 mb-2 block">Short Summary (Card Preview) *</label>
                         <textarea
                             className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 h-24 outline-none focus:ring-2 ring-blue-500 text-sm text-slate-900 dark:text-white"
                             value={editingProject.description || ''}
-                            onChange={(e) => setEditingProject({ ...editingProject, description: e.target.value })}
+                            onChange={(e: any) => setEditingProject((prev: any) => ({ ...prev, description: e.target.value }))}
                             placeholder="Brief summary shown on the showcase card..."
                         />
                     </div>
@@ -157,10 +167,10 @@ export const WorkEditor: React.FC<WorkEditorProps> = ({ project, onSave, onCance
                         <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-2 block">Full Work Details (Case Study)</label>
                         <RichTextEditor
                             value={editingProject.longDescription || ''}
-                            onChange={(v: string) => setEditingProject({ ...editingProject, longDescription: v })}
+                            onChange={(v: string) => setEditingProject((prev: any) => ({ ...prev, longDescription: v }))}
                             placeholder="Describe your design decisions, technical implementation, and challenges..."
                             className="min-h-[400px]"
-                            allowImages={false}
+                            allowImages={true}
                         />
                     </div>
                 </div>
