@@ -1127,6 +1127,10 @@ const AdminContent: React.FC = () => {
     // Profile Forms State
     const [profileForm, setProfileForm] = useState<typeof data.profile | null>(null);
     const [newSkill, setNewSkill] = useState({ name: '', icon: 'devicon-react-original' });
+    const [newLearning, setNewLearning] = useState({ topic: '', category: '', level: '', status: '', referenceUrl: '' });
+    const [editingLearning, setEditingLearning] = useState<{ topic: string; category: string; level: string; status: string; referenceUrl: string; } | null>(null);
+    const [editingLearningIndex, setEditingLearningIndex] = useState<number | null>(null);
+    const [isCreatingLearning, setIsCreatingLearning] = useState(false);
     const [newCertification, setNewCertification] = useState({ name: '', issuer: '', url: '', date: '', icon: 'devicon-google-plain' });
     const [editingCertification, setEditingCertification] = useState<Partial<typeof data.certifications[0]> | null>(null);
     const [isCreatingCert, setIsCreatingCert] = useState(false);
@@ -1493,6 +1497,30 @@ const AdminContent: React.FC = () => {
     const saveProfile = () => handleSave(async () => {
         if (profileForm) await updateProfile(profileForm);
     }, "Profile updated!");
+
+    const saveLearning = () => {
+        if (!editingLearning || !editingLearning.topic.trim()) return;
+        if (profileForm) {
+            const updated = [...(profileForm.currentlyLearning || [])];
+            const normalizedItem = {
+                topic: editingLearning.topic.trim(),
+                category: editingLearning.category?.trim() || "",
+                level: editingLearning.level?.trim() || "",
+                status: editingLearning.status?.trim() || "",
+                referenceUrl: editingLearning.referenceUrl?.trim() || ""
+            };
+
+            if (isCreatingLearning) {
+                updated.push(normalizedItem);
+            } else if (editingLearningIndex !== null) {
+                updated[editingLearningIndex] = normalizedItem;
+            }
+            setProfileForm({ ...profileForm, currentlyLearning: updated });
+            setEditingLearning(null);
+            setEditingLearningIndex(null);
+            setIsCreatingLearning(false);
+        }
+    };
 
     const saveExp = async () => {
         if (!editingExperience) return;
@@ -1901,6 +1929,141 @@ const AdminContent: React.FC = () => {
                                         <Input label="GitHub" value={profileForm.github} onChange={v => setProfileForm({ ...profileForm, github: v })} />
                                         <Input label="Twitter/X" value={profileForm.twitter} onChange={v => setProfileForm({ ...profileForm, twitter: v })} />
                                     </div>
+                                </div>
+
+                                <div className="md:col-span-2 border-t dark:border-slate-700 pt-6 space-y-4">
+                                    {editingLearning ? (
+                                        <EditorLayout
+                                            title={isCreatingLearning ? "Add Learning Topic" : "Edit Learning Topic"}
+                                            onCancel={() => {
+                                                setEditingLearning(null);
+                                                setEditingLearningIndex(null);
+                                                setIsCreatingLearning(false);
+                                            }}
+                                            onSave={saveLearning}
+                                        >
+                                            <Input
+                                                label="Topic / Subject"
+                                                value={editingLearning.topic}
+                                                onChange={v => setEditingLearning({ ...editingLearning, topic: v })}
+                                            />
+                                            <Input
+                                                label="Category"
+                                                value={editingLearning.category}
+                                                onChange={v => setEditingLearning({ ...editingLearning, category: v })}
+                                            />
+                                            <Input
+                                                label="Level"
+                                                value={editingLearning.level}
+                                                onChange={v => setEditingLearning({ ...editingLearning, level: v })}
+                                            />
+                                            <Input
+                                                label="Status"
+                                                value={editingLearning.status}
+                                                onChange={v => setEditingLearning({ ...editingLearning, status: v })}
+                                            />
+                                            <div className="md:col-span-2">
+                                                <Input
+                                                    label="Reference URL"
+                                                    value={editingLearning.referenceUrl}
+                                                    onChange={v => setEditingLearning({ ...editingLearning, referenceUrl: v })}
+                                                />
+                                            </div>
+                                        </EditorLayout>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-center pb-2 border-b dark:border-slate-700">
+                                                <h4 className="font-bold text-sm text-slate-500 uppercase">Currently Learning</h4>
+                                                {user?.role !== 'view_only_admin' && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setEditingLearning({ topic: '', category: '', level: '', status: '', referenceUrl: '' });
+                                                            setIsCreatingLearning(true);
+                                                            setEditingLearningIndex(null);
+                                                        }}
+                                                        className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600/10 dark:hover:bg-blue-600/20 dark:text-blue-400 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 text-xs transition-colors"
+                                                    >
+                                                        <Plus size={14} /> Add Topic
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            {/* List of currently learning items */}
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                {profileForm.currentlyLearning && profileForm.currentlyLearning.map((item: any, idx: number) => {
+                                                    const isObj = typeof item === 'object' && item !== null;
+                                                    const topic = isObj ? item.topic : item;
+                                                    const category = isObj ? item.category : '';
+                                                    const level = isObj ? item.level : '';
+                                                    const status = isObj ? item.status : '';
+                                                    const url = isObj ? item.referenceUrl : '';
+
+                                                    return (
+                                                        <div key={idx} className="relative group bg-slate-50 dark:bg-slate-900/50 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-start gap-4 hover:border-blue-500/50 transition-all">
+                                                            <div className="w-12 h-12 flex-shrink-0 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center text-blue-600 dark:text-blue-400 text-xl font-bold">
+                                                                <BookOpen size={20} />
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="flex items-center gap-2 flex-wrap mb-1">
+                                                                    <h5 className="font-bold text-slate-900 dark:text-white text-sm truncate">{topic}</h5>
+                                                                    {status && (
+                                                                        <span className="text-[9px] uppercase font-extrabold tracking-wider bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded">
+                                                                            {status}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <div className="text-xs text-slate-500 dark:text-slate-400 space-y-1">
+                                                                    {[category, level].filter(Boolean).join(" • ") && (
+                                                                        <p className="font-medium text-[11px]">{[category, level].filter(Boolean).join(" • ")}</p>
+                                                                    )}
+                                                                    {url && (
+                                                                        <a href={url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-500 hover:underline flex items-center gap-1 mt-1 font-semibold truncate max-w-[180px]">
+                                                                            Reference Link <ExternalLink size={10} />
+                                                                        </a>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                            {user?.role !== 'view_only_admin' && (
+                                                                <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            setEditingLearning({
+                                                                                topic: topic || "",
+                                                                                category: category || "",
+                                                                                level: level || "",
+                                                                                status: status || "",
+                                                                                referenceUrl: url || ""
+                                                                            });
+                                                                            setIsCreatingLearning(false);
+                                                                            setEditingLearningIndex(idx);
+                                                                        }}
+                                                                        className="text-blue-500 p-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                                                                    >
+                                                                        <Edit2 size={14} />
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            const updated = (profileForm.currentlyLearning || []).filter((_: any, i: number) => i !== idx);
+                                                                            setProfileForm({ ...profileForm, currentlyLearning: updated });
+                                                                        }}
+                                                                        className="text-red-500 p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                                                                    >
+                                                                        <Trash2 size={14} />
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                                {(!profileForm.currentlyLearning || profileForm.currentlyLearning.length === 0) && (
+                                                    <p className="text-xs text-slate-500 col-span-full">No learning items configured yet.</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
