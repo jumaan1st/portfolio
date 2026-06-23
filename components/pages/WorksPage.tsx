@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { FolderOpen, Github, ExternalLink, ArrowRight, Search, Briefcase, Building, Edit2, Plus, Trash2 } from "lucide-react";
+import { FolderOpen, Github, ExternalLink, ArrowRight, Search, Briefcase, Building, Edit2, Plus, Trash2, GripVertical } from "lucide-react";
 import Link from "next/link";
 import { usePortfolio } from "../PortfolioContext";
 import { PROJECT_CATEGORIES } from "@/data/constants";
@@ -105,7 +105,7 @@ export const WorksPage: React.FC = () => {
                 <h2 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mt-8 mb-4">
                     My Works
                 </h2>
-                <div className="h-1.5 w-24 bg-gradient-to-r from-blue-600 to-indigo-600 mx-auto rounded-full" />
+                <div className="h-1.5 w-24 bg-gradient-to-r from-blue-600 to-indigo-650 mx-auto rounded-full" />
                 <p className="text-slate-600 dark:text-slate-400 mt-4 max-w-2xl mx-auto mb-8 font-medium">
                     A comprehensive showcase of commercial software developments and personal engineering systems.
                 </p>
@@ -161,13 +161,22 @@ export const WorksPage: React.FC = () => {
                             ))}
                         </select>
                         {isFullAdmin && (
-                            <Link
-                                href="/works/new"
-                                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
-                            >
-                                <Plus size={18} />
-                                <span>Add Work</span>
-                            </Link>
+                            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                                <Link
+                                    href="/works/new"
+                                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
+                                >
+                                    <Plus size={18} />
+                                    <span>Add Work</span>
+                                </Link>
+                                <Link
+                                    href="/admin/reorder"
+                                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl shadow-md transition-all border border-slate-200 dark:border-slate-800 hover:scale-105 active:scale-95 whitespace-nowrap"
+                                >
+                                    <GripVertical size={18} />
+                                    <span>Reorder Works</span>
+                                </Link>
+                            </div>
                         )}
                     </div>
                 )}

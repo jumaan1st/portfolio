@@ -36,8 +36,13 @@ const getCachedProjects = unstable_cache(
       return rows.length > 0 ? rows[0] : null;
     }
 
-    // Handle Single Fetch by Slug
+    // Handle Single Fetch by Slug (or ID if slug is numeric)
     if (slug) {
+      const isNumeric = /^\d+$/.test(slug);
+      const condition = isNumeric
+        ? or(eq(projects.slug, slug), eq(projects.id, parseInt(slug)))
+        : eq(projects.slug, slug);
+
       const rows = await db.select({
         id: projects.id,
         title: projects.title,
@@ -54,7 +59,7 @@ const getCachedProjects = unstable_cache(
         slug: projects.slug,
         isClient: projects.is_client,
         priority: projects.priority
-      }).from(projects).where(eq(projects.slug, slug));
+      }).from(projects).where(condition);
       return rows.length > 0 ? rows[0] : null;
     }
 

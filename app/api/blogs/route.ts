@@ -23,9 +23,13 @@ const getCachedBlogs = unstable_cache(
       return rows.length > 0 ? mapRow(rows[0]) : null;
     }
 
-    // Handle Single Fetch by Slug
+    // Handle Single Fetch by Slug (or ID if slug is numeric)
     if (slug) {
-      const rows = await db.select().from(blogs).where(eq(blogs.slug, slug));
+      const isNumeric = /^\d+$/.test(slug);
+      const condition = isNumeric
+        ? or(eq(blogs.slug, slug), eq(blogs.id, parseInt(slug)))
+        : eq(blogs.slug, slug);
+      const rows = await db.select().from(blogs).where(condition);
       return rows.length > 0 ? mapRow(rows[0]) : null;
     }
 

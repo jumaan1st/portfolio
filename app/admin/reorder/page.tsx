@@ -3,10 +3,10 @@ import { GenericReorderPage } from "@/components/pages/GenericReorderPage";
 export default function Page() {
     return (
         <GenericReorderPage
-            title="Reorder Projects"
+            title="Reorder Works"
             fetchEndpoint="/api/projects"
             saveEndpoint="/api/projects/reorder"
-            backUrl="/projects"
+            backUrl="/works"
             itemType="project"
         />
     );

@@ -146,7 +146,7 @@ export const ProjectDetailPage: React.FC<Props> = ({ project: initialProject, on
                     {isFullAdmin && (
                         <>
                             <Link
-                                href={`/projects/${project.id}/edit`}
+                                href={`/projects/${project.slug || project.id}/edit`}
                                 className="flex-none justify-center items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex"
                                 title="Edit Project"
                             >

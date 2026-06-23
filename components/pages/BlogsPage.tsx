@@ -179,7 +179,7 @@ export const BlogsPage: React.FC = () => {
                                     {isFullAdmin && (
                                         <div className="absolute top-14 right-4 z-10 flex flex-col gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                                             <button
-                                                onClick={(e) => { e.stopPropagation(); router.push(`/blogs/${blog.id}/edit`); }}
+                                                onClick={(e) => { e.stopPropagation(); router.push(`/blogs/${blog.slug || blog.id}/edit`); }}
                                                 className="p-2 bg-white dark:bg-slate-800 text-blue-500 rounded-lg shadow-md hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
                                                 title="Edit"
                                             >
