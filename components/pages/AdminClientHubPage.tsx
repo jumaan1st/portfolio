@@ -493,7 +493,7 @@ export const AdminClientHubPage: React.FC = () => {
                                                             enquiryId: enq.id,
                                                             description: ""
                                                         })}
-                                                        className="px-4 py-1.5 bg-blue-650 hover:bg-blue-700 text-white text-[10px] font-bold rounded-lg transition-all shadow-md shadow-blue-500/10"
+                                                        className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold rounded-lg transition-all shadow-md shadow-blue-500/10"
                                                     >
                                                         Onboard Client
                                                     </button>
@@ -769,7 +769,7 @@ export const AdminClientHubPage: React.FC = () => {
                                         />
                                         <button
                                             type="submit"
-                                            className="bg-blue-650 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl shadow-md shadow-blue-500/10 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+                                            className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl shadow-md shadow-blue-500/10 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
                                         >
                                             <Send size={16} />
                                         </button>
