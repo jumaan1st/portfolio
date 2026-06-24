@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { client as clientTable, clientProject as clientProjectTable, enquiry as enquiryTable, passwordResetOtp, projectMessage, projectPayment as projectPaymentTable } from '@/lib/schema';
+import { client as clientTable, clientProject as clientProjectTable, enquiry as enquiryTable, passwordResetOtp, projectMessage, projectPayment as projectPaymentTable, config as configTable } from '@/lib/schema';
 import { eq, and, desc, gt } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import nodemailer from 'nodemailer';
@@ -120,6 +120,9 @@ export async function POST(request: Request) {
         // Send email if a new client was created
         if (tempPassword) {
             try {
+                const adminRows = await db.select({ email: configTable.admin_email }).from(configTable).limit(1);
+                const adminEmail = adminRows.length > 0 ? adminRows[0].email : process.env.EMAIL_USER;
+
                 const transporter = nodemailer.createTransport({
                     service: 'gmail',
                     auth: {
@@ -157,6 +160,7 @@ export async function POST(request: Request) {
                 await transporter.sendMail({
                     from: process.env.EMAIL_USER,
                     to: cleanEmail,
+                    cc: adminEmail || undefined,
                     subject: `Welcome to Your Project Portal - ${projectTitle}`,
                     html: htmlTemplate,
                 });

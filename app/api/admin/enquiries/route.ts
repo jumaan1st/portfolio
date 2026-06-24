@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 import { db } from '@/lib/db';
-import { enquiry as enquiryTable } from '@/lib/schema';
+import { enquiry as enquiryTable, config as configTable } from '@/lib/schema';
 import { eq, desc } from 'drizzle-orm';
 import { verifyAuth, UserRole } from '@/lib/auth';
 
@@ -49,6 +49,9 @@ export async function DELETE(request: Request) {
 
         // Send a polite workload rejection email containing their subject and desc
         try {
+            const adminRows = await db.select({ email: configTable.admin_email }).from(configTable).limit(1);
+            const adminEmail = adminRows.length > 0 ? adminRows[0].email : process.env.EMAIL_USER;
+
             const transporter = nodemailer.createTransport({
                 service: 'gmail',
                 auth: {
@@ -85,6 +88,7 @@ export async function DELETE(request: Request) {
             await transporter.sendMail({
                 from: process.env.EMAIL_USER,
                 to: targetEnquiry.email,
+                cc: adminEmail || undefined,
                 subject: `Update regarding your collaboration request: ${targetEnquiry.subject}`,
                 html: emailHtml,
             });
