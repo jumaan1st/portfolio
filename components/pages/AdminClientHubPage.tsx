@@ -133,7 +133,7 @@ export const AdminClientHubPage: React.FC = () => {
     // Mark messages read & load chat thread
     useEffect(() => {
         if (chatProjectId) {
-            const proj = clients.flatMap(c => c.projects).find(p => p.id === chatProjectId);
+            const proj = clients.flatMap(c => c.projects || []).find(p => p.id === chatProjectId);
             if (proj?.status === "Completed") {
                 setChatMessages([]);
                 return;
