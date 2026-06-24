@@ -80,6 +80,7 @@ export const AdminClientHubPage: React.FC = () => {
     const [deleteClientOtpCode, setDeleteClientOtpCode] = useState("");
     const [isSendingDeleteOtp, setIsSendingDeleteOtp] = useState(false);
     const [isDeletingClient, setIsDeletingClient] = useState(false);
+    const [deletingEnquiryId, setDeletingEnquiryId] = useState<number | null>(null);
 
     // Form Loading States
     const [isOnboarding, setIsOnboarding] = useState(false);
@@ -194,6 +195,7 @@ export const AdminClientHubPage: React.FC = () => {
 
     const handleDeleteEnquiry = async (id: number) => {
         if (!confirm("Are you sure you want to delete this enquiry?")) return;
+        setDeletingEnquiryId(id);
         try {
             const res = await fetch(`/api/admin/enquiries?id=${id}`, { method: "DELETE" });
             if (res.ok) {
@@ -204,6 +206,8 @@ export const AdminClientHubPage: React.FC = () => {
             }
         } catch (e) {
             addToast("Failed to delete enquiry", "error");
+        } finally {
+            setDeletingEnquiryId(null);
         }
     };
 
@@ -475,8 +479,10 @@ export const AdminClientHubPage: React.FC = () => {
                                                 <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800/80 mt-2">
                                                     <button
                                                         onClick={() => handleDeleteEnquiry(enq.id)}
-                                                        className="px-3 py-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/10 dark:hover:bg-red-950/30 text-red-600 text-[10px] font-bold rounded-lg transition-all"
+                                                        disabled={deletingEnquiryId !== null || isOnboarding}
+                                                        className="px-3 py-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/10 dark:hover:bg-red-950/30 text-red-600 text-[10px] font-bold rounded-lg transition-all disabled:opacity-50 flex items-center gap-1.5"
                                                     >
+                                                        {deletingEnquiryId === enq.id && <Loader2 size={10} className="animate-spin" />}
                                                         Delete
                                                     </button>
                                                     <button
@@ -493,8 +499,10 @@ export const AdminClientHubPage: React.FC = () => {
                                                             enquiryId: enq.id,
                                                             description: ""
                                                         })}
-                                                        className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold rounded-lg transition-all shadow-md shadow-blue-500/10"
+                                                        disabled={deletingEnquiryId !== null || isOnboarding}
+                                                        className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold rounded-lg transition-all shadow-md shadow-blue-500/10 disabled:opacity-50 flex items-center gap-1.5"
                                                     >
+                                                        {onboardForm?.enquiryId === enq.id && isOnboarding && <Loader2 size={10} className="animate-spin" />}
                                                         Onboard Client
                                                     </button>
                                                 </div>
