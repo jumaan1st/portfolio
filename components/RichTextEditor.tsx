@@ -5,31 +5,39 @@ import dynamic from 'next/dynamic';
 import 'react-quill-new/dist/quill.snow.css';
 
 // Dynamic import to avoid "document is not defined" error in Next.js SSR
-// Dynamic import to avoid "document is not defined" error in Next.js SSR
 // Comprehensive dynamic import to handle SSR and Plugin Registration
 const ReactQuill = dynamic(async () => {
-    const { default: RQ, Quill } = await import('react-quill-new');
+    try {
+        const { default: RQ, Quill } = await import('react-quill-new');
 
-    // Dynamic import of plugins to avoid server-side 'document' errors
-    const { default: BlotFormatter } = await import('quill-blot-formatter');
-    // markdown-shortcuts might be a commonjs export, handling that:
-    const MarkdownShortcutsImport = await import('quill-markdown-shortcuts');
-    const MarkdownShortcuts = MarkdownShortcutsImport.default || MarkdownShortcutsImport;
+        // Dynamic import of plugins to avoid server-side 'document' errors
+        const { default: BlotFormatter } = await import('quill-blot-formatter');
+        // markdown-shortcuts might be a commonjs export, handling that:
+        const MarkdownShortcutsImport = await import('quill-markdown-shortcuts');
+        const MarkdownShortcuts = MarkdownShortcutsImport.default || MarkdownShortcutsImport;
 
-    // Register modules safely on client
-    if (Quill) { // Ensure Quill exists
-        if (!Quill.imports['modules/blotFormatter']) {
-            Quill.register('modules/blotFormatter', BlotFormatter);
+        // Register modules safely on client
+        if (Quill) { // Ensure Quill exists
+            if (!Quill.imports['modules/blotFormatter']) {
+                Quill.register('modules/blotFormatter', BlotFormatter);
+            }
+            if (!Quill.imports['modules/markdownShortcuts']) {
+                Quill.register('modules/markdownShortcuts', MarkdownShortcuts);
+            }
         }
-        if (!Quill.imports['modules/markdownShortcuts']) {
-            Quill.register('modules/markdownShortcuts', MarkdownShortcuts);
+
+        // Return the component. forwardRef is handled by Next.js dynamic if the underlying component supports it.
+        // However, explicit forwarding is safer if RQ is a class component.
+        // For now, returning RQ directly usually works.
+        return ({ forwardedRef, ...props }: any) => <RQ ref={forwardedRef} {...props} />;
+    } catch (err) {
+        console.error("Failed to load chunk for RichTextEditor, reloading page...", err);
+        if (typeof window !== 'undefined') {
+            window.location.reload();
         }
+        // Return placeholder during reload
+        return () => <div className="h-40 bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse" />;
     }
-
-    // Return the component. forwardRef is handled by Next.js dynamic if the underlying component supports it.
-    // However, explicit forwarding is safer if RQ is a class component.
-    // For now, returning RQ directly usually works.
-    return ({ forwardedRef, ...props }: any) => <RQ ref={forwardedRef} {...props} />;
 }, {
     ssr: false,
     loading: () => <div className="h-40 bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse" />
