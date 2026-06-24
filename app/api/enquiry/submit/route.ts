@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import nodemailer from 'nodemailer';
 import { db } from '@/lib/db';
 import { enquiry, enquiryOtp, config as configTable, client as clientTable, viewOnlyAdmin as viewOnlyAdminTable } from '@/lib/schema';
 import { eq, and, gt, desc } from 'drizzle-orm';
@@ -66,6 +67,56 @@ export async function POST(request: Request) {
             message: message.trim(),
             status: 'Pending',
         });
+
+        // 4. Send Confirmation Email to Client (CC Admin)
+        try {
+            const adminEmail = adminRows.length > 0 ? adminRows[0].email : process.env.EMAIL_USER;
+            if (adminEmail) {
+                const transporter = nodemailer.createTransport({
+                    service: 'gmail',
+                    auth: {
+                        user: process.env.EMAIL_USER,
+                        pass: process.env.EMAIL_PASS,
+                    },
+                });
+
+                const emailHtml = `
+                <!DOCTYPE html>
+                <html>
+                <body style="font-family: sans-serif; padding: 20px; background-color: #f9f9f9; color: #333;">
+                    <div style="max-width: 600px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 8px; border: 1px solid #e0e0e0; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                        <h2 style="color: #4F46E5; margin-bottom: 20px;">We Received Your Enquiry</h2>
+                        <p>Hi ${name.trim()},</p>
+                        <p>Thank you for reaching out! We have received your collaboration enquiry regarding <strong>"${subject.trim()}"</strong>.</p>
+                        <p>We will get back to you and will typically respond in 24 hours.</p>
+                        
+                        <div style="background-color: #EEF2F6; padding: 20px; border-radius: 6px; margin: 25px 0;">
+                            <p style="margin: 0 0 10px 0;"><strong>Copy of Your Request:</strong></p>
+                            <p style="margin: 0 0 5px 0;"><strong>Name:</strong> ${name.trim()}</p>
+                            <p style="margin: 0 0 5px 0;"><strong>Email:</strong> ${cleanEmail}</p>
+                            <p style="margin: 0 0 5px 0;"><strong>Subject:</strong> ${subject.trim()}</p>
+                            <p style="margin: 0 0 10px 0;"><strong>Message:</strong></p>
+                            <p style="margin: 0; white-space: pre-wrap; background: #fff; padding: 12px; border-radius: 4px; border: 1px solid #ddd; font-size: 13px;">${message.trim()}</p>
+                        </div>
+                        
+                        <hr style="border: 0; border-top: 1px solid #eee;">
+                        <p style="font-size: 12px; color: #999; text-align: center;">Freelance Engineering Portal</p>
+                    </div>
+                </body>
+                </html>
+                `;
+
+                await transporter.sendMail({
+                    from: process.env.EMAIL_USER,
+                    to: cleanEmail,
+                    cc: adminEmail,
+                    subject: `Enquiry Received: ${subject.trim()}`,
+                    html: emailHtml,
+                });
+            }
+        } catch (emailError) {
+            console.error('Failed to send enquiry confirmation email:', emailError);
+        }
 
         return NextResponse.json({ success: true, message: 'Enquiry submitted successfully' });
     } catch (error) {
