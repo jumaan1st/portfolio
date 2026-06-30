@@ -70,6 +70,24 @@ export async function GET(req: Request) {
             .limit(limit)
             .offset(offset);
 
+        // Helper to calculate exact cost
+        const calculateCost = (prov: string | null, prompt: number, completion: number) => {
+            const p = (prov || '').toLowerCase();
+            if (p === 'deepseek') {
+                return (prompt * 0.14 + completion * 0.28) / 1000000;
+            } else if (p === 'gemini') {
+                return (prompt * 0.075 + completion * 0.30) / 1000000;
+            } else {
+                return ((prompt + completion) * 0.15) / 1000000;
+            }
+        };
+
+        // Attach cost to each paginated log
+        const logsWithCost = logs.map(l => ({
+            ...l,
+            cost: parseFloat(calculateCost(l.provider, l.prompt_tokens || 0, l.completion_tokens || 0).toFixed(6))
+        }));
+
         // 2. Fetch AI Token Aggregates (Cumulative Stats)
         const aggregatesRes = await db.select({
             totalTokens: sql<string>`COALESCE(SUM(${aiUsageLog.total_tokens}), 0)`,
@@ -82,38 +100,114 @@ export async function GET(req: Request) {
             totalTokens: parseInt(aggregatesRes[0]?.totalTokens || '0'),
             promptTokens: parseInt(aggregatesRes[0]?.promptTokens || '0'),
             completionTokens: parseInt(aggregatesRes[0]?.completionTokens || '0'),
-            totalRequests: aggregatesRes[0]?.totalRequests || 0
+            totalRequests: aggregatesRes[0]?.totalRequests || 0,
+            totalCost: 0 // Will compute below
         };
 
-        // Group by provider
+        // Group by provider with prompt/completion splits for cost calculation
         const providerStatsRes = await db.select({
             provider: aiUsageLog.provider,
             tokens: sql<string>`COALESCE(SUM(${aiUsageLog.total_tokens}), 0)`,
+            promptTokens: sql<string>`COALESCE(SUM(${aiUsageLog.prompt_tokens}), 0)`,
+            completionTokens: sql<string>`COALESCE(SUM(${aiUsageLog.completion_tokens}), 0)`,
             requests: count()
         })
         .from(aiUsageLog)
         .groupBy(aiUsageLog.provider);
 
-        const providers = providerStatsRes.map(row => ({
-            provider: row.provider || 'unknown',
-            tokens: parseInt(row.tokens || '0'),
-            requests: row.requests
-        }));
+        const providers = providerStatsRes.map(row => {
+            const prompt = parseInt(row.promptTokens || '0');
+            const completion = parseInt(row.completionTokens || '0');
+            const cost = calculateCost(row.provider, prompt, completion);
+            return {
+                provider: row.provider || 'unknown',
+                tokens: parseInt(row.tokens || '0'),
+                promptTokens: prompt,
+                completionTokens: completion,
+                requests: row.requests,
+                cost: parseFloat(cost.toFixed(6))
+            };
+        });
 
-        // Group by action type
+        // Compute total cost across all providers
+        aggregates.totalCost = parseFloat(providers.reduce((acc, curr) => acc + curr.cost, 0).toFixed(4));
+
+        // Group by action type and provider for precise action-type cost calculation
         const actionStatsRes = await db.select({
             action: aiUsageLog.action_type,
+            provider: aiUsageLog.provider,
+            tokens: sql<string>`COALESCE(SUM(${aiUsageLog.total_tokens}), 0)`,
+            promptTokens: sql<string>`COALESCE(SUM(${aiUsageLog.prompt_tokens}), 0)`,
+            completionTokens: sql<string>`COALESCE(SUM(${aiUsageLog.completion_tokens}), 0)`,
+            requests: count()
+        })
+        .from(aiUsageLog)
+        .groupBy(aiUsageLog.action_type, aiUsageLog.provider);
+
+        const actionMap: { [action: string]: { action: string, tokens: number, requests: number, cost: number } } = {};
+        for (const row of actionStatsRes) {
+            const action = row.action;
+            const prompt = parseInt(row.promptTokens || '0');
+            const completion = parseInt(row.completionTokens || '0');
+            const cost = calculateCost(row.provider, prompt, completion);
+
+            if (!actionMap[action]) {
+                actionMap[action] = { action, tokens: 0, requests: 0, cost: 0 };
+            }
+            actionMap[action].tokens += parseInt(row.tokens || '0');
+            actionMap[action].requests += row.requests;
+            actionMap[action].cost += cost;
+        }
+
+        const actions = Object.values(actionMap).map(a => ({
+            ...a,
+            cost: parseFloat(a.cost.toFixed(6))
+        }));
+
+        // Fetch Top 5 most active AI users
+        const topUsersRes = await db.select({
+            email: aiUsageLog.user_email,
+            name: aiUsageLog.user_name,
             tokens: sql<string>`COALESCE(SUM(${aiUsageLog.total_tokens}), 0)`,
             requests: count()
         })
         .from(aiUsageLog)
-        .groupBy(aiUsageLog.action_type);
+        .groupBy(aiUsageLog.user_email, aiUsageLog.user_name)
+        .orderBy(desc(count()))
+        .limit(5);
 
-        const actions = actionStatsRes.map(row => ({
-            action: row.action,
+        const topUsers = topUsersRes.map(row => ({
+            email: row.email || 'unknown',
+            name: row.name || 'Guest',
             tokens: parseInt(row.tokens || '0'),
             requests: row.requests
         }));
+
+        // Fetch system settings status
+        let deepseekBalance: any = null;
+        if (process.env.DEEPSEEK_API_KEY) {
+            try {
+                const balanceRes = await fetch('https://api.deepseek.com/user/balance', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`
+                    }
+                });
+                if (balanceRes.ok) {
+                    deepseekBalance = await balanceRes.json();
+                }
+            } catch (e) {
+                console.error("[UsageAPI] Failed to fetch DeepSeek balance:", e);
+            }
+        }
+
+        const systemConfig = {
+            defaultProvider: process.env.AI_PROVIDER || 'auto',
+            geminiConfigured: !!process.env.GEMINI_API_KEY,
+            deepseekConfigured: !!process.env.DEEPSEEK_API_KEY,
+            deepseekBalance
+        };
 
         // 3. Fetch Outreach/Job Applications (Paginated)
         const jobAppsCount = await db.select({ count: count() }).from(jobApplications);
@@ -128,7 +222,7 @@ export async function GET(req: Request) {
         return NextResponse.json({
             success: true,
             aiLogs: {
-                logs,
+                logs: logsWithCost,
                 pagination: {
                     total: totalAi,
                     page,
@@ -148,8 +242,10 @@ export async function GET(req: Request) {
             stats: {
                 aggregates,
                 providers,
-                actions
-            }
+                actions,
+                topUsers
+            },
+            systemConfig
         });
 
     } catch (error) {

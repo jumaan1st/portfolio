@@ -288,5 +288,3 @@ export const passwordResetOtp = portfolio.table("password_reset_otp", {
     verified: boolean("verified").default(false),
 });
 
-
-

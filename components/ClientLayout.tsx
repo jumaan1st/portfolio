@@ -112,6 +112,8 @@ function Shell({ children }: { children: React.ReactNode }) {
         }
     };
 
+
+
     return (
         <div className="min-h-screen font-sans flex flex-col overflow-x-hidden">
             <Navbar />

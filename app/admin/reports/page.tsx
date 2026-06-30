@@ -8,7 +8,8 @@ import {
     Database, HardDrive, FileText, FolderOpen, CheckCircle, 
     AlertTriangle, RefreshCw, ShieldAlert, Eye, X, 
     ChevronLeft, ChevronRight, Trash2, Star, MessageSquare, 
-    Zap, BarChart3, Mail, Send, Sparkles, User, UserCheck
+    Zap, BarChart3, Mail, Send, Sparkles, User, UserCheck,
+    DollarSign, Key, Cpu
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 
@@ -56,6 +57,7 @@ interface AiLog {
     total_tokens: number;
     provider: string | null;
     created_at: string;
+    cost?: number;
 }
 
 interface OutreachLog {
@@ -76,6 +78,15 @@ interface StatsData {
     database: { sizeBytes: number; blogsCount: number; projectsCount: number; };
     storage: { sizeBytes: number; fileCount: number; };
     limits: { dbMaxBytes: number; storageMaxBytes: number; };
+    deepseekBalance?: {
+        is_available: boolean;
+        balance_infos: Array<{
+            currency: string;
+            total_balance: string;
+            granted_balance: string;
+            topped_up_balance: string;
+        }>;
+    } | null;
 }
 
 const formatBytes = (bytes: number) => {
@@ -129,7 +140,7 @@ const UsageStatsTab = () => {
                 </button>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-8">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {/* DATABASE CARD */}
                 <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-8 opacity-5">
@@ -221,6 +232,63 @@ const UsageStatsTab = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* DEEPSEEK CARD */}
+                {stats.deepseekBalance && (
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden flex flex-col justify-between">
+                        <div className="absolute top-0 right-0 p-8 opacity-5">
+                            <Sparkles size={120} />
+                        </div>
+
+                        <div>
+                            <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+                                <Sparkles className="text-purple-500" /> DeepSeek API Balance
+                            </h2>
+
+                            <div className="mb-6">
+                                <div className="text-slate-500 text-xs uppercase font-bold tracking-wider mb-2">Total Balance</div>
+                                <div className="flex items-baseline gap-1.5">
+                                    <span className="text-3xl font-extrabold text-slate-900 dark:text-white">
+                                        {stats.deepseekBalance.balance_infos?.[0]?.currency === 'CNY' ? '¥' : '$'}
+                                        {stats.deepseekBalance.balance_infos?.[0]?.total_balance || '0.00'}
+                                    </span>
+                                    <span className="text-slate-400 text-xs font-mono">{stats.deepseekBalance.balance_infos?.[0]?.currency || 'USD'}</span>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 mb-4">
+                                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl">
+                                    <div className="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold tracking-wider mb-1">
+                                        Paid Balance
+                                    </div>
+                                    <div className="text-base font-bold text-slate-900 dark:text-white">
+                                        {stats.deepseekBalance.balance_infos?.[0]?.currency === 'CNY' ? '¥' : '$'}
+                                        {stats.deepseekBalance.balance_infos?.[0]?.topped_up_balance || '0.00'}
+                                    </div>
+                                </div>
+                                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl">
+                                    <div className="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold tracking-wider mb-1">
+                                        Trial Balance
+                                    </div>
+                                    <div className="text-base font-bold text-slate-900 dark:text-white">
+                                        {stats.deepseekBalance.balance_infos?.[0]?.currency === 'CNY' ? '¥' : '$'}
+                                        {stats.deepseekBalance.balance_infos?.[0]?.granted_balance || '0.00'}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-slate-50 dark:bg-slate-800/50 px-4 py-3 rounded-xl flex items-center justify-between">
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500">API Status</span>
+                            <div className="flex items-center gap-1.5">
+                                <div className={`w-2 h-2 rounded-full ${stats.deepseekBalance.is_available ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+                                <span className="text-xs font-bold text-slate-700 dark:text-slate-350">
+                                    {stats.deepseekBalance.is_available ? 'Active' : 'Unavailable'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -272,10 +340,17 @@ export default function ReportsPage() {
     const [outreachPagination, setOutreachPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
     const [aiFilter, setAiFilter] = useState({ search: '', provider: 'all', actionType: 'all' });
     const [usageStats, setUsageStats] = useState({
-        aggregates: { totalTokens: 0, promptTokens: 0, completionTokens: 0, totalRequests: 0 },
-        providers: [] as { provider: string, tokens: number, requests: number }[],
-        actions: [] as { action: string, tokens: number, requests: number }[]
+        aggregates: { totalTokens: 0, promptTokens: 0, completionTokens: 0, totalRequests: 0, totalCost: 0 },
+        providers: [] as { provider: string, tokens: number, requests: number, cost?: number }[],
+        actions: [] as { action: string, tokens: number, requests: number, cost?: number }[],
+        topUsers: [] as { email: string, name: string, tokens: number, requests: number }[]
     });
+    const [systemConfig, setSystemConfig] = useState<{
+        defaultProvider: string;
+        geminiConfigured: boolean;
+        deepseekConfigured: boolean;
+        deepseekBalance: any;
+    } | null>(null);
 
     // Helper to group reviews by user email when grouping toggle is enabled
     const groupedReviews = React.useMemo(() => {
@@ -399,6 +474,7 @@ export default function ReportsPage() {
                     totalPages: data.outreachLogs.pagination.totalPages
                 }));
                 setUsageStats(data.stats);
+                setSystemConfig(data.systemConfig);
             } else {
                 addToast(data.error || "Failed to load usage statistics", "error");
             }
@@ -980,7 +1056,7 @@ export default function ReportsPage() {
                 {activeTab === 'ai_usage' && (
                     <div className="space-y-6 animate-in fade-in duration-300">
                         {/* Token usage Stats Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                             {/* Total Tokens Card */}
                             <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden flex flex-col justify-between">
                                 <div className="flex justify-between items-center mb-2">
@@ -1005,22 +1081,121 @@ export default function ReportsPage() {
                                 <p className="text-xs text-slate-500 mt-1">Chatbot & Auto-replies</p>
                             </div>
 
-                            {/* Providers Split Card */}
-                            <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm md:col-span-2 flex flex-col justify-center gap-1.5">
-                                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Provider Splits</span>
-                                {usageStats.providers.length === 0 ? (
-                                    <span className="text-xs text-slate-400 italic">No usage recorded yet</span>
-                                ) : (
-                                    usageStats.providers.map(row => (
-                                        <div key={row.provider} className="flex justify-between items-center text-xs">
-                                            <span className="capitalize font-bold text-slate-700 dark:text-slate-355 flex items-center gap-1">
-                                                <Sparkles size={12} className={row.provider === 'gemini' ? 'text-blue-500' : 'text-cyan-500'} />
-                                                {row.provider}
-                                            </span>
-                                            <span className="font-mono text-slate-500">{row.tokens.toLocaleString()} tokens ({row.requests} reqs)</span>
+                            {/* Estimated Total Cost Card */}
+                            <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden flex flex-col justify-between">
+                                <div className="flex justify-between items-center mb-2">
+                                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Estimated Cost</span>
+                                    <DollarSign className="text-emerald-500" size={16} />
+                                </div>
+                                <div className="text-2xl font-black text-slate-900 dark:text-white">
+                                    ${usageStats.aggregates.totalCost.toFixed(4)}
+                                </div>
+                                <p className="text-xs text-slate-500 mt-1">Total API token expenditure</p>
+                            </div>
+
+                            {/* AI System Config Card */}
+                            <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden flex flex-col justify-between">
+                                <div className="flex justify-between items-center mb-2">
+                                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">System Config</span>
+                                    <Key className="text-purple-500" size={16} />
+                                </div>
+                                {systemConfig ? (
+                                    <div className="text-xs space-y-1 text-slate-650 dark:text-slate-350">
+                                        <div className="flex justify-between">
+                                            <span>Active AI:</span>
+                                            <span className="font-bold capitalize">{systemConfig.defaultProvider}</span>
                                         </div>
-                                    ))
+                                        <div className="flex justify-between">
+                                            <span>DS Balance:</span>
+                                            <span className="font-mono font-bold text-purple-605 dark:text-purple-400">
+                                                {systemConfig.deepseekBalance?.balance_infos?.[0]?.currency === 'CNY' ? '¥' : '$'}
+                                                {systemConfig.deepseekBalance?.balance_infos?.[0]?.total_balance || '0.00'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-xs text-slate-400 italic">Loading config...</div>
                                 )}
+                            </div>
+                        </div>
+
+                        {/* Detailed Sub-split Metrics */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            {/* Provider Splits */}
+                            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+                                <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4 flex items-center gap-2 border-b dark:border-slate-800 pb-2">
+                                    <Sparkles size={16} className="text-blue-500" /> Provider Splits
+                                </h3>
+                                <div className="space-y-3">
+                                    {usageStats.providers.length === 0 ? (
+                                        <span className="text-xs text-slate-400 italic">No usage recorded yet</span>
+                                    ) : (
+                                        usageStats.providers.map(row => (
+                                            <div key={row.provider} className="flex justify-between items-center text-xs border-b dark:border-slate-800 pb-2 last:border-b-0 last:pb-0">
+                                                <span className="capitalize font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                                    <Sparkles size={14} className={row.provider === 'gemini' ? 'text-blue-500' : 'text-cyan-500'} />
+                                                    {row.provider}
+                                                </span>
+                                                <div className="text-right flex flex-col items-end">
+                                                    <span className="font-mono text-slate-900 dark:text-white font-bold">${row.cost?.toFixed(5) || '0.00000'}</span>
+                                                    <span className="text-[10px] text-slate-500 font-mono">({row.tokens.toLocaleString()} tokens, {row.requests} reqs)</span>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Feature Cost & Usage */}
+                            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+                                <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4 flex items-center gap-2 border-b dark:border-slate-800 pb-2">
+                                    <Cpu size={16} className="text-indigo-500" /> Feature Cost & Usage
+                                </h3>
+                                <div className="space-y-3">
+                                    {usageStats.actions.length === 0 ? (
+                                        <p className="text-xs text-slate-500 italic">No usage recorded yet</p>
+                                    ) : (
+                                        usageStats.actions.map(act => (
+                                            <div key={act.action} className="flex flex-col gap-1 border-b dark:border-slate-800 pb-2 last:border-b-0 last:pb-0">
+                                                <div className="flex justify-between items-center text-xs">
+                                                    <span className="font-bold text-slate-800 dark:text-slate-200 uppercase">{act.action}</span>
+                                                    <span className="font-mono font-bold text-slate-900 dark:text-white">
+                                                        ${act.cost?.toFixed(5) || '0.00000'}
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between items-center text-[10px] text-slate-400">
+                                                    <span>{act.requests} calls</span>
+                                                    <span>{act.tokens.toLocaleString()} tokens</span>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Top AI Users */}
+                            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+                                <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4 flex items-center gap-2 border-b dark:border-slate-800 pb-2">
+                                    <UserCheck size={16} className="text-emerald-500" /> Top AI Users
+                                </h3>
+                                <div className="space-y-3">
+                                    {usageStats.topUsers && usageStats.topUsers.length === 0 ? (
+                                        <p className="text-xs text-slate-500 italic">No usage recorded yet</p>
+                                    ) : (
+                                        usageStats.topUsers?.map((u) => (
+                                            <div key={u.email} className="flex justify-between items-center text-xs border-b dark:border-slate-800 pb-2 last:border-b-0 last:pb-0">
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-slate-800 dark:text-slate-200">{u.name}</span>
+                                                    <span className="text-[10px] text-slate-450 font-mono truncate max-w-[150px]">{u.email}</span>
+                                                </div>
+                                                <div className="text-right flex flex-col items-end">
+                                                    <span className="font-mono text-slate-700 dark:text-slate-300 font-bold">{u.requests} calls</span>
+                                                    <span className="text-[10px] text-slate-500">{u.tokens.toLocaleString()} tokens</span>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
                             </div>
                         </div>
 
@@ -1068,14 +1243,15 @@ export default function ReportsPage() {
                                             <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">User</th>
                                             <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Task Type</th>
                                             <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Provider</th>
-                                            <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300 text-right">Tokens Used</th>
+                                            <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Tokens Used</th>
+                                            <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300 text-right">Est. Cost</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                         {usageLoading ? (
-                                            <tr><td colSpan={5} className="px-6 py-8 text-center text-slate-400">Loading AI usage logs...</td></tr>
+                                            <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-400">Loading AI usage logs...</td></tr>
                                         ) : aiLogs.length === 0 ? (
-                                            <tr><td colSpan={5} className="px-6 py-8 text-center text-slate-400">No logs found matching criteria.</td></tr>
+                                            <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-400">No logs found matching criteria.</td></tr>
                                         ) : (
                                             aiLogs.map((log) => (
                                                 <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
@@ -1100,8 +1276,11 @@ export default function ReportsPage() {
                                                     <td className="px-6 py-4 font-medium capitalize text-slate-650 dark:text-slate-350">
                                                         {log.provider}
                                                     </td>
+                                                    <td className="px-6 py-4 font-mono font-medium text-slate-700 dark:text-slate-300">
+                                                        {log.total_tokens.toLocaleString()} <span className="text-xs font-normal text-slate-450">(P: {log.prompt_tokens} | R: {log.completion_tokens})</span>
+                                                    </td>
                                                     <td className="px-6 py-4 text-right font-mono font-bold text-slate-900 dark:text-white">
-                                                        {log.total_tokens.toLocaleString()} <span className="text-xs font-normal text-slate-400">(P: {log.prompt_tokens} | R: {log.completion_tokens})</span>
+                                                        ${log.cost?.toFixed(5) || '0.00000'}
                                                     </td>
                                                 </tr>
                                             ))

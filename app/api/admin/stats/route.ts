@@ -94,13 +94,33 @@ export async function GET() {
             fileCount: fileCount
         };
 
+        // 3. Fetch DeepSeek API balance if key is present
+        let deepseekBalance: any = null;
+        if (process.env.DEEPSEEK_API_KEY) {
+            try {
+                const balanceRes = await fetch('https://api.deepseek.com/user/balance', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`
+                    }
+                });
+                if (balanceRes.ok) {
+                    deepseekBalance = await balanceRes.json();
+                }
+            } catch (e) {
+                console.error("[StatsAPI] Failed to fetch DeepSeek balance:", e);
+            }
+        }
+
         return NextResponse.json({
             database: dbStats,
             storage: storageStats,
             limits: {
                 dbMaxBytes: 500 * 1024 * 1024, // 500MB (Relatively standard generic free tier)
                 storageMaxBytes: 10 * 1024 * 1024 * 1024 // 10GB (Cloudflare R2 free tier)
-            }
+            },
+            deepseekBalance
         });
 
     } catch (e) {
